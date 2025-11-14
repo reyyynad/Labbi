@@ -1,6 +1,7 @@
 // src/pages/customer/MyBookings.jsx
 import React, { useState } from 'react';
-import BookingCard from '../../components/widgets/BookingCard.jsx';
+import BookingCard from '../../components/widgets/BookingCard';
+
 
 const Header = () => {
   return (
