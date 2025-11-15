@@ -1,12 +1,11 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import './index.css';
-import Settings from './pages/service_provider/Settings';
-import ViewReviews from './pages/service_provider/ViewReviews';
+import AvailabilityManagement from './pages/service_provider/AvailabilityManagement';
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
-    <ViewReviews />
+    <AvailabilityManagement />
   </React.StrictMode>
 );
 

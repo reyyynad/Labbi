@@ -1,10 +1,10 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import Service_Provider from "./pages/service_provider/Service_Provider";
 import './styles/index.css'
+import AvailabilityManagement from './pages/service_provider/AvailabilityManagement';
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
-    <Service_Provider />
+    <AvailabilityManagement />
   </React.StrictMode>
 );
