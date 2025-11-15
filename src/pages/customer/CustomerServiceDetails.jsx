@@ -239,7 +239,7 @@ const BookingForm = ({ price }) => {
 };
 
 // ========== SERVICE DESCRIPTION WIDGET ==========
-const CustomerServiceDetails = ({ description, features }) => {
+const ServiceDescription = ({ description, features }) => {
   return (
     <div className="border border-gray-300 rounded p-6 mb-4">
       <h2 className="text-lg font-semibold mb-4">About This Service</h2>
@@ -384,7 +384,7 @@ const ServiceDetails = () => {
 
             <ServiceGallery images={service.images} serviceName={service.name} />
             <ProviderInfo provider={provider} />
-            <CustomerServiceDetails description={description} features={features} />
+            <ServiceDescription description={description} features={features} />
             <ReviewsSection reviews={reviews} totalReviews={service.reviews} />
           </div>
 

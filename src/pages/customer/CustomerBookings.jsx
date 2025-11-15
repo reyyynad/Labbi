@@ -1,23 +1,68 @@
-// src/pages/customer/MyBookings.jsx
 import React, { useState } from 'react';
-import BookingCard from '../../components/widgets/BookingCard';
+import { Calendar, Clock, DollarSign, MapPin, User } from 'lucide-react';
 
+// ========== BUTTON COMPONENT ==========
+const Button = ({ 
+  children, 
+  onClick, 
+  variant = 'primary', 
+  size = 'medium',
+  className = '',
+  disabled = false
+}) => {
+  const baseStyles = 'rounded-lg font-medium transition-colors focus:outline-none inline-flex items-center justify-center';
+  
+  const variants = {
+    primary: 'bg-[#047857] text-white hover:bg-[#065f46]',
+    secondary: 'bg-white text-[#047857] border-2 border-[#047857] hover:bg-[#f0fdf4]',
+    danger: 'bg-white text-red-600 border-2 border-red-600 hover:bg-red-50',
+    outline: 'border-2 border-gray-300 bg-white text-[#374151] hover:bg-gray-50'
+  };
+  
+  const sizes = {
+    small: 'px-4 py-2 text-sm',
+    medium: 'px-5 py-2.5 text-sm',
+    large: 'px-6 py-3 text-base'
+  };
 
+  const disabledStyles = disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer';
+  
+  return (
+    <button
+      onClick={onClick}
+      disabled={disabled}
+      className={`${baseStyles} ${variants[variant]} ${sizes[size]} ${disabledStyles} ${className}`}
+    >
+      {children}
+    </button>
+  );
+};
+
+// ========== HEADER COMPONENT ==========
 const Header = () => {
   return (
-    <header className="bg-white border-b border-gray-300 py-4 px-6">
+    <header className="bg-[#1e3a8a] text-white py-4 px-6 shadow-md">
       <div className="max-w-7xl mx-auto flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 border-2 border-black flex items-center justify-center font-bold text-lg">
-            L
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 bg-white rounded flex items-center justify-center">
+              <span className="text-[#1e3a8a] font-bold text-lg">L</span>
+            </div>
+            <h1 className="text-xl font-bold">Labbi - لبِّ</h1>
           </div>
-          <h1 className="text-lg font-normal">Labbi - لَبّي</h1>
         </div>
-        <div className="flex items-center gap-6">
-          <a href="#" className="text-sm text-gray-700 hover:text-black underline">Find Services</a>
-          <a href="#" className="text-sm text-gray-700 hover:text-black underline">My Bookings</a>
-          <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center border border-gray-400">
-            <span className="text-sm font-semibold">AA</span>
+        <div className="flex items-center gap-4">
+          <button className="text-white hover:text-gray-200 transition-colors text-sm">
+            My Profile
+          </button>
+          <button className="text-white hover:text-gray-200 transition-colors text-sm">
+            Find Services
+          </button>
+          <button className="text-white hover:text-gray-200 transition-colors text-sm">
+            My Bookings
+          </button>
+          <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center">
+            <span className="text-sm font-semibold text-[#374151]">AA</span>
           </div>
         </div>
       </div>
@@ -25,53 +70,142 @@ const Header = () => {
   );
 };
 
-const MyBookings = () => {
-  const [activeTab, setActiveTab] = useState('All');
-  const tabs = ['All', 'Pending', 'Confirmed', 'Completed'];
+// ========== STATUS BADGE COMPONENT ==========
+const StatusBadge = ({ status }) => {
+  const styles = {
+    Upcoming: 'bg-blue-100 text-blue-800 border border-blue-300',
+    Confirmed: 'bg-green-100 text-green-800 border border-green-300',
+    Completed: 'bg-gray-100 text-gray-800 border border-gray-300',
+    Cancelled: 'bg-red-100 text-red-800 border border-red-300'
+  };
+
+  return (
+    <span className={`px-3 py-1 rounded text-xs font-medium ${styles[status]}`}>
+      {status}
+    </span>
+  );
+};
+
+// ========== BOOKING CARD COMPONENT ==========
+const BookingCard = ({ booking }) => {
+  return (
+    <div className="bg-[#f0fdf4] border border-[#047857] rounded-lg p-6 mb-4">
+      <div className="flex items-start justify-between mb-4">
+        <div className="flex-1">
+          <h3 className="font-semibold text-lg text-[#374151] mb-2">{booking.service}</h3>
+          <div className="flex items-center gap-2 text-sm text-gray-600 mb-2">
+            <User size={14} />
+            <span>Provider: {booking.provider}</span>
+          </div>
+        </div>
+        <div className="flex flex-col items-end gap-2">
+          <StatusBadge status={booking.status} />
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-4 mb-4">
+        <div className="flex items-center gap-2 text-sm text-gray-700">
+          <Calendar size={16} className="text-[#047857]" />
+          <span>{booking.date}</span>
+        </div>
+        <div className="flex items-center gap-2 text-sm text-gray-700">
+          <Clock size={16} className="text-[#047857]" />
+          <span>{booking.time}</span>
+        </div>
+        <div className="flex items-center gap-2 text-sm text-gray-700">
+          <MapPin size={16} className="text-[#047857]" />
+          <span>{booking.location}</span>
+        </div>
+        <div className="flex items-center gap-2 text-sm text-gray-700">
+          <DollarSign size={16} className="text-[#047857]" />
+          <span>${booking.price}</span>
+        </div>
+      </div>
+
+      <div className="flex gap-3">
+        {booking.actions.map((action, index) => (
+          <Button
+            key={index}
+            variant={action.variant}
+            size="medium"
+            onClick={action.onClick}
+          >
+            {action.label}
+          </Button>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+// ========== MAIN MY BOOKINGS PAGE ==========
+const CustomerBookings = () => {
+  const [activeTab, setActiveTab] = useState('All Bookings');
+
+  const tabs = ['All Bookings', 'Upcoming', 'Confirmed', 'Completed', 'Cancelled'];
 
   const bookings = [
     {
       id: '1000',
-      status: 'Confirmed',
-      service: 'Web Development',
-      provider: 'Renad Elsafi',
-      date: 'Oct 15, 2025',
-      time: '2:00 PM',
-      price: '50/hr',
+      status: 'Upcoming',
+      service: 'Professional House Cleaning',
+      provider: 'Sarah Johnson',
+      date: 'Nov 15, 2024',
+      time: '10:00 AM - 12:00 PM',
+      location: '123 Main St, New York, NY',
+      price: '120',
       actions: [
-        { label: 'View Details', variant: 'outline', onClick: () => {} },
-        { label: 'Cancel', variant: 'outline', onClick: () => {} }
+        { label: 'View Details', variant: 'primary', onClick: () => {} },
+        { label: 'Reschedule', variant: 'outline', onClick: () => {} },
+        { label: 'Cancel', variant: 'danger', onClick: () => {} }
       ]
     },
     {
       id: '1001',
-      status: 'Pending',
-      service: 'UI Design',
-      provider: 'Renad Elsafi',
-      date: 'Oct 18, 2025',
-      time: '10:00 AM',
-      price: '50/hr',
+      status: 'Confirmed',
+      service: 'Personal Training Session',
+      provider: 'Emma Wilson',
+      date: 'Nov 12, 2024',
+      time: '6:00 PM - 7:00 PM',
+      location: 'FitLife Gym, New York, NY',
+      price: '50',
       actions: [
-        { label: 'Awaiting Provider Confirmation', variant: 'outline', onClick: () => {} }
-      ],
-      statusMessage: 'Awaiting Provider Confirmation'
+        { label: 'View Details', variant: 'primary', onClick: () => {} },
+        { label: 'Reschedule', variant: 'outline', onClick: () => {} },
+        { label: 'Cancel', variant: 'danger', onClick: () => {} }
+      ]
     },
     {
       id: '1002',
       status: 'Completed',
-      service: 'Web Development',
-      provider: 'Renad Elsafi',
-      date: 'Oct 10, 2025',
-      time: '3:00 PM',
-      price: '50/hr',
+      service: 'Plumbing Repair',
+      provider: 'Mike Davis',
+      date: 'Nov 8, 2024',
+      time: '2:00 PM - 3:30 PM',
+      location: '123 Main St, New York, NY',
+      price: '85',
       actions: [
-        { label: 'Leave Review', variant: 'primary', onClick: () => {} },
-        { label: 'Book Again', variant: 'outline', onClick: () => {} }
+        { label: 'Book Again', variant: 'primary', onClick: () => {} },
+        { label: 'Leave Review', variant: 'outline', onClick: () => {} }
+      ]
+    },
+    {
+      id: '1003',
+      status: 'Completed',
+      service: 'Web Development Consultation',
+      provider: 'David Chen',
+      date: 'Nov 5, 2024',
+      time: '3:00 PM - 4:00 PM',
+      location: 'Online Meeting',
+      price: '80',
+      actions: [
+        { label: 'Book Again', variant: 'primary', onClick: () => {} },
+        { label: 'Leave Review', variant: 'outline', onClick: () => {} }
       ]
     }
   ];
 
-  const filteredBookings = activeTab === 'All' 
+  const filteredBookings = activeTab === 'All Bookings' 
     ? bookings 
     : bookings.filter(b => b.status === activeTab);
 
@@ -79,24 +213,23 @@ const MyBookings = () => {
     <div className="min-h-screen bg-gray-50">
       <Header />
 
-      <div className="max-w-5xl mx-auto px-6 py-8">
+      <div className="max-w-6xl mx-auto px-6 py-8">
         <div className="mb-6">
-          <h1 className="text-2xl font-semibold mb-2">My Bookings</h1>
-          <p className="text-sm text-gray-600">View and manage your service bookings</p>
+          <h1 className="text-3xl font-bold text-[#374151] mb-2">My Bookings</h1>
+          <p className="text-gray-600">Manage all your service bookings in one place</p>
         </div>
 
-        <div className="border-b border-gray-300 mb-6"></div>
-
-        <div className="bg-white border border-gray-300 mb-6">
-          <div className="flex gap-0">
+        {/* Tabs */}
+        <div className="bg-white rounded-lg shadow-sm mb-6 overflow-hidden">
+          <div className="flex">
             {tabs.map((tab) => (
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
-                className={`flex-1 px-6 py-3 text-sm font-medium border-r border-gray-300 last:border-r-0 transition-colors ${
+                className={`flex-1 px-6 py-4 text-sm font-medium transition-colors ${
                   activeTab === tab
-                    ? 'bg-black text-white'
-                    : 'bg-white text-gray-700 hover:bg-gray-50'
+                    ? 'bg-[#047857] text-white'
+                    : 'bg-[#f0fdf4] text-[#374151] hover:bg-[#d1fae5]'
                 }`}
               >
                 {tab}
@@ -105,14 +238,26 @@ const MyBookings = () => {
           </div>
         </div>
 
-        <div className="bg-white border border-gray-300 p-6">
+        {/* Bookings List */}
+        <div>
           {filteredBookings.length > 0 ? (
             filteredBookings.map((booking) => (
               <BookingCard key={booking.id} booking={booking} />
             ))
           ) : (
-            <div className="text-center py-12 text-gray-500">
-              <p>No bookings found for this category.</p>
+            <div className="bg-white rounded-lg border border-gray-200 p-12 text-center">
+              <div className="text-gray-400 mb-4">
+                <Calendar size={64} className="mx-auto" />
+              </div>
+              <h3 className="text-xl font-semibold text-[#374151] mb-2">
+                No bookings found
+              </h3>
+              <p className="text-gray-600 mb-6">
+                You don't have any bookings in this category yet.
+              </p>
+              <Button variant="primary">
+                Browse Services
+              </Button>
             </div>
           )}
         </div>
@@ -121,4 +266,4 @@ const MyBookings = () => {
   );
 };
 
-export default MyBookings;
+export default CustomerBookings;
