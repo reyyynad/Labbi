@@ -115,7 +115,7 @@ const CustomerBookings = () => {
 
   const tabs = ['All Bookings', 'Upcoming', 'Confirmed', 'Completed', 'Cancelled'];
 
-  const bookings = [
+  const bookingsData = [
     {
       id: '1000',
       status: 'Upcoming',
@@ -124,12 +124,7 @@ const CustomerBookings = () => {
       date: 'Nov 15, 2024',
       time: '10:00 AM - 12:00 PM',
       location: '123 Main St, New York, NY',
-      price: '120',
-      actions: [
-        { label: 'View Details', variant: 'primary', onClick: () => {} },
-        { label: 'Reschedule', variant: 'outline', onClick: () => {} },
-        { label: 'Cancel', variant: 'danger', onClick: () => {} }
-      ]
+      price: '120'
     },
     {
       id: '1001',
@@ -139,12 +134,7 @@ const CustomerBookings = () => {
       date: 'Nov 12, 2024',
       time: '6:00 PM - 7:00 PM',
       location: 'FitLife Gym, New York, NY',
-      price: '50',
-      actions: [
-        { label: 'View Details', variant: 'primary', onClick: () => {} },
-        { label: 'Reschedule', variant: 'outline', onClick: () => {} },
-        { label: 'Cancel', variant: 'danger', onClick: () => {} }
-      ]
+      price: '50'
     },
     {
       id: '1002',
@@ -154,11 +144,7 @@ const CustomerBookings = () => {
       date: 'Nov 8, 2024',
       time: '2:00 PM - 3:30 PM',
       location: '123 Main St, New York, NY',
-      price: '85',
-      actions: [
-        { label: 'Book Again', variant: 'primary', onClick: () => {} },
-        { label: 'Leave Review', variant: 'outline', onClick: () => {} }
-      ]
+      price: '85'
     },
     {
       id: '1003',
@@ -168,13 +154,55 @@ const CustomerBookings = () => {
       date: 'Nov 5, 2024',
       time: '3:00 PM - 4:00 PM',
       location: 'Online Meeting',
-      price: '80',
-      actions: [
-        { label: 'Book Again', variant: 'primary', onClick: () => {} },
-        { label: 'Leave Review', variant: 'outline', onClick: () => {} }
-      ]
+      price: '80'
     }
   ];
+
+  const bookings = bookingsData.map((booking) => {
+    const standardActions = [
+      {
+        label: 'View Details',
+        variant: 'primary',
+        onClick: () => navigate(`/services/${booking.id}`)
+      }
+    ];
+
+    if (booking.status === 'Completed') {
+      return {
+        ...booking,
+        actions: [
+          {
+            label: 'Book Again',
+            variant: 'primary',
+            onClick: () => navigate(`/services/${booking.id}`)
+          },
+          {
+            label: 'Leave Review',
+            variant: 'outline',
+            onClick: () => navigate('/bookings')
+          },
+          ...standardActions
+        ]
+      };
+    }
+
+    return {
+      ...booking,
+      actions: [
+        ...standardActions,
+        {
+          label: 'Reschedule',
+          variant: 'outline',
+          onClick: () => navigate(`/booking/datetime/${booking.id}`)
+        },
+        {
+          label: 'Cancel',
+          variant: 'danger',
+          onClick: () => navigate('/bookings')
+        }
+      ]
+    };
+  });
 
   const filteredBookings = activeTab === 'All Bookings' 
     ? bookings 

@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { Search, Filter, Star, MapPin, X } from 'lucide-react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 
 // ========== BUTTON COMPONENT ==========
 const Button = ({ 
@@ -41,6 +41,7 @@ const Button = ({
 
 // ========== HEADER COMPONENT ==========
 const Header = () => {
+  const navigate = useNavigate();
   // Try different logo path approaches
   const logoPath = '/assets/images/labbi_logo.svg';
   
@@ -65,17 +66,31 @@ const Header = () => {
           </div>
         </div>
         <div className="flex items-center gap-4">
-          <button className="flex items-center gap-2 text-white hover:text-gray-200 transition-colors text-sm">
+          <button
+            className="flex items-center gap-2 text-white hover:text-gray-200 transition-colors text-sm"
+            onClick={() => navigate('/profile')}
+          >
             My Profile
           </button>
-          <Button variant="primary" size="medium" className="flex items-center gap-2">
+          <Button
+            variant="primary"
+            size="medium"
+            className="flex items-center gap-2"
+            onClick={() => navigate('/')}
+          >
             <Search size={16} />
             Find Services
           </Button>
-          <button className="flex items-center gap-2 text-white hover:text-gray-200 transition-colors text-sm">
+          <button
+            className="flex items-center gap-2 text-white hover:text-gray-200 transition-colors text-sm"
+            onClick={() => navigate('/bookings')}
+          >
             My Bookings
           </button>
-          <button className="flex items-center gap-2 text-white hover:text-gray-200 transition-colors text-sm">
+          <button
+            className="flex items-center gap-2 text-white hover:text-gray-200 transition-colors text-sm"
+            onClick={() => navigate('/settings')}
+          >
             Settings
           </button>
         </div>
@@ -278,7 +293,7 @@ const SearchBar = ({ searchQuery, setSearchQuery, filters, setFilters }) => {
 };
 
 // ========== SERVICE CARD WIDGET ==========
-const ServiceCard = ({ service }) => {
+const ServiceCard = ({ service, onViewDetails }) => {
   const RatingStars = ({ rating }) => {
     return (
       <div className="flex items-center gap-0.5">
@@ -327,7 +342,7 @@ const ServiceCard = ({ service }) => {
             <span className="text-xs text-gray-500">Starting at</span>
             <div className="font-bold text-[#374151] text-xl">${service.price}<span className="text-sm font-normal">/{service.unit}</span></div>
           </div>
-          <Button size="small" variant="primary">
+          <Button size="small" variant="primary" onClick={onViewDetails}>
             View Details
           </Button>
         </div>
@@ -338,6 +353,7 @@ const ServiceCard = ({ service }) => {
 
 // ========== MAIN APPLICATION ==========
 const CustomerInterface = () => {
+  const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
   const [filters, setFilters] = useState({
     category: 'All Categories',
@@ -524,7 +540,11 @@ const CustomerInterface = () => {
         {filteredServices.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredServices.map((service) => (
-              <ServiceCard key={service.id} service={service} />
+              <ServiceCard
+                key={service.id}
+                service={service}
+                onViewDetails={() => navigate(`/services/${service.id}`)}
+              />
             ))}
           </div>
         ) : (

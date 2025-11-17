@@ -305,7 +305,7 @@ const CustomerProfile = () => {
               </div>
             </div>
           </div>
-        </div>q
+        </div>
       </main>
     </div>
   );

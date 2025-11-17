@@ -26,7 +26,10 @@ const Header = () => {
           </div>
         </div>
         <div className="flex items-center gap-4">
-          <button className="bg-[#047857] text-white hover:bg-[#065f46] px-5 py-2.5 text-sm rounded-lg font-medium transition-colors inline-flex items-center justify-center gap-2">
+          <button
+            className="bg-[#047857] text-white hover:bg-[#065f46] px-5 py-2.5 text-sm rounded-lg font-medium transition-colors inline-flex items-center justify-center gap-2"
+            onClick={() => navigate('/')}
+          >
             <Search size={16} />
             Find Services
           </button>
