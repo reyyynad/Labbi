@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { ArrowLeft, Calendar, Clock } from 'lucide-react';
+import { useNavigate, useParams } from 'react-router-dom';
+import Header from '../../components/header/Header';
 
 // ========== BUTTON COMPONENT ==========
 const Button = ({ 
@@ -33,38 +35,6 @@ const Button = ({
     >
       {children}
     </button>
-  );
-};
-
-// ========== HEADER COMPONENT ==========
-const Header = () => {
-  return (
-    <header className="bg-[#1e3a8a] text-white py-4 px-6 shadow-md">
-      <div className="max-w-7xl mx-auto flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-white rounded flex items-center justify-center">
-              <span className="text-[#1e3a8a] font-bold text-lg">L</span>
-            </div>
-            <h1 className="text-xl font-bold">Labbi - لبِّ</h1>
-          </div>
-        </div>
-        <div className="flex items-center gap-4">
-          <button className="text-white hover:text-gray-200 transition-colors text-sm">
-            My Profile
-          </button>
-          <button className="text-white hover:text-gray-200 transition-colors text-sm">
-            Find Services
-          </button>
-          <button className="text-white hover:text-gray-200 transition-colors text-sm">
-            My Bookings
-          </button>
-          <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center">
-            <span className="text-sm font-semibold text-[#374151]">AA</span>
-          </div>
-        </div>
-      </div>
-    </header>
   );
 };
 
@@ -201,6 +171,9 @@ const TimeSlots = ({ selectedTime, setSelectedTime }) => {
 
 // ========== MAIN PAGE ==========
 const CustomerDateTimeSelection = () => {
+  const navigate = useNavigate();
+  const { id } = useParams();
+  
   const [selectedDate, setSelectedDate] = useState(null);
   const [selectedTime, setSelectedTime] = useState(null);
   
@@ -212,7 +185,7 @@ const CustomerDateTimeSelection = () => {
   const handleContinue = () => {
     if (selectedDate && selectedTime) {
       console.log('Continue to booking:', { selectedDate, selectedTime });
-      // Navigate to confirmation page
+      navigate('/booking/confirmation');
     }
   };
   
@@ -222,7 +195,10 @@ const CustomerDateTimeSelection = () => {
       
       <div className="max-w-4xl mx-auto px-6 py-8">
         {/* Back Button */}
-        <button className="flex items-center gap-2 text-sm text-[#374151] hover:text-[#047857] mb-6 font-medium">
+        <button 
+          onClick={() => navigate(`/services/${id}`)}
+          className="flex items-center gap-2 text-sm text-[#374151] hover:text-[#047857] mb-6 font-medium"
+        >
           <ArrowLeft size={16} />
           Back to Service Details
         </button>

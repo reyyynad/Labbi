@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { Calendar, Clock, DollarSign, MapPin, User } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import Header from '../../components/header/Header';
 
 // ========== BUTTON COMPONENT ==========
 const Button = ({ 
@@ -35,38 +37,6 @@ const Button = ({
     >
       {children}
     </button>
-  );
-};
-
-// ========== HEADER COMPONENT ==========
-const Header = () => {
-  return (
-    <header className="bg-[#1e3a8a] text-white py-4 px-6 shadow-md">
-      <div className="max-w-7xl mx-auto flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-white rounded flex items-center justify-center">
-              <span className="text-[#1e3a8a] font-bold text-lg">L</span>
-            </div>
-            <h1 className="text-xl font-bold">Labbi - لبِّ</h1>
-          </div>
-        </div>
-        <div className="flex items-center gap-4">
-          <button className="text-white hover:text-gray-200 transition-colors text-sm">
-            My Profile
-          </button>
-          <button className="text-white hover:text-gray-200 transition-colors text-sm">
-            Find Services
-          </button>
-          <button className="text-white hover:text-gray-200 transition-colors text-sm">
-            My Bookings
-          </button>
-          <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center">
-            <span className="text-sm font-semibold text-[#374151]">AA</span>
-          </div>
-        </div>
-      </div>
-    </header>
   );
 };
 
@@ -140,6 +110,7 @@ const BookingCard = ({ booking }) => {
 
 // ========== MAIN MY BOOKINGS PAGE ==========
 const CustomerBookings = () => {
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('All Bookings');
 
   const tabs = ['All Bookings', 'Upcoming', 'Confirmed', 'Completed', 'Cancelled'];
@@ -255,7 +226,7 @@ const CustomerBookings = () => {
               <p className="text-gray-600 mb-6">
                 You don't have any bookings in this category yet.
               </p>
-              <Button variant="primary">
+              <Button variant="primary" onClick={() => navigate('/')}>
                 Browse Services
               </Button>
             </div>

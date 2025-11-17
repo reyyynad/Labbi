@@ -1,5 +1,8 @@
 import React, { useState } from 'react';
 import { ArrowLeft, Star, MapPin, Mail, Phone, Calendar, Clock } from 'lucide-react';
+import { useNavigate, useParams } from 'react-router-dom';
+import Header from '../../components/header/Header';
+
 
 // ========== BUTTON COMPONENT ==========
 const Button = ({ 
@@ -13,9 +16,9 @@ const Button = ({
   const baseStyles = 'rounded font-medium transition-colors focus:outline-none inline-flex items-center justify-center w-full';
   
   const variants = {
-    primary: 'bg-black text-white hover:bg-gray-800',
-    secondary: 'bg-white text-black border border-black hover:bg-gray-50',
-    outline: 'border border-gray-300 bg-white text-gray-700 hover:bg-gray-50'
+    primary: 'bg-[#047857] text-white hover:bg-[#065f46]',
+    secondary: 'bg-white text-[#047857] border-2 border-[#047857] hover:bg-[#f0fdf4]',
+    outline: 'border-2 border-gray-300 bg-white text-gray-700 hover:bg-gray-50'
   };
   
   const sizes = {
@@ -37,43 +40,24 @@ const Button = ({
   );
 };
 
-// ========== HEADER COMPONENT ==========
-const Header = () => {
-  return (
-    <header className="bg-white border-b border-gray-300 py-4 px-6">
-      <div className="max-w-7xl mx-auto flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 border-2 border-black flex items-center justify-center font-bold text-lg">
-            L
-          </div>
-          <h1 className="text-lg font-normal">Labbi - لَبّي</h1>
-        </div>
-        <div className="flex items-center gap-6">
-          <a href="#" className="text-sm text-gray-700 hover:text-black underline">Find Services</a>
-          <a href="#" className="text-sm text-gray-700 hover:text-black underline">My Bookings</a>
-          <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center border border-gray-400">
-            <span className="text-sm font-semibold">AA</span>
-          </div>
-        </div>
-      </div>
-    </header>
-  );
-};
-
 // ========== SERVICE GALLERY WIDGET ==========
 const ServiceGallery = ({ images, serviceName }) => {
+  const primaryImage = images?.[0] || 'https://via.placeholder.com/600x400/cccccc/666666?text=No+Image';
+
   return (
     <div className="mb-4">
       <div className="grid grid-cols-2 gap-3">
-        {/* Primary Image */}
-        <div className="col-span-2 row-span-2 bg-gray-100 border border-gray-300 rounded flex items-center justify-center h-64">
-          <div className="text-center text-gray-400">
-            <div className="w-16 h-16 mx-auto mb-2 border-2 border-gray-300 rounded"></div>
-            <span className="text-sm">[Primary Image]</span>
-          </div>
+        <div className="col-span-2 row-span-2 bg-gray-100 border border-gray-300 rounded overflow-hidden h-64">
+          <img 
+            src={primaryImage} 
+            alt={serviceName}
+            className="w-full h-full object-cover"
+            onError={(e) => {
+              e.target.src = 'https://via.placeholder.com/600x400/cccccc/666666?text=Image+Not+Found';
+            }}
+          />
         </div>
-        
-        {/* Secondary Images */}
+        {/* Thumbnails */}
         {[1, 2, 3, 4].map((num) => (
           <div key={num} className="bg-gray-100 border border-gray-300 rounded flex items-center justify-center h-24">
             <span className="text-xs text-gray-400">({num})</span>
@@ -87,7 +71,7 @@ const ServiceGallery = ({ images, serviceName }) => {
 // ========== PROVIDER INFO WIDGET ==========
 const ProviderInfo = ({ provider }) => {
   return (
-    <div className="border border-gray-300 rounded p-4 mb-4">
+    <div className="border border-gray-300 rounded p-4 mb-4 bg-white">
       <div className="flex items-start gap-4">
         <div className="w-12 h-12 bg-gray-200 rounded-full flex items-center justify-center flex-shrink-0">
           <span className="text-sm font-semibold">RE</span>
@@ -124,7 +108,7 @@ const ProviderInfo = ({ provider }) => {
 };
 
 // ========== BOOKING FORM WIDGET ==========
-const BookingForm = ({ price }) => {
+const BookingForm = ({ price, serviceId, navigate }) => {
   const [formData, setFormData] = useState({
     serviceType: '',
     date: '',
@@ -136,11 +120,15 @@ const BookingForm = ({ price }) => {
   const serviceFee = 5;
   const total = subtotal + serviceFee;
 
+  const handleBookNow = () => {
+    navigate(`/booking/datetime/${serviceId}`);
+  };
+
   return (
-    <div className="bg-white border border-gray-300 rounded p-6 sticky top-6">
+    <div className="bg-white border-2 border-[#047857] rounded-lg p-6 sticky top-6">
       <div className="text-center mb-6 pb-6 border-b border-gray-200">
         <p className="text-sm text-gray-600 mb-1">Starting at</p>
-        <p className="text-3xl font-bold">{price} SAR<span className="text-base font-normal">/hr</span></p>
+        <p className="text-3xl font-bold text-[#047857]">{price} SAR<span className="text-base font-normal">/hr</span></p>
       </div>
 
       <div className="space-y-4 mb-6">
@@ -149,7 +137,7 @@ const BookingForm = ({ price }) => {
           <select 
             value={formData.serviceType}
             onChange={(e) => setFormData({...formData, serviceType: e.target.value})}
-            className="w-full px-3 py-2 text-sm border border-gray-300 rounded bg-white focus:outline-none focus:ring-2 focus:ring-black"
+            className="w-full px-3 py-2 text-sm border border-gray-300 rounded bg-white focus:outline-none focus:ring-2 focus:ring-[#047857]"
           >
             <option value="">Select service</option>
             <option>Web Development</option>
@@ -163,11 +151,10 @@ const BookingForm = ({ price }) => {
           <div className="relative">
             <Calendar size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
             <input
-              type="text"
-              placeholder="Select date"
+              type="date"
               value={formData.date}
               onChange={(e) => setFormData({...formData, date: e.target.value})}
-              className="w-full pl-10 pr-3 py-2 text-sm border border-gray-300 rounded bg-white focus:outline-none focus:ring-2 focus:ring-black"
+              className="w-full pl-10 pr-3 py-2 text-sm border border-gray-300 rounded bg-white focus:outline-none focus:ring-2 focus:ring-[#047857]"
             />
           </div>
         </div>
@@ -177,11 +164,10 @@ const BookingForm = ({ price }) => {
           <div className="relative">
             <Clock size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
             <input
-              type="text"
-              placeholder="Select time"
+              type="time"
               value={formData.time}
               onChange={(e) => setFormData({...formData, time: e.target.value})}
-              className="w-full pl-10 pr-3 py-2 text-sm border border-gray-300 rounded bg-white focus:outline-none focus:ring-2 focus:ring-black"
+              className="w-full pl-10 pr-3 py-2 text-sm border border-gray-300 rounded bg-white focus:outline-none focus:ring-2 focus:ring-[#047857]"
             />
           </div>
         </div>
@@ -191,7 +177,7 @@ const BookingForm = ({ price }) => {
           <select 
             value={formData.duration}
             onChange={(e) => setFormData({...formData, duration: e.target.value})}
-            className="w-full px-3 py-2 text-sm border border-gray-300 rounded bg-white focus:outline-none focus:ring-2 focus:ring-black"
+            className="w-full px-3 py-2 text-sm border border-gray-300 rounded bg-white focus:outline-none focus:ring-2 focus:ring-[#047857]"
           >
             <option value="">Select duration</option>
             <option>1 hour</option>
@@ -218,7 +204,7 @@ const BookingForm = ({ price }) => {
       </div>
 
       <div className="space-y-3">
-        <Button variant="primary" size="medium">
+        <Button variant="primary" size="medium" onClick={handleBookNow}>
           Book Now
         </Button>
         <Button variant="outline" size="medium">
@@ -227,7 +213,7 @@ const BookingForm = ({ price }) => {
       </div>
 
       <div className="mt-6 pt-6 border-t border-gray-200">
-        <h4 className="text-xs font-semibold mb-2">BOOKING FLOW:</h4>
+        <h4 className="text-xs font-semibold mb-2 text-[#374151]">BOOKING FLOW:</h4>
         <ul className="text-xs text-gray-600 space-y-1">
           <li>• Select date/time</li>
           <li>• Provider confirms</li>
@@ -241,7 +227,7 @@ const BookingForm = ({ price }) => {
 // ========== SERVICE DESCRIPTION WIDGET ==========
 const ServiceDescription = ({ description, features }) => {
   return (
-    <div className="border border-gray-300 rounded p-6 mb-4">
+    <div className="bg-white border border-gray-300 rounded p-6 mb-4">
       <h2 className="text-lg font-semibold mb-4">About This Service</h2>
       <p className="text-sm text-gray-700 leading-relaxed mb-4">
         {description}
@@ -285,8 +271,8 @@ const ReviewItem = ({ review }) => {
 // ========== REVIEWS SECTION WIDGET ==========
 const ReviewsSection = ({ reviews, totalReviews }) => {
   return (
-    <div className="border border-gray-300 rounded p-6">
-      <h2 className="text-lg font-semibold mb-4">[Reviews ({totalReviews})]</h2>
+    <div className="bg-white border border-gray-300 rounded p-6">
+      <h2 className="text-lg font-semibold mb-4">Reviews ({totalReviews})</h2>
       <div>
         {reviews.map((review, index) => (
           <ReviewItem key={index} review={review} />
@@ -297,9 +283,12 @@ const ReviewsSection = ({ reviews, totalReviews }) => {
 };
 
 // ========== MAIN SERVICE DETAILS PAGE ==========
-const ServiceDetails = () => {
+const CustomerServiceDetails = () => {
+  const navigate = useNavigate();
+  const { id } = useParams();
+
   const service = {
-    name: '[Professional Web Development]',
+    name: 'Professional Web Development',
     status: 'Online',
     rating: 4.9,
     reviews: 127,
@@ -354,7 +343,10 @@ const ServiceDetails = () => {
 
       <div className="max-w-7xl mx-auto px-6 py-6">
         {/* Back Button */}
-        <button className="flex items-center gap-2 text-sm text-gray-700 hover:text-black mb-6">
+        <button 
+          onClick={() => navigate('/')}
+          className="flex items-center gap-2 text-sm text-gray-700 hover:text-[#047857] mb-6 font-medium"
+        >
           <ArrowLeft size={16} />
           Back to results
         </button>
@@ -390,7 +382,7 @@ const ServiceDetails = () => {
 
           {/* Right Column - Booking Form */}
           <div className="lg:col-span-1">
-            <BookingForm price={service.price} />
+            <BookingForm price={service.price} serviceId={id} navigate={navigate} />
           </div>
         </div>
       </div>
@@ -398,4 +390,4 @@ const ServiceDetails = () => {
   );
 };
 
-export default ServiceDetails;
+export default CustomerServiceDetails;

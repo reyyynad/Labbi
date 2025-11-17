@@ -11,38 +11,29 @@ ReactDOM.createRoot(document.getElementById('root')).render(
 );
 
 
-// import React from 'react';
-// import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 
-// // === CUSTOMER PAGES ===
+
+// // src/App.jsx
+// import { Routes, Route } from 'react-router-dom';
 // import CustomerInterface from './pages/customer/CustomerInterface';
+// import CustomerBookings from './pages/customer/CustomerBookings';
 // import CustomerProfile from './pages/customer/CustomerProfile';
 // import CustomerSettings from './pages/customer/CustomerSettings';
-// import CustomerServiceDetails from './pages/customer/CustomerServiceDetails';
-// import CustomerBookings from './pages/customer/CustomerBookings';
 // import CustomerBookingConfirmation from './pages/customer/CustomerBookingConfirmation';
 // import CustomerDateTimeSelection from './pages/customer/CustomerDateTimeSelection';
+// import CustomerServiceDetails from './pages/customer/CustomerServiceDetails';
 
 // function App() {
 //   return (
-//     <Router>
-//       <Routes>
-//         <Route path="/" element={<Navigate to="/services" replace />} />
-
-//         <Route path="/services" element={<CustomerInterface />} />
-//         <Route path="/services/:id" element={<CustomerServiceDetails />} />
-
-//         <Route path="/profile" element={<CustomerProfile />} />
-//         <Route path="/settings" element={<CustomerSettings />} />
-//         <Route path="/bookings" element={<CustomerBookings />} />
-//         <Route path="/bookings/:id" element={<CustomerBookingConfirmation />} />
-
-//         {/* ← ADD THIS LINE */}
-//         <Route path="/booking/datetime/:serviceId" element={<CustomerDateTimeSelection />} />
-
-
-//       </Routes>
-//     </Router>
+//     <Routes>
+//       <Route path="/" element={<CustomerInterface />} />
+//       <Route path="/bookings" element={<CustomerBookings />} />
+//       <Route path="/profile" element={<CustomerProfile />} />
+//       <Route path="/settings" element={<CustomerSettings />} />
+//       <Route path="/booking/confirmation" element={<CustomerBookingConfirmation />} />
+//       <Route path="/booking/datetime/:id" element={<CustomerDateTimeSelection />} />
+//       <Route path="/services/:id" element={<CustomerServiceDetails />} />
+//     </Routes>
 //   );
 // }
 

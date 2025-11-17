@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
-import { Calendar, Clock, DollarSign, MapPin, User } from 'lucide-react';
+import { Calendar, Clock, MapPin } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import Header from '../../components/header/Header';
 
 // ========== BUTTON COMPONENT ==========
 const Button = ({ 
@@ -38,40 +40,9 @@ const Button = ({
   );
 };
 
-// ========== HEADER COMPONENT ==========
-const Header = () => {
-  return (
-    <header className="bg-[#1e3a8a] text-white py-4 px-6 shadow-md">
-      <div className="max-w-7xl mx-auto flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-white rounded flex items-center justify-center">
-              <span className="text-[#1e3a8a] font-bold text-lg">L</span>
-            </div>
-            <h1 className="text-xl font-bold">Labbi - لبِّ</h1>
-          </div>
-        </div>
-        <div className="flex items-center gap-4">
-          <button className="text-white hover:text-gray-200 transition-colors text-sm">
-            My Profile
-          </button>
-          <button className="text-white hover:text-gray-200 transition-colors text-sm">
-            Find Services
-          </button>
-          <button className="text-white hover:text-gray-200 transition-colors text-sm">
-            My Bookings
-          </button>
-          <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center">
-            <span className="text-sm font-semibold text-[#374151]">AA</span>
-          </div>
-        </div>
-      </div>
-    </header>
-  );
-};
-
 // ========== BOOKING CONFIRMATION PAGE ==========
 const CustomerBookingConfirmation = () => {
+  const navigate = useNavigate();
   const [agreedToPolicy, setAgreedToPolicy] = useState(false);
 
   const bookingData = {
@@ -93,6 +64,8 @@ const CustomerBookingConfirmation = () => {
       return;
     }
     console.log('Booking confirmed!');
+    alert('Booking confirmed successfully!');
+    navigate('/bookings');
   };
 
   return (
@@ -167,7 +140,6 @@ const CustomerBookingConfirmation = () => {
               />
             </div>
 
-
             {/* Cancellation Policy */}
             <div className="bg-white border border-gray-200 rounded-lg p-6">
               <label className="flex items-start gap-3 cursor-pointer">
@@ -225,7 +197,7 @@ const CustomerBookingConfirmation = () => {
                 Confirm Booking
               </Button>
               
-              <Button variant="outline" size="large">
+              <Button variant="outline" size="large" onClick={() => navigate(-1)}>
                 Go Back
               </Button>
 

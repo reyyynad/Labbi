@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
-import { Camera, Mail, Phone, MapPin, Calendar, Edit2, Settings, CheckCircle } from 'lucide-react';
+import { Camera, Settings, CheckCircle, Edit2 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import Header from '../../components/header/Header';
 
 // ========== BUTTON COMPONENT ==========
 const Button = ({ 
@@ -35,40 +37,9 @@ const Button = ({
   );
 };
 
-// ========== HEADER COMPONENT ==========
-const Header = ({ onNavigate }) => {
-  return (
-    <header className="bg-[#1e3a8a] text-white py-4 px-6 shadow-md">
-      <div className="max-w-7xl mx-auto flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-white rounded flex items-center justify-center">
-              <span className="text-[#1e3a8a] font-bold text-lg">L</span>
-            </div>
-            <h1 className="text-xl font-bold">Labbi - لبِّ</h1>
-          </div>
-        </div>
-        <div className="flex items-center gap-4">
-          <button onClick={() => onNavigate?.('dashboard')} className="text-white hover:text-gray-200 transition-colors text-sm">
-            Dashboard
-          </button>
-          <button onClick={() => onNavigate?.('services')} className="text-white hover:text-gray-200 transition-colors text-sm">
-            Find Services
-          </button>
-          <button onClick={() => onNavigate?.('bookings')} className="text-white hover:text-gray-200 transition-colors text-sm">
-            My Bookings
-          </button>
-          <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center cursor-pointer">
-            <span className="text-sm font-semibold text-[#374151]">JD</span>
-          </div>
-        </div>
-      </div>
-    </header>
-  );
-};
-
 // ========== MAIN CUSTOMER PROFILE PAGE ==========
-const CustomerProfile = ({ onNavigate }) => {
+const CustomerProfile = () => {
+  const navigate = useNavigate();
   const [isEditing, setIsEditing] = useState(false);
   
   const [profileData, setProfileData] = useState({
@@ -123,7 +94,7 @@ const CustomerProfile = ({ onNavigate }) => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Header onNavigate={onNavigate} />
+      <Header />
 
       <main className="max-w-7xl mx-auto px-6 py-8">
         <div className="flex items-center justify-between mb-8">
@@ -132,7 +103,7 @@ const CustomerProfile = ({ onNavigate }) => {
             <p className="text-gray-600">Manage your personal information and preferences</p>
           </div>
           <button 
-            onClick={() => onNavigate?.('settings')}
+            onClick={() => navigate('/settings')}
             className="flex items-center gap-2 px-4 py-2 border-2 border-gray-300 rounded-lg hover:bg-gray-50"
           >
             <Settings className="w-4 h-4 text-[#374151]" />
@@ -307,7 +278,10 @@ const CustomerProfile = ({ onNavigate }) => {
             <div className="bg-white border-2 border-[#047857] rounded-lg p-6">
               <div className="flex items-center justify-between mb-6">
                 <h3 className="text-xl font-bold text-[#374151]">Recent Bookings</h3>
-                <button className="text-sm text-[#047857] hover:text-[#065f46] font-medium">
+                <button 
+                  onClick={() => navigate('/bookings')}
+                  className="text-sm text-[#047857] hover:text-[#065f46] font-medium"
+                >
                   View All
                 </button>
               </div>
@@ -331,7 +305,7 @@ const CustomerProfile = ({ onNavigate }) => {
               </div>
             </div>
           </div>
-        </div>
+        </div>q
       </main>
     </div>
   );

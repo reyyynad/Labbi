@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
-import { ArrowLeft, Bell, Shield, Trash2, CreditCard, CheckCircle, User } from 'lucide-react';
+import { ArrowLeft, Bell, Shield, Trash2, User, CheckCircle } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import Header from '../../components/header/Header';
 
 // ========== BUTTON COMPONENT ==========
 const Button = ({ 
@@ -35,38 +37,6 @@ const Button = ({
     >
       {children}
     </button>
-  );
-};
-
-// ========== HEADER COMPONENT ==========
-const Header = ({ onNavigate }) => {
-  return (
-    <header className="bg-[#1e3a8a] text-white py-4 px-6 shadow-md">
-      <div className="max-w-7xl mx-auto flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-white rounded flex items-center justify-center">
-              <span className="text-[#1e3a8a] font-bold text-lg">L</span>
-            </div>
-            <h1 className="text-xl font-bold">Labbi - لبِّ</h1>
-          </div>
-        </div>
-        <div className="flex items-center gap-4">
-          <button onClick={() => onNavigate('dashboard')} className="text-white hover:text-gray-200 transition-colors text-sm">
-            Dashboard
-          </button>
-          <button onClick={() => onNavigate('services')} className="text-white hover:text-gray-200 transition-colors text-sm">
-            My Services
-          </button>
-          <button onClick={() => onNavigate('bookings')} className="text-white hover:text-gray-200 transition-colors text-sm">
-            My Bookings
-          </button>
-          <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center cursor-pointer" onClick={() => onNavigate('profile')}>
-            <span className="text-sm font-semibold text-[#374151]">SA</span>
-          </div>
-        </div>
-      </div>
-    </header>
   );
 };
 
@@ -188,8 +158,6 @@ const SecuritySection = ({ passwords, onChange, onUpdate }) => {
   );
 };
 
-
-
 // ========== DANGER ZONE SECTION ==========
 const DangerZoneSection = ({ onDelete }) => {
   return (
@@ -219,14 +187,14 @@ const QuickActionsSidebar = ({ onNavigate }) => {
         
         <div className="space-y-3 mb-6">
           <button 
-            onClick={() => onNavigate('profile')}
+            onClick={() => onNavigate('/profile')}
             className="w-full flex items-center gap-3 p-3 rounded-lg border border-gray-200 hover:bg-[#f0fdf4] transition-colors text-left"
           >
             <User className="w-5 h-5 text-[#047857]" />
             <span className="text-sm font-medium text-[#374151]">View Profile</span>
           </button>
           <button 
-            onClick={() => onNavigate('bookings')}
+            onClick={() => onNavigate('/bookings')}
             className="w-full flex items-center gap-3 p-3 rounded-lg border border-gray-200 hover:bg-[#f0fdf4] transition-colors text-left"
           >
             <CheckCircle className="w-5 h-5 text-[#047857]" />
@@ -248,7 +216,9 @@ const QuickActionsSidebar = ({ onNavigate }) => {
 };
 
 // ========== MAIN SETTINGS PAGE ==========
-const CustomerSettings = ({ onNavigate }) => {
+const CustomerSettings = () => {
+  const navigate = useNavigate();
+  
   const [notifications, setNotifications] = useState({
     email: true,
     sms: true,
@@ -295,12 +265,12 @@ const CustomerSettings = ({ onNavigate }) => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Header onNavigate={onNavigate} />
+      <Header />
 
       <div className="max-w-7xl mx-auto px-6 py-6">
         {/* Back Button */}
         <button 
-          onClick={() => onNavigate('profile')}
+          onClick={() => navigate('/profile')}
           className="flex items-center gap-2 text-sm text-[#374151] hover:text-[#047857] mb-6 font-medium"
         >
           <ArrowLeft size={16} />
@@ -325,13 +295,12 @@ const CustomerSettings = ({ onNavigate }) => {
               onChange={handlePasswordChange}
               onUpdate={handleUpdatePassword}
             />
-       
             <DangerZoneSection onDelete={handleDeleteAccount} />
           </div>
 
           {/* Right Column - Quick Actions Sidebar */}
           <div className="lg:col-span-1">
-            <QuickActionsSidebar onNavigate={onNavigate} />
+            <QuickActionsSidebar onNavigate={navigate} />
           </div>
         </div>
       </div>
