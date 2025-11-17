@@ -40,37 +40,55 @@ const Button = ({
   );
 };
 
-// ========== HERO SECTION COMPONENT (FIXED) ==========
+// ========== HERO SECTION COMPONENT ==========
 const HeroSection = ({ onBrowseServices }) => {
   return (
-    <section className="bg-[#1e3a8a] text-white py-16 px-6">
-      <div className="max-w-7xl mx-auto">
+    <section className="relative bg-gradient-to-br from-[#1e3a8a] via-[#1e3a8a]/95 to-[#047857] text-white py-24 px-6 overflow-hidden">
+      {/* Animated Background Blobs - Same as Login Page */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div 
+          className="absolute -top-40 -right-40 w-96 h-96 bg-[#1e3a8a] rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob"
+        ></div>
+        <div 
+          className="absolute -bottom-40 -left-40 w-96 h-96 bg-[#065f46] rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob animation-delay-2000"
+        ></div>
+        <div 
+          className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-[#047857] rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob animation-delay-4000"
+        ></div>
+      </div>
+
+      {/* Content */}
+      <div className="relative z-10 max-w-7xl mx-auto">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-          {/* Left Side - Overview and Button */}
-          <div>
-            <h2 className="text-2xl font-semibold mb-4">About Labbi</h2>
-            <p className="text-lg leading-relaxed mb-8 text-gray-100">
-              Labbi is a digital marketplace built to create a win-win environment for both service providers and clients. It allows individuals to share their skills, earn money, and build credibility, while giving clients a simple way to find reliable services that match their needs. Providers can create detailed profiles to showcase their expertise, whether in tutoring, translation, design, cooking, delivery, or home maintenance, making their skills visible to a wide audience.
+          {/* Left Side - Text & Button */}
+          <div className="max-w-lg">
+            <h2 className="text-3xl md:text-4xl font-bold mb-6 leading-tight">
+              About Labbi
+            </h2>
+            <p className="text-lg leading-relaxed mb-10 text-gray-100">
+              Labbi is a digital marketplace built to create a win-win environment for both service providers and clients. It allows individuals to share their skills, earn money, and build credibility, while giving clients a simple way to find reliable services that match their needs.
             </p>
             
             <button
               type="button"
-              onClick={onBrowseServices}
-
-              className="bg-[#047857] text-white hover:bg-[#065f46] px-6 py-3 text-base rounded-lg font-medium transition-colors inline-flex items-center justify-center gap-2"
+              onClick={(e) => {
+                e.stopPropagation();
+                onBrowseServices?.();
+              }}
+              className="bg-[#047857] hover:bg-[#065f46] text-white px-8 py-4 text-lg rounded-xl font-semibold transition-all duration-300 inline-flex items-center gap-3 shadow-lg hover:shadow-xl hover:-translate-y-1"
             >
-              <Search size={20} />
+              <Search size={24} />
               Browse Services
             </button>
           </div>
 
-          {/* Right Side - Logo and Slogan */}
-          <div className="flex flex-col items-center justify-center gap-4">
-            <div className="w-full h-[500px] flex items-center justify-center">
+          {/* Right Side - Logo & Arabic Slogan */}
+          <div className="flex flex-col items-center justify-center gap-8">
+            <div className="w-full max-w-md h-[400px] md:h-[500px] flex items-center justify-center">
               <img
                 src="/src/assets/images/labbi_logo.svg"
                 alt="Labbi Logo"
-                className="w-full h-full object-contain"
+                className="w-full h-full object-contain drop-shadow-2xl"
                 onError={(e) => {
                   e.currentTarget.style.display = 'none';
                   const parent = e.currentTarget.parentElement;
@@ -518,7 +536,7 @@ const CustomerInterface = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Header />
+      <Header transparent />
       <HeroSection onBrowseServices={handleBrowseServices} />
       <SearchBar 
         searchQuery={searchQuery}

@@ -4,10 +4,23 @@ import { Search } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import logoPath from '../../assets/images/labbi_logo.svg';
 
-const Header = () => {
+const Header = ({ transparent = false }) => {
   const navigate = useNavigate();
+
+  const headerClasses = transparent
+    ? 'absolute top-0 left-0 right-0 z-50 bg-transparent shadow-none'  // Transparent mode
+    : 'bg-[#1e3a8a] text-white shadow-md';                            // Normal mode
+
+  const textClasses = transparent
+    ? 'text-white hover:text-gray-200'   // Keep white on gradient
+    : 'text-white hover:text-gray-200';
+
+  const buttonClasses = transparent
+    ? 'bg-[#047857]/90 backdrop-blur-sm text-white hover:bg-[#047857] border border-white/20'
+    : 'bg-[#047857] text-white hover:bg-[#065f46]';
+
   return (
-    <header className="bg-[#1e3a8a] text-white py-4 px-6 shadow-md">
+    <header className={`${headerClasses} py-4 px-6 transition-all duration-300`}>
       <div className="max-w-7xl mx-auto flex items-center justify-between">
         <div className="flex items-center gap-3">
           <button
@@ -19,34 +32,34 @@ const Header = () => {
               <img
                 src={logoPath}
                 alt="Labbi Logo"
-                className="w-full h-full object-contain"
+                className="w-full h-full object-contain drop-shadow-lg"
                 onError={(e) => {
-                  e.currentTarget.parentElement.innerHTML = '<span class="text-[#1e3a8a] font-bold text-lg">L</span>';
+                  e.currentTarget.parentElement.innerHTML = '<span class="text-white font-bold text-4xl">لبِّ</span>';
                 }}
               />
             </div>
-            {/* <h1 className="text-xl font-bold">Labbi - لبِّ</h1> */}
           </button>
         </div>
-        <div className="flex items-center gap-4">
+
+        <div className="flex items-center gap-6">
           <Link
             to="/#services"
-            className="bg-[#047857] text-white hover:bg-[#065f46] px-5 py-2.5 text-sm rounded-lg font-medium transition-colors inline-flex items-center justify-center gap-2"
+            className={`${buttonClasses} px-5 py-2.5 text-sm rounded-lg font-medium transition-all inline-flex items-center gap-2 shadow-lg`}
           >
-            <Search size={16} />
+            <Search size={18} />
             Find Services
           </Link>
-          <Link to="/bookings" className="text-sm hover:text-gray-200">
+          <Link to="/bookings" className={`${textClasses} text-sm font-medium`}>
             My Bookings
           </Link>
-          <Link to="/settings" className="text-sm hover:text-gray-200">
+          <Link to="/settings" className={`${textClasses} text-sm font-medium`}>
             Settings
           </Link>
           <div
             onClick={() => navigate('/profile')}
-            className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center cursor-pointer hover:bg-gray-300 transition-colors"
+            className="w-10 h-10 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center cursor-pointer hover:bg-white/30 transition-all border border-white/30"
           >
-            <span className="text-sm font-semibold text-[#374151]">SA</span>
+            <span className="text-sm font-bold text-white">SA</span>
           </div>
         </div>
       </div>
