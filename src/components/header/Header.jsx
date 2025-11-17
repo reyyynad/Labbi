@@ -2,17 +2,20 @@
 import React from 'react';
 import { Search } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
+import logoPath from '../../assets/images/labbi_logo.svg';
 
 const Header = () => {
   const navigate = useNavigate();
-  const logoPath = '/assets/images/labbi_logo.svg';
-
   return (
     <header className="bg-[#1e3a8a] text-white py-4 px-6 shadow-md">
       <div className="max-w-7xl mx-auto flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-white rounded flex items-center justify-center overflow-hidden">
+          <button
+            type="button"
+            onClick={() => navigate('/')}
+            className="flex items-center gap-2"
+          >
+            <div className="w-20 h-20 flex items-center justify-center overflow-hidden">
               <img
                 src={logoPath}
                 alt="Labbi Logo"
@@ -22,17 +25,17 @@ const Header = () => {
                 }}
               />
             </div>
-            <h1 className="text-xl font-bold">Labbi - لبِّ</h1>
-          </div>
+            {/* <h1 className="text-xl font-bold">Labbi - لبِّ</h1> */}
+          </button>
         </div>
         <div className="flex items-center gap-4">
-          <button
+          <Link
+            to="/#services"
             className="bg-[#047857] text-white hover:bg-[#065f46] px-5 py-2.5 text-sm rounded-lg font-medium transition-colors inline-flex items-center justify-center gap-2"
-            onClick={() => navigate('/')}
           >
             <Search size={16} />
             Find Services
-          </button>
+          </Link>
           <Link to="/bookings" className="text-sm hover:text-gray-200">
             My Bookings
           </Link>

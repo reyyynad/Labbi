@@ -1,6 +1,7 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { Search, Filter, Star, MapPin, X } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
+import Header from '../../components/header/Header';
 
 // ========== BUTTON COMPONENT ==========
 const Button = ({ 
@@ -39,63 +40,53 @@ const Button = ({
   );
 };
 
-// ========== HEADER COMPONENT ==========
-const Header = () => {
-  const navigate = useNavigate();
-  // Try different logo path approaches
-  const logoPath = '/assets/images/labbi_logo.svg';
-  
+// ========== HERO SECTION COMPONENT (FIXED) ==========
+const HeroSection = ({ onBrowseServices }) => {
   return (
-    <header className="bg-[#1e3a8a] text-white py-4 px-6 shadow-md">
-      <div className="max-w-7xl mx-auto flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2">
-            {/* Try to load logo, fallback to letter if fails */}
-            <div className="w-8 h-8 bg-white rounded flex items-center justify-center overflow-hidden">
-              <img 
-                src={logoPath}
-                alt="Labbi Logo" 
+    <section className="bg-[#1e3a8a] text-white py-16 px-6">
+      <div className="max-w-7xl mx-auto">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+          {/* Left Side - Overview and Button */}
+          <div>
+            <h2 className="text-2xl font-semibold mb-4">About Labbi</h2>
+            <p className="text-lg leading-relaxed mb-8 text-gray-100">
+              Labbi is a digital marketplace built to create a win-win environment for both service providers and clients. It allows individuals to share their skills, earn money, and build credibility, while giving clients a simple way to find reliable services that match their needs. Providers can create detailed profiles to showcase their expertise, whether in tutoring, translation, design, cooking, delivery, or home maintenance, making their skills visible to a wide audience.
+            </p>
+            
+            <button
+              type="button"
+              onClick={onBrowseServices}
+
+              className="bg-[#047857] text-white hover:bg-[#065f46] px-6 py-3 text-base rounded-lg font-medium transition-colors inline-flex items-center justify-center gap-2"
+            >
+              <Search size={20} />
+              Browse Services
+            </button>
+          </div>
+
+          {/* Right Side - Logo and Slogan */}
+          <div className="flex flex-col items-center justify-center gap-4">
+            <div className="w-full h-[500px] flex items-center justify-center">
+              <img
+                src="/src/assets/images/labbi_logo.svg"
+                alt="Labbi Logo"
                 className="w-full h-full object-contain"
                 onError={(e) => {
-                  // If image fails, replace with text
-                  e.target.parentElement.innerHTML = '<span class="text-[#1e3a8a] font-bold text-lg">L</span>';
+                  e.currentTarget.style.display = 'none';
+                  const parent = e.currentTarget.parentElement;
+                  if (parent) {
+                    parent.innerHTML = '<div class="text-white text-9xl font-bold">لبِّ</div>';
+                  }
                 }}
               />
             </div>
-            <h1 className="text-xl font-bold">Labbi - لبِّ</h1>
+            <h1 className="text-xl font-bold text-center" style={{ direction: 'rtl' }}>
+              خدمتك مطلوبة وحاجتك موجودة
+            </h1>
           </div>
         </div>
-        <div className="flex items-center gap-4">
-          <button
-            className="flex items-center gap-2 text-white hover:text-gray-200 transition-colors text-sm"
-            onClick={() => navigate('/profile')}
-          >
-            My Profile
-          </button>
-          <Button
-            variant="primary"
-            size="medium"
-            className="flex items-center gap-2"
-            onClick={() => navigate('/')}
-          >
-            <Search size={16} />
-            Find Services
-          </Button>
-          <button
-            className="flex items-center gap-2 text-white hover:text-gray-200 transition-colors text-sm"
-            onClick={() => navigate('/bookings')}
-          >
-            My Bookings
-          </button>
-          <button
-            className="flex items-center gap-2 text-white hover:text-gray-200 transition-colors text-sm"
-            onClick={() => navigate('/settings')}
-          >
-            Settings
-          </button>
-        </div>
       </div>
-    </header>
+    </section>
   );
 };
 
@@ -354,6 +345,8 @@ const ServiceCard = ({ service, onViewDetails }) => {
 // ========== MAIN APPLICATION ==========
 const CustomerInterface = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const servicesSectionRef = useRef(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [filters, setFilters] = useState({
     category: 'All Categories',
@@ -513,9 +506,20 @@ const CustomerInterface = () => {
     });
   }, [searchQuery, filters, allServices]);
 
+  const handleBrowseServices = () => {
+    servicesSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
+
+  useEffect(() => {
+    if (location.hash === '#services') {
+      servicesSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }, [location.hash]);
+
   return (
     <div className="min-h-screen bg-gray-50">
       <Header />
+      <HeroSection onBrowseServices={handleBrowseServices} />
       <SearchBar 
         searchQuery={searchQuery}
         setSearchQuery={setSearchQuery}
@@ -523,7 +527,7 @@ const CustomerInterface = () => {
         setFilters={setFilters}
       />
 
-      <div className="max-w-7xl mx-auto px-6 py-10">
+      <div ref={servicesSectionRef} className="max-w-7xl mx-auto px-6 py-10">
         {/* Results count */}
         <div className="mb-6">
           <h3 className="text-xl font-semibold text-[#374151]">
@@ -576,6 +580,16 @@ const CustomerInterface = () => {
           </div>
         )}
       </div>
+      <footer className="bg-white border-t border-gray-200 mt-10">
+        <div className="max-w-7xl mx-auto px-6 py-6 flex flex-col md:flex-row items-center justify-between text-sm text-gray-600">
+          <span>© 2025 Labbi</span>
+          <div className="flex gap-4 mt-3 md:mt-0">
+            <a href="/" className="hover:text-[#047857]">Privacy</a>
+            <a href="/" className="hover:text-[#047857]">Terms</a>
+            <a href="mailto:support@labbi.com" className="hover:text-[#047857]">Contact</a>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 };
