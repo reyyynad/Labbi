@@ -1,3 +1,80 @@
-/* @tailwind base;
+/* Font imports - Add your font files or CDN links here */
+/* For Proxima Nova Condensed - add via @font-face or Adobe Fonts */
+/* For MediaPro Heavy Condens - add via @font-face */
+
+@tailwind base;
 @tailwind components;
-@tailwind utilities; */
+@tailwind utilities;
+
+@layer base {
+  * {
+    @apply m-0 p-0 box-border;
+  }
+  
+  /* Default: Apply Proxima Nova Condensed to all text elements */
+  body,
+  html,
+  input,
+  textarea,
+  select,
+  button,
+  p,
+  h1, h2, h3, h4, h5, h6,
+  span,
+  div,
+  a,
+  label {
+    font-family: 'Proxima Nova Condensed', 'Proxima Nova', 'Arial Narrow', Arial, sans-serif;
+  }
+  
+  body {
+    @apply bg-background text-text leading-relaxed min-h-screen;
+  }
+  
+  html {
+    @apply scroll-smooth;
+  }
+  
+  /* Apply MediaPro Heavy Condens to Arabic text */
+  [lang="ar"],
+  .font-arabic,
+  *:lang(ar) {
+    font-family: 'MediaPro Heavy Condens', 'MediaPro', 'Arial', Tahoma, sans-serif !important;
+  }
+}
+
+/* Apply Arabic font to elements containing Arabic characters */
+@layer utilities {
+  .font-arabic {
+    font-family: 'MediaPro Heavy Condens', 'MediaPro', 'Arial', Tahoma, sans-serif !important;
+  }
+}
+
+@layer utilities {
+  @keyframes blob {
+    0% {
+      transform: translate(0px, 0px) scale(1);
+    }
+    33% {
+      transform: translate(30px, -50px) scale(1.1);
+    }
+    66% {
+      transform: translate(-20px, 20px) scale(0.9);
+    }
+    100% {
+      transform: translate(0px, 0px) scale(1);
+    }
+  }
+  
+  .animate-blob {
+    animation: blob 7s infinite;
+  }
+  
+  .animation-delay-2000 {
+    animation-delay: 2s;
+  }
+  
+  .animation-delay-4000 {
+    animation-delay: 4s;
+  }
+}

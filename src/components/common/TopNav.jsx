@@ -26,33 +26,39 @@ function TopNav() {
   }
 
   return (
-    <nav className="top-nav">
-      <div className="nav-left">
-        <span className="wireframe-label">WIREFRAME PROTOTYPE</span>
+    <nav className="bg-nav-dark px-8 py-3 flex justify-between items-center border-b-2 border-primary">
+      <div>
+        <span className="text-white text-sm font-semibold tracking-wide border-2 border-white px-3 py-1.5">
+          WIREFRAME PROTOTYPE
+        </span>
       </div>
-      <div className="nav-right">
+      <div className="flex gap-2">
         <button 
-          className={`nav-btn ${isActive('auth')}`}
+          className={`bg-transparent text-white border border-white/30 px-4 py-2 text-sm cursor-pointer transition-all duration-300 font-primary hover:bg-secondary hover:border-secondary ${
+            isActive('auth') ? 'bg-primary border-primary' : ''
+          }`}
           onClick={() => handleNavClick('/auth-registration')}
         >
           Auth/Registration
         </button>
         <button 
-          className="nav-btn"
+          className="bg-transparent text-white border border-white/30 px-4 py-2 text-sm cursor-pointer transition-all duration-300 font-primary hover:bg-secondary hover:border-secondary"
           title="Under development"
           onClick={() => {}}
         >
           Customer Interface
         </button>
         <button 
-          className="nav-btn"
+          className="bg-transparent text-white border border-white/30 px-4 py-2 text-sm cursor-pointer transition-all duration-300 font-primary hover:bg-secondary hover:border-secondary"
           title="Under development"
           onClick={() => {}}
         >
           Provider Interface
         </button>
         <button 
-          className={`nav-btn ${isActive('admin')}`}
+          className={`bg-transparent text-white border border-white/30 px-4 py-2 text-sm cursor-pointer transition-all duration-300 font-primary hover:bg-secondary hover:border-secondary ${
+            isActive('admin') ? 'bg-primary border-primary' : ''
+          }`}
           onClick={() => handleNavClick('/admin-panel')}
         >
           Admin Panel

@@ -1,26 +1,24 @@
 import React from 'react'
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
-import TopNav from './components/common/TopNav'
-import Login from './pages/Login'
-import AuthRegistration from './pages/AuthRegistration'
-import SignupCustomer from './pages/SignupCustomer'
-import SignupProvider from './pages/SignupProvider'
-import LoginProvider from './pages/LoginProvider'
-import VerifyEmail from './pages/VerifyEmail'
-import VerifyEmailProvider from './pages/VerifyEmailProvider'
-import CustomerDashboard from './pages/CustomerDashboard'
-import ProviderDashboard from './pages/ProviderDashboard'
-import AdminPanel from './pages/AdminPanel'
-import AdminUsers from './pages/AdminUsers'
-import AdminServices from './pages/AdminServices'
-import Analytics from './pages/Analytics'
+import Login from './pages/auth_registration/Login'
+import AuthRegistration from './pages/auth_registration/AuthRegistration'
+import SignupCustomer from './pages/auth_registration/SignupCustomer'
+import SignupProvider from './pages/auth_registration/SignupProvider'
+import LoginProvider from './pages/auth_registration/LoginProvider'
+import VerifyEmail from './pages/auth_registration/VerifyEmail'
+import VerifyEmailProvider from './pages/auth_registration/VerifyEmailProvider'
+import CustomerDashboard from './pages/admin/CustomerDashboard'
+import ProviderDashboard from './pages/admin/ProviderDashboard'
+import AdminPanel from './pages/admin/AdminPanel'
+import AdminUsers from './pages/admin/AdminUsers'
+import AdminServices from './pages/admin/AdminServices'
+import Analytics from './pages/admin/Analytics'
 import ProtectedRoute from './components/common/ProtectedRoute'
 
 function App() {
   return (
     <Router>
       <div className="App">
-        <TopNav />
         <Routes>
           <Route path="/" element={<Login />} />
           <Route path="/auth-registration" element={<AuthRegistration />} />

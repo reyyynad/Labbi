@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
-import { validateEmail, validatePassword, validateForm } from '../utils/validation'
+import { validateEmail, validatePassword, validateForm } from '../../utils/validation'
 
 function SignupCustomer() {
   const navigate = useNavigate()
@@ -58,34 +58,30 @@ function SignupCustomer() {
 
   return (
     <>
-      <header className="main-header">
-        <div className="logo">
-          <div className="logo-icon">L</div>
-          <span className="logo-text">Labbi - لبِّ</span>
-        </div>
-        <nav className="main-nav">
-          <a href="#" className="nav-link">Find Services</a>
-          <a href="#" className="nav-link">Become a Provider</a>
-          <a href="#" className="nav-link">How it works</a>
-        </nav>
-        <div className="auth-buttons">
-          <button className="btn-secondary" onClick={() => navigate('/')}>Log in</button>
-          <button className="btn-primary">Sign up</button>
-        </div>
-      </header>
+      <div className="min-h-screen bg-gradient-to-r from-primary via-primary/90 to-secondary flex justify-center items-center p-8 relative">
+        {/* Help icon in bottom right */}
+        <button className="absolute bottom-8 right-8 w-12 h-12 bg-secondary rounded-full flex items-center justify-center text-white text-xl font-semibold shadow-lg hover:bg-highlight transition-colors cursor-pointer">
+          ?
+        </button>
 
-      <main className="signup-container">
-        <div className="signup-card">
-          <Link to="/auth-registration" className="back-link">← Back</Link>
+        {/* Main content card */}
+        <div className="bg-background rounded-2xl p-10 w-full max-w-[550px] shadow-2xl">
+          {/* Back button */}
+          <Link to="/auth-registration" className="inline-flex items-center gap-2 text-text font-medium mb-6 hover:text-highlight transition-colors">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+              <path d="M12 4l-6 6 6 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+            Back
+          </Link>
           
-          <h1 className="signup-title">Create your customer account</h1>
-          <p className="signup-subtitle">Start finding services that match your needs</p>
+          <h1 className="text-3xl font-bold text-text mb-2">Create Customer Account</h1>
+          <p className="text-base text-text mb-8">Join Labbi to book amazing services</p>
           
-          <form onSubmit={handleSubmit} className="signup-form">
-            <div className="form-group">
-              <label htmlFor="fullName" className="form-label">Full Name *</label>
-              <div className="input-wrapper">
-                <svg className="input-icon" width="20" height="20" viewBox="0 0 20 20">
+          <form onSubmit={handleSubmit} className="flex flex-col gap-5">
+            <div className="flex flex-col gap-2">
+              <label htmlFor="fullName" className="text-sm font-semibold text-gray-700">Full Name</label>
+              <div className="relative flex items-center">
+                <svg className="absolute left-4 text-gray-400 pointer-events-none" width="20" height="20" viewBox="0 0 20 20" fill="none">
                   <circle cx="10" cy="7" r="3" stroke="currentColor" strokeWidth="1.5" fill="none"/>
                   <path d="M4 16c0-3.314 2.686-6 6-6s6 2.686 6 6" stroke="currentColor" strokeWidth="1.5" fill="none"/>
                 </svg>
@@ -93,20 +89,22 @@ function SignupCustomer() {
                   type="text" 
                   id="fullName"
                   name="fullName"
-                  className={`form-input ${errors.fullName ? 'error' : ''}`}
-                  placeholder="Renad Alxxx"
+                  className={`w-full py-3.5 pl-12 pr-4 text-base border-2 rounded-lg transition-all duration-300 font-primary focus:outline-none focus:border-highlight ${
+                    errors.fullName ? 'border-red-500' : 'border-gray-300'
+                  }`}
+                  placeholder="Arwa Aldawoud"
                   value={formData.fullName}
                   onChange={handleChange}
                   required
                 />
               </div>
-              {errors.fullName && <div className="error-message">{errors.fullName}</div>}
+              {errors.fullName && <div className="text-red-500 text-sm mt-1">{errors.fullName}</div>}
             </div>
 
-            <div className="form-group">
-              <label htmlFor="email" className="form-label">Email Address *</label>
-              <div className="input-wrapper">
-                <svg className="input-icon" width="20" height="20" viewBox="0 0 20 20">
+            <div className="flex flex-col gap-2">
+              <label htmlFor="email" className="text-sm font-semibold text-gray-700">Email Address</label>
+              <div className="relative flex items-center">
+                <svg className="absolute left-4 text-gray-400 pointer-events-none" width="20" height="20" viewBox="0 0 20 20" fill="none">
                   <path d="M3 4h14a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1z" stroke="currentColor" strokeWidth="1.5" fill="none"/>
                   <path d="M2 5l8 5 8-5" stroke="currentColor" strokeWidth="1.5" fill="none"/>
                 </svg>
@@ -114,21 +112,22 @@ function SignupCustomer() {
                   type="email" 
                   id="email"
                   name="email"
-                  className={`form-input ${errors.email ? 'error' : ''}`}
-                  placeholder="example@example.com"
+                  className={`w-full py-3.5 pl-12 pr-4 text-base border-2 rounded-lg transition-all duration-300 font-primary focus:outline-none focus:border-teal-600 ${
+                    errors.email ? 'border-red-500' : 'border-gray-300'
+                  }`}
+                  placeholder="arwa@example.com"
                   value={formData.email}
                   onChange={handleChange}
                   required
                 />
               </div>
-              <small className="form-hint">We'll send a verification email to this address</small>
-              {errors.email && <div className="error-message">{errors.email}</div>}
+              {errors.email && <div className="text-red-500 text-sm mt-1">{errors.email}</div>}
             </div>
 
-            <div className="form-group">
-              <label htmlFor="password" className="form-label">Password *</label>
-              <div className="input-wrapper">
-                <svg className="input-icon" width="20" height="20" viewBox="0 0 20 20">
+            <div className="flex flex-col gap-2">
+              <label htmlFor="password" className="text-sm font-semibold text-gray-700">Password</label>
+              <div className="relative flex items-center">
+                <svg className="absolute left-4 text-gray-400 pointer-events-none" width="20" height="20" viewBox="0 0 20 20" fill="none">
                   <rect x="4" y="9" width="12" height="8" rx="1" stroke="currentColor" strokeWidth="1.5" fill="none"/>
                   <path d="M7 9V6a3 3 0 0 1 6 0v3" stroke="currentColor" strokeWidth="1.5" fill="none"/>
                 </svg>
@@ -136,21 +135,22 @@ function SignupCustomer() {
                   type="password" 
                   id="password"
                   name="password"
-                  className={`form-input ${errors.password ? 'error' : ''}`}
-                  placeholder="Min. 8 characters"
+                  className={`w-full py-3.5 pl-12 pr-4 text-base border-2 rounded-lg transition-all duration-300 font-primary focus:outline-none focus:border-teal-600 ${
+                    errors.password ? 'border-red-500' : 'border-gray-300'
+                  }`}
+                  placeholder="Enter your password"
                   value={formData.password}
                   onChange={handleChange}
                   required
                 />
               </div>
-              <small className="form-hint">Must be at least 8 characters</small>
-              {errors.password && <div className="error-message">{errors.password}</div>}
+              {errors.password && <div className="text-red-500 text-sm mt-1">{errors.password}</div>}
             </div>
 
-            <div className="form-group">
-              <label htmlFor="confirmPassword" className="form-label">Confirm Password *</label>
-              <div className="input-wrapper">
-                <svg className="input-icon" width="20" height="20" viewBox="0 0 20 20">
+            <div className="flex flex-col gap-2">
+              <label htmlFor="confirmPassword" className="text-sm font-semibold text-gray-700">Confirm Password</label>
+              <div className="relative flex items-center">
+                <svg className="absolute left-4 text-gray-400 pointer-events-none" width="20" height="20" viewBox="0 0 20 20" fill="none">
                   <rect x="4" y="9" width="12" height="8" rx="1" stroke="currentColor" strokeWidth="1.5" fill="none"/>
                   <path d="M7 9V6a3 3 0 0 1 6 0v3" stroke="currentColor" strokeWidth="1.5" fill="none"/>
                 </svg>
@@ -158,62 +158,50 @@ function SignupCustomer() {
                   type="password" 
                   id="confirmPassword"
                   name="confirmPassword"
-                  className={`form-input ${errors.confirmPassword ? 'error' : ''}`}
-                  placeholder="Re-enter password"
+                  className={`w-full py-3.5 pl-12 pr-4 text-base border-2 rounded-lg transition-all duration-300 font-primary focus:outline-none focus:border-teal-600 ${
+                    errors.confirmPassword ? 'border-red-500' : 'border-gray-300'
+                  }`}
+                  placeholder="Confirm your password"
                   value={formData.confirmPassword}
                   onChange={handleChange}
                   required
                 />
               </div>
-              {errors.confirmPassword && <div className="error-message">{errors.confirmPassword}</div>}
+              {errors.confirmPassword && <div className="text-red-500 text-sm mt-1">{errors.confirmPassword}</div>}
             </div>
 
-            <div className="form-group">
-              <label className="checkbox-container">
+            <div className="flex flex-col gap-2">
+              <label className="flex items-center gap-2 cursor-pointer">
                 <input 
                   type="checkbox" 
                   id="terms"
                   name="terms"
+                  className="w-5 h-5 cursor-pointer accent-secondary"
                   checked={formData.terms}
                   onChange={handleChange}
                   required
                 />
-                <span className="checkbox-label">
-                  I agree to the <a href="#" className="inline-link">Terms of Service</a> and <a href="#" className="inline-link">Privacy Policy</a>
+                <span className="text-sm text-text select-none">
+                  I agree to the <a href="#" className="text-secondary underline hover:text-highlight">Terms of Service</a> and <a href="#" className="text-secondary underline hover:text-highlight">Privacy Policy</a>
                 </span>
               </label>
-              {errors.terms && <div className="error-message">{errors.terms}</div>}
+              {errors.terms && <div className="text-red-500 text-sm mt-1">{errors.terms}</div>}
             </div>
 
-            <button type="submit" className="btn-signup" disabled={loading}>
+            <button 
+              type="submit" 
+              className="w-full py-4 text-lg font-semibold text-white bg-secondary border-none rounded-lg cursor-pointer transition-all duration-300 mt-2 hover:bg-highlight disabled:cursor-not-allowed disabled:opacity-60"
+              disabled={loading}
+            >
               {loading ? 'Creating Account...' : 'Create Account'}
-            </button>
-
-            <div className="divider">
-              <span className="divider-text">Or continue with</span>
-            </div>
-
-            <button type="button" className="btn-google">
-              <svg width="20" height="20" viewBox="0 0 20 20">
-                <path d="M19.6 10.23c0-.82-.1-1.42-.25-2.05H10v3.72h5.5c-.15.96-.74 2.31-2.04 3.22v2.45h3.16c1.89-1.73 2.98-4.3 2.98-7.34z" fill="#4285F4"/>
-                <path d="M13.46 15.13c-.83.59-1.96 1-3.46 1-2.64 0-4.88-1.74-5.68-4.15H1.07v2.52C2.72 17.75 6.09 20 10 20c2.7 0 4.96-.89 6.62-2.42l-3.16-2.45z" fill="#34A853"/>
-                <path d="M3.99 10c0-.69.12-1.35.32-1.97V5.51H1.07A9.973 9.973 0 000 10c0 1.61.39 3.14 1.07 4.49l3.24-2.52c-.2-.62-.32-1.28-.32-1.97z" fill="#FBBC05"/>
-                <path d="M10 3.88c1.88 0 3.13.81 3.85 1.48l2.84-2.76C14.96.99 12.7 0 10 0 6.09 0 2.72 2.25 1.07 5.51l3.24 2.52C5.12 5.62 7.36 3.88 10 3.88z" fill="#EA4335"/>
-              </svg>
-              Google
             </button>
           </form>
 
-          <div className="system-info-box" style={{ marginTop: '1.5rem' }}>
-            <h3 className="system-title">SYSTEM VALIDATION:</h3>
-            <ul className="system-list">
-              <li>• Email uniqueness check</li>
-              <li>• Password strength validation</li>
-              <li>• Confirmation email sent upon submission</li>
-            </ul>
-          </div>
+          <p className="text-center text-sm text-text mt-6">
+            Already have an account? <Link to="/" className="text-secondary font-semibold underline hover:text-highlight">Log in</Link>
+          </p>
         </div>
-      </main>
+      </div>
     </>
   )
 }

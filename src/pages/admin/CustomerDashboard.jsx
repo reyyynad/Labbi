@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { getUserEmail, getUserName, logout } from '../utils/auth'
+import { getUserEmail, getUserName, logout } from '../../utils/auth'
 
 function CustomerDashboard() {
   const navigate = useNavigate()
@@ -20,61 +20,84 @@ function CustomerDashboard() {
 
   return (
     <>
-      <header className="dashboard-header">
-        <div className="logo">
-          <div className="logo-icon">L</div>
-          <span className="logo-text">Labbi - لبِّ</span>
-        </div>
-        <nav className="dashboard-nav">
-          <a href="#" className="nav-link">Browse Services</a>
-          <a href="#" className="nav-link">My Bookings</a>
-          <a href="#" className="nav-link">Favorites</a>
-          <a href="#" className="nav-link">Messages</a>
-        </nav>
-        <div className="user-menu">
-          <div className="user-info">
-            <span className="user-name">{userName}</span>
-            <span className="user-email">{userEmail}</span>
+      <header className="bg-primary px-8 py-4">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center">
+            <span className="text-xl font-bold text-gray-800">L</span>
           </div>
-          <button className="btn-logout" onClick={handleLogout}>Logout</button>
+          <span className="text-xl font-bold text-white font-arabic">Labbi - لُبّ</span>
+        </div>
+        <nav className="flex gap-8">
+          <a href="#" className="text-text no-underline text-base font-medium transition-colors duration-300 border-b-2 border-transparent pb-1 hover:text-secondary hover:border-secondary">
+            Browse Services
+          </a>
+          <a href="#" className="text-text no-underline text-base font-medium transition-colors duration-300 border-b-2 border-transparent pb-1 hover:text-secondary hover:border-secondary">
+            My Bookings
+          </a>
+          <a href="#" className="text-text no-underline text-base font-medium transition-colors duration-300 border-b-2 border-transparent pb-1 hover:text-secondary hover:border-secondary">
+            Favorites
+          </a>
+          <a href="#" className="text-text no-underline text-base font-medium transition-colors duration-300 border-b-2 border-transparent pb-1 hover:text-secondary hover:border-secondary">
+            Messages
+          </a>
+        </nav>
+        <div className="flex items-center gap-4">
+          <div className="text-right">
+            <span className="block font-semibold text-text">{userName}</span>
+            <span className="block text-sm text-gray-500">{userEmail}</span>
+          </div>
+          <button 
+            className="py-2 px-4 bg-transparent border-2 border-text rounded text-text font-semibold cursor-pointer transition-all duration-300 hover:bg-text hover:text-white"
+            onClick={handleLogout}
+          >
+            Logout
+          </button>
         </div>
       </header>
 
-      <main className="dashboard-main">
-        <div className="dashboard-container">
-          <h1 className="dashboard-title">Welcome Back!</h1>
-          <p className="dashboard-subtitle">Find and book services from verified providers</p>
+      <main className="bg-light min-h-[calc(100vh-200px)] p-8">
+        <div className="max-w-[1200px] mx-auto">
+          <h1 className="text-3xl font-bold text-text mb-2">Welcome Back!</h1>
+          <p className="text-base text-gray-500 mb-8">Find and book services from verified providers</p>
 
-          <div className="dashboard-grid">
-            <div className="dashboard-card">
-              <div className="card-icon">📅</div>
-              <h3>My Bookings</h3>
-              <p className="card-number">0</p>
-              <p className="card-label">Active bookings</p>
-              <button className="btn-card">View All</button>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <div className="bg-background border-2 border-gray-200 rounded-lg p-8 text-center">
+              <div className="text-5xl mb-4">📅</div>
+              <h3 className="text-xl font-semibold text-text mb-2">My Bookings</h3>
+              <p className="text-3xl font-bold text-primary my-2">0</p>
+              <p className="text-sm text-gray-500 mb-4">Active bookings</p>
+              <button className="py-2 px-4 bg-background border-2 border-text rounded cursor-pointer transition-all duration-300 hover:bg-secondary hover:border-secondary hover:text-white">
+                View All
+              </button>
             </div>
 
-            <div className="dashboard-card">
-              <div className="card-icon">⭐</div>
-              <h3>Favorites</h3>
-              <p className="card-number">0</p>
-              <p className="card-label">Saved providers</p>
-              <button className="btn-card">Browse</button>
+            <div className="bg-background border-2 border-gray-200 rounded-lg p-8 text-center">
+              <div className="text-5xl mb-4">⭐</div>
+              <h3 className="text-xl font-semibold text-text mb-2">Favorites</h3>
+              <p className="text-3xl font-bold text-primary my-2">0</p>
+              <p className="text-sm text-gray-500 mb-4">Saved providers</p>
+              <button className="py-2 px-4 bg-background border-2 border-text rounded cursor-pointer transition-all duration-300 hover:bg-secondary hover:border-secondary hover:text-white">
+                Browse
+              </button>
             </div>
 
-            <div className="dashboard-card">
-              <div className="card-icon">💬</div>
-              <h3>Messages</h3>
-              <p className="card-number">0</p>
-              <p className="card-label">Unread messages</p>
-              <button className="btn-card">Check Messages</button>
+            <div className="bg-background border-2 border-gray-200 rounded-lg p-8 text-center">
+              <div className="text-5xl mb-4">💬</div>
+              <h3 className="text-xl font-semibold text-text mb-2">Messages</h3>
+              <p className="text-3xl font-bold text-primary my-2">0</p>
+              <p className="text-sm text-gray-500 mb-4">Unread messages</p>
+              <button className="py-2 px-4 bg-background border-2 border-text rounded cursor-pointer transition-all duration-300 hover:bg-secondary hover:border-secondary hover:text-white">
+                Check Messages
+              </button>
             </div>
 
-            <div className="dashboard-card">
-              <div className="card-icon">🔍</div>
-              <h3>Find Services</h3>
-              <p>Discover thousands of verified service providers</p>
-              <button className="btn-card btn-primary">Browse Now</button>
+            <div className="bg-background border-2 border-gray-200 rounded-lg p-8 text-center">
+              <div className="text-5xl mb-4">🔍</div>
+              <h3 className="text-xl font-semibold text-text mb-2">Find Services</h3>
+              <p className="text-sm text-text mb-4">Discover thousands of verified service providers</p>
+              <button className="py-2 px-4 bg-primary text-white border-2 border-primary rounded cursor-pointer transition-all duration-300 hover:bg-secondary hover:border-secondary">
+                Browse Now
+              </button>
             </div>
           </div>
         </div>

@@ -71,7 +71,7 @@ const Navbar = () => {
     <nav className="bg-white border-b py-3 px-6">
       <div className="max-w-7xl mx-auto flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <span className="text-sm">Labbi - لبِّ</span>
+          <span className="text-sm">Labbi - <span className="font-arabic">لبِّ</span></span>
         </div>
         <div className="flex items-center gap-4">
           <button className="text-sm text-gray-600 hover:text-gray-900 transition-colors">

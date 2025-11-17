@@ -37,34 +37,79 @@ function AdminHeader() {
   }, [])
 
   const isActive = (path) => {
-    return location.pathname === path ? 'active' : ''
+    return location.pathname === path
   }
 
   return (
-    <header className="admin-header">
-      <div className="admin-brand">
-        <div className="admin-icon">A</div>
-        <span className="admin-title">Admin Panel</span>
+    <header className="bg-primary px-8 py-4 flex justify-between items-center">
+      <div className="flex items-center gap-3">
+        <svg className="w-6 h-6 text-white" viewBox="0 0 20 20" fill="none">
+          <rect x="4" y="3" width="12" height="4" rx="0.5" fill="currentColor"/>
+          <rect x="4" y="8" width="12" height="4" rx="0.5" fill="currentColor"/>
+          <rect x="4" y="13" width="12" height="4" rx="0.5" fill="currentColor"/>
+        </svg>
+        <span className="text-xl font-bold text-white">Labbi <span className="font-arabic">لبِّ</span></span>
       </div>
-      <nav className="admin-nav">
-        <Link to="/admin-panel" className={`admin-link ${isActive('/admin-panel')}`}>
+      <nav className="flex gap-1">
+        <Link 
+          to="/admin-panel" 
+          className={`flex items-center gap-2 no-underline font-medium py-2 px-4 rounded transition-all duration-300 ${
+            isActive('/admin-panel') 
+              ? 'bg-highlight text-white' 
+              : 'text-white/70 hover:text-white hover:bg-white/10'
+          }`}
+        >
+          <svg className="w-5 h-5" viewBox="0 0 20 20" fill="none">
+            <rect x="3" y="3" width="14" height="14" rx="1" stroke="currentColor" strokeWidth="1.5" fill="none"/>
+            <path d="M7 8v4M10 6v6M13 9v3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+          </svg>
           Dashboard
         </Link>
-        <Link to="/admin-users" className={`admin-link ${isActive('/admin-users')}`}>
+        <Link 
+          to="/admin-users" 
+          className={`flex items-center gap-2 no-underline font-medium py-2 px-4 rounded transition-all duration-300 ${
+            isActive('/admin-users') 
+              ? 'bg-highlight text-white' 
+              : 'text-white/70 hover:text-white hover:bg-white/10'
+          }`}
+        >
+          <svg className="w-5 h-5" viewBox="0 0 20 20" fill="none">
+            <circle cx="7" cy="7" r="2.5" stroke="currentColor" strokeWidth="1.5" fill="none"/>
+            <circle cx="13" cy="7" r="2.5" stroke="currentColor" strokeWidth="1.5" fill="none"/>
+            <path d="M2 16c0-2.5 2-4.5 5-4.5s5 2 5 4.5M13 16c0-2.5 2-4.5 5-4.5s5 2 5 4.5" stroke="currentColor" strokeWidth="1.5" fill="none"/>
+          </svg>
           Users
         </Link>
-        <Link to="/admin-services" className={`admin-link ${isActive('/admin-services')}`}>
+        <Link 
+          to="/admin-services" 
+          className={`flex items-center gap-2 no-underline font-medium py-2 px-4 rounded transition-all duration-300 ${
+            isActive('/admin-services') 
+              ? 'bg-highlight text-white' 
+              : 'text-white/70 hover:text-white hover:bg-white/10'
+          }`}
+        >
+          <svg className="w-5 h-5" viewBox="0 0 20 20" fill="none">
+            <rect x="4" y="3" width="12" height="4" rx="0.5" fill="currentColor"/>
+            <rect x="4" y="8" width="12" height="4" rx="0.5" fill="currentColor"/>
+            <rect x="4" y="13" width="12" height="4" rx="0.5" fill="currentColor"/>
+          </svg>
           Services
         </Link>
-        <Link to="/analytics" className={`admin-link ${isActive('/analytics')}`}>
+        <Link 
+          to="/analytics" 
+          className={`flex items-center gap-2 no-underline font-medium py-2 px-4 rounded transition-all duration-300 ${
+            isActive('/analytics') 
+              ? 'bg-highlight text-white' 
+              : 'text-white/70 hover:text-white hover:bg-white/10'
+          }`}
+        >
+          <svg className="w-5 h-5" viewBox="0 0 20 20" fill="none">
+            <rect x="3" y="3" width="14" height="14" rx="1" stroke="currentColor" strokeWidth="1.5" fill="none"/>
+            <path d="M7 8v4M10 6v6M13 9v3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+          </svg>
           Analytics
         </Link>
       </nav>
-      <div className="admin-header-actions">
-        <button className="btn-user-avatar" title="Settings">
-          {userInitials}
-        </button>
-      </div>
     </header>
   )
 }
