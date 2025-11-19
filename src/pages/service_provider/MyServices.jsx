@@ -1,154 +1,199 @@
 import React, { useState } from 'react';
-import { Plus, Search, Edit, Trash2, Eye, Clock, MapPin, DollarSign } from 'lucide-react';
+import { Plus, Edit, Eye, Trash2 } from 'lucide-react';
 
 // Mock services data
 const mockServices = [
   {
     id: 1,
-    title: "Web Development",
-    category: "Technology",
-    description: "Full-stack web development using React and Node.js",
-    price: 500,
+    title: "Professional House Cleaning",
+    category: "Home Services",
+    description: "Comprehensive cleaning service with eco-friendly products",
+    price: 40,
+    priceType: "hour",
     status: "Active",
-    bookings: 15,
-    rating: 4.8,
-    availability: "Mon-Fri, 9 AM - 5 PM",
-    location: "Riyadh"
+    bookings: 127,
+    image: "https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=400"
   },
   {
     id: 2,
-    title: "UI/UX Design",
-    category: "Design",
-    description: "Modern and user-friendly interface design",
-    price: 350,
+    title: "Deep Cleaning Service",
+    category: "Home Services",
+    description: "Intensive cleaning for homes and offices",
+    price: 60,
+    priceType: "hour",
     status: "Active",
-    bookings: 12,
-    rating: 4.9,
-    availability: "Flexible",
-    location: "Remote"
+    bookings: 45,
+    image: "https://images.unsplash.com/photo-1563453392212-326f5e854473?w=400"
   },
   {
     id: 3,
-    title: "Arabic Translation",
-    category: "Language",
-    description: "Professional Arabic to English translation",
-    price: 200,
-    status: "Pending Review",
-    bookings: 8,
-    rating: 5.0,
-    availability: "Weekends",
-    location: "Remote"
+    title: "Move-In/Out Cleaning",
+    category: "Home Services",
+    description: "Complete cleaning for moving in or out of properties",
+    price: 150,
+    priceType: "session",
+    status: "Inactive",
+    bookings: 32,
+    image: "https://images.unsplash.com/photo-1585421514738-01798e348b17?w=400"
+  },
+  {
+    id: 4,
+    title: "Office Cleaning",
+    category: "Home Services",
+    description: "Professional office and workplace cleaning services",
+    price: 50,
+    priceType: "hour",
+    status: "Active",
+    bookings: 81,
+    image: "https://images.unsplash.com/photo-1497366216548-37526070297c?w=400"
   }
 ];
 
-const MyServices = () => {
+const MyServices = ({ onNavigate }) => {
   const [services, setServices] = useState(mockServices);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [filterStatus, setFilterStatus] = useState("All");
 
-  // Filter services based on search and status
-  const filteredServices = services.filter(service => {
-    const matchesSearch = service.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         service.category.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = filterStatus === "All" || service.status === filterStatus;
-    return matchesSearch && matchesStatus;
-  });
+  const handleEdit = (serviceId) => {
+    alert(`Edit service #${serviceId}`);
+  };
 
-  const getStatusColor = (status) => {
-    switch(status) {
-      case "Active": return "bg-green-100 text-green-800";
-      case "Pending Review": return "bg-yellow-100 text-yellow-800";
-      case "Inactive": return "bg-gray-100 text-gray-800";
-      default: return "bg-gray-100 text-gray-800";
+  const handleView = (serviceId) => {
+    alert(`View details for service #${serviceId}`);
+  };
+
+  const handleDelete = (serviceId) => {
+    if (confirm('Are you sure you want to delete this service?')) {
+      setServices(services.filter(s => s.id !== serviceId));
+      alert('Service deleted successfully');
     }
   };
 
-  const ServiceCard = ({ service }) => (
-    <div className="bg-white rounded-lg border-2 border-gray-200 p-6 hover:shadow-lg transition-shadow">
-      {/* Header */}
-      <div className="flex items-start justify-between mb-4">
-        <div className="flex-1">
-          <div className="flex items-center gap-3 mb-2">
-            <h3 className="text-xl font-bold text-gray-900">{service.title}</h3>
-            <span className={`px-3 py-1 rounded-full text-xs font-semibold ${getStatusColor(service.status)}`}>
-              {service.status}
-            </span>
+  const getStatusColor = (status) => {
+    switch(status) {
+      case "Active": 
+        return { bg: '#065f46', text: '#ffffff' };
+      case "Inactive": 
+        return { bg: '#9ca3af', text: '#ffffff' };
+      case "Pending": 
+        return { bg: '#fbbf24', text: '#ffffff' };
+      default: 
+        return { bg: '#9ca3af', text: '#ffffff' };
+    }
+  };
+
+  const ServiceCard = ({ service }) => {
+    const statusColors = getStatusColor(service.status);
+    
+    return (
+      <div className="rounded-lg border border-gray-200 overflow-hidden hover:shadow-lg transition-shadow" style={{ backgroundColor: '#f0fdf4' }}>
+        {/* Service Image */}
+        <div className="relative h-48 bg-gray-200">
+          <img 
+            src={service.image} 
+            alt={service.title}
+            className="w-full h-full object-cover"
+            onError={(e) => {
+              e.target.style.display = 'none';
+            }}
+          />
+          {/* Status Badge */}
+          <div 
+            className="absolute top-3 right-3 px-3 py-1 rounded-full text-xs font-semibold"
+            style={{ backgroundColor: statusColors.bg, color: statusColors.text }}
+          >
+            {service.status}
           </div>
-          <p className="text-sm text-gray-600">{service.category}</p>
         </div>
-        
-        {/* Action Buttons */}
-        <div className="flex gap-2">
-          <button className="p-2 hover:bg-gray-100 rounded-lg" title="View Details">
-            <Eye className="w-5 h-5 text-gray-600" />
-          </button>
-          <button className="p-2 hover:bg-gray-100 rounded-lg" title="Edit Service">
-            <Edit className="w-5 h-5 text-blue-600" />
-          </button>
-          <button className="p-2 hover:bg-gray-100 rounded-lg" title="Delete Service">
-            <Trash2 className="w-5 h-5 text-red-600" />
-          </button>
+
+        {/* Card Content */}
+        <div className="p-5">
+          {/* Title and Price */}
+          <div className="flex items-start justify-between mb-2">
+            <h3 className="text-lg font-bold text-gray-900 flex-1 pr-2">
+              {service.title}
+            </h3>
+            <div className="text-right">
+              <p className="text-lg font-bold text-gray-900">${service.price}/{service.priceType}</p>
+            </div>
+          </div>
+
+          {/* Description */}
+          <p className="text-sm text-gray-600 mb-3 line-clamp-2">
+            {service.description}
+          </p>
+
+          {/* Category and Bookings */}
+          <div className="mb-4">
+            <p className="text-sm text-gray-600">
+              {service.category} • {service.bookings} bookings
+            </p>
+          </div>
+
+          {/* Action Buttons */}
+          <div className="flex gap-2 pt-4 border-t border-gray-200">
+            <button 
+              onClick={() => handleEdit(service.id)}
+              className="flex items-center justify-center gap-2 flex-1 px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-md text-sm font-medium hover:bg-gray-50 transition-colors"
+            >
+              <Edit className="w-4 h-4" />
+              Edit
+            </button>
+            <button 
+              onClick={() => handleView(service.id)}
+              className="flex items-center justify-center gap-2 flex-1 px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-md text-sm font-medium hover:bg-gray-50 transition-colors"
+            >
+              <Eye className="w-4 h-4" />
+              View
+            </button>
+            <button 
+              onClick={() => handleDelete(service.id)}
+              className="flex items-center justify-center gap-2 px-4 py-2 bg-white border border-gray-300 text-red-600 rounded-md text-sm font-medium hover:bg-gray-50 transition-colors"
+            >
+              <Trash2 className="w-4 h-4" />
+              Close
+            </button>
+          </div>
         </div>
       </div>
-
-      {/* Description */}
-      <p className="text-gray-700 mb-4 line-clamp-2">{service.description}</p>
-
-      {/* Info Grid */}
-      <div className="grid grid-cols-2 gap-4 mb-4 pb-4 border-b border-gray-200">
-        <div className="flex items-center gap-2 text-sm text-gray-600">
-          <DollarSign className="w-4 h-4" />
-          <span className="font-semibold text-gray-900">{service.price} SAR</span>
-        </div>
-        <div className="flex items-center gap-2 text-sm text-gray-600">
-          <Clock className="w-4 h-4" />
-          <span>{service.availability}</span>
-        </div>
-        <div className="flex items-center gap-2 text-sm text-gray-600">
-          <MapPin className="w-4 h-4" />
-          <span>{service.location}</span>
-        </div>
-        <div className="text-sm text-gray-600">
-          <span className="font-semibold text-gray-900">{service.bookings}</span> bookings
-        </div>
-      </div>
-
-      {/* Rating */}
-      <div className="flex items-center gap-2">
-        <div className="flex">
-          {[...Array(5)].map((_, i) => (
-            <span key={i} className={`text-lg ${i < Math.floor(service.rating) ? 'text-yellow-400' : 'text-gray-300'}`}>
-              ★
-            </span>
-          ))}
-        </div>
-        <span className="text-sm font-semibold text-gray-900">{service.rating}</span>
-      </div>
-    </div>
-  );
+    );
+  };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-white">
       {/* Header */}
-      <header className="bg-gray-900 text-white border-b border-gray-800">
+      <header className="text-white shadow-sm" style={{ backgroundColor: '#1e3a8a' }}>
         <div className="max-w-7xl mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-white text-gray-900 rounded flex items-center justify-center font-bold">
-                L
+              <div className="w-8 h-8 rounded flex items-center justify-center" style={{ backgroundColor: '#ffffff' }}>
+                <svg className="w-5 h-5" style={{ color: '#1e3a8a' }} fill="currentColor" viewBox="0 0 20 20">
+                  <path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z" />
+                </svg>
               </div>
-              <span className="text-xl font-semibold">Labbi - لَبِّ</span>
+              <span className="text-lg font-semibold">ServiceHub</span>
             </div>
             
-            <nav className="flex items-center gap-6">
-              <button className="text-gray-400 hover:text-white">Dashboard</button>
-              <button className="text-white">My Services</button>
-              <button className="text-gray-400 hover:text-white">Bookings</button>
-              <button className="text-gray-400 hover:text-white">Availability</button>
-              
-              <div className="w-10 h-10 bg-gray-700 rounded-full flex items-center justify-center ml-4">
-                <span className="text-sm font-semibold">SA</span>
-              </div>
+            <nav className="flex items-center gap-8 text-sm">
+              <button onClick={() => onNavigate('dashboard')} className="hover:text-gray-200 transition-colors">
+                Dashboard
+              </button>
+              <button className="font-medium">
+                My Services
+              </button>
+              <button onClick={() => onNavigate('bookings')} className="hover:text-gray-200 transition-colors">
+                Bookings
+              </button>
+              <button onClick={() => onNavigate('availability')} className="hover:text-gray-200 transition-colors">
+                Availability
+              </button>
+              <button onClick={() => onNavigate('profile')} className="hover:text-gray-200 transition-colors">
+                Profile
+              </button>
+              <button onClick={() => onNavigate('reviews')} className="hover:text-gray-200 transition-colors">
+                Reviews
+              </button>
+              <button onClick={() => onNavigate('settings')} className="hover:text-gray-200 transition-colors">
+                Settings
+              </button>
             </nav>
           </div>
         </div>
@@ -157,69 +202,41 @@ const MyServices = () => {
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-6 py-8">
         {/* Page Header */}
-        <div className="flex items-center justify-between mb-8">
+        <div className="flex items-center justify-between mb-6">
           <div>
             <h1 className="text-2xl font-bold text-gray-900 mb-1">My Services</h1>
-            <p className="text-gray-600">Manage and track all your service listings</p>
+            <p className="text-gray-600 text-sm">Manage your service offerings</p>
           </div>
-          <button className="flex items-center gap-2 px-6 py-3 bg-gray-900 text-white rounded-lg hover:bg-gray-800">
+          <button 
+            onClick={() => onNavigate('add-service')}
+            className="flex items-center gap-2 px-5 py-2.5 text-white rounded-lg font-medium hover:opacity-90 transition-colors"
+            style={{ backgroundColor: '#065f46' }}
+          >
             <Plus className="w-5 h-5" />
             Add New Service
           </button>
         </div>
 
-        {/* Search and Filter Bar */}
-        <div className="bg-white rounded-lg border-2 border-gray-200 p-4 mb-6">
-          <div className="flex gap-4 items-center">
-            {/* Search */}
-            <div className="flex-1 relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-              <input
-                type="text"
-                placeholder="Search services..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900"
-              />
-            </div>
-
-            {/* Status Filter */}
-            <select
-              value={filterStatus}
-              onChange={(e) => setFilterStatus(e.target.value)}
-              className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900"
-            >
-              <option value="All">All Status</option>
-              <option value="Active">Active</option>
-              <option value="Pending Review">Pending Review</option>
-              <option value="Inactive">Inactive</option>
-            </select>
-          </div>
-        </div>
-
-        {/* Services Count */}
-        <div className="mb-4">
-          <p className="text-sm text-gray-600">
-            Showing <span className="font-semibold text-gray-900">{filteredServices.length}</span> of <span className="font-semibold text-gray-900">{services.length}</span> services
-          </p>
-        </div>
-
         {/* Services Grid */}
-        {filteredServices.length > 0 ? (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {filteredServices.map(service => (
+        {services.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6">
+            {services.map(service => (
               <ServiceCard key={service.id} service={service} />
             ))}
           </div>
         ) : (
-          <div className="bg-white rounded-lg border-2 border-gray-200 p-12 text-center">
+          <div className="rounded-lg border-2 border-dashed border-gray-300 p-16 text-center" style={{ backgroundColor: '#f0fdf4' }}>
             <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <Search className="w-8 h-8 text-gray-400" />
+              <Plus className="w-8 h-8 text-gray-400" />
             </div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">No services found</h3>
-            <p className="text-gray-600 mb-6">Try adjusting your search or filter criteria</p>
-            <button className="px-6 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800">
-              Clear Filters
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">No services yet</h3>
+            <p className="text-gray-600 mb-6">Create your first service to start accepting bookings</p>
+            <button 
+              onClick={() => onNavigate('add-service')}
+              className="px-6 py-2.5 text-white rounded-lg font-medium hover:opacity-90 transition-colors"
+              style={{ backgroundColor: '#065f46' }}
+            >
+              Add New Service
             </button>
           </div>
         )}

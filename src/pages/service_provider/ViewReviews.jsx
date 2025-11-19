@@ -1,14 +1,14 @@
 import React, { useState } from 'react';
-import { Star, TrendingUp } from 'lucide-react';
+import { Star } from 'lucide-react';
 
 const mockReviews = [
   {
     id: 1,
-    customer: 'Arwa Aldawoud',
-    initials: 'AA',
+    customer: 'Anna Robinson',
+    initials: 'AR',
     rating: 5,
-    comment: 'Excellent service! Very professional and delivered exactly what I needed. Would definitely work with again.',
-    service: 'Professional Web Development',
+    comment: 'Excellent service! Very professional and delivered exactly what I needed. Would definitely recommend! The attention to detail was outstanding.',
+    service: 'Professional House Cleaning',
     date: '2 days ago'
   },
   {
@@ -16,41 +16,70 @@ const mockReviews = [
     customer: 'Adel Hassan',
     initials: 'AH',
     rating: 5,
-    comment: 'Excellent service! Very professional and delivered exactly what I needed. Would definitely work with again.',
-    service: 'UI/UX Design Consultation',
-    date: '5 days ago'
+    comment: 'Excellent service. Very professional and delivered exactly what I needed. Would definitely recommend!',
+    service: 'Deep Cleaning Service',
+    date: '1 week ago'
   },
   {
     id: 3,
-    customer: 'Bana Jaber',
-    initials: 'BJ',
+    customer: 'Dana Jaber',
+    initials: 'DJ',
     rating: 5,
-    comment: 'Excellent service! Very professional and delivered exactly what I needed. Would definitely work with again.',
-    service: 'Full-Stack Development',
-    date: '1 week ago'
+    comment: 'Excellent service. Very professional and delivered exactly what I needed. Would definitely recommend!',
+    service: 'Professional House Cleaning',
+    date: '2 weeks ago'
   },
   {
     id: 4,
     customer: 'Shatha Alharbi',
     initials: 'SA',
     rating: 5,
-    comment: 'Excellent service! Very professional and delivered exactly what I needed. Would definitely work with again.',
-    service: 'UI/UX Design Consultation',
-    date: '2 days ago'
+    comment: 'Outstanding work! Sarah was punctual, thorough, and my house has never looked better. Highly recommend her services.',
+    service: 'Move-In/Out Cleaning',
+    date: '3 weeks ago'
   },
   {
     id: 5,
-    customer: 'Yaser Abdullah',
-    initials: 'YA',
+    customer: 'Viper Abdullah',
+    initials: 'VA',
+    rating: 4,
+    comment: 'Great service overall. The cleaning was thorough and Sarah was very professional. Would use again.',
+    service: 'Professional House Cleaning',
+    date: '1 month ago'
+  },
+  {
+    id: 6,
+    customer: 'Mike Johnson',
+    initials: 'MJ',
     rating: 5,
-    comment: 'Excellent service! Very professional and delivered exactly what I needed. Would definitely work with again.',
-    service: 'Professional Web Development',
-    date: '2 days ago'
+    comment: 'Best cleaning service I\'ve ever used. Sarah is amazing and the results speak for themselves!',
+    service: 'Deep Cleaning Service',
+    date: '1 month ago'
+  },
+  {
+    id: 7,
+    customer: 'Lisa Brown',
+    initials: 'LB',
+    rating: 4,
+    comment: 'Very good service. Professional and efficient. My home looks great!',
+    service: 'Professional House Cleaning',
+    date: '1 month ago'
+  },
+  {
+    id: 8,
+    customer: 'Tom Wilson',
+    initials: 'TW',
+    rating: 5,
+    comment: 'Exceptional service! Sarah went above and beyond. Highly professional and thorough.',
+    service: 'Office Cleaning',
+    date: '2 months ago'
   }
 ];
 
 const ViewReviews = ({ onNavigate }) => {
   const [reviews] = useState(mockReviews);
+  const [currentPage, setCurrentPage] = useState(1);
+  const reviewsPerPage = 8;
 
   const stats = {
     avgRating: 4.8,
@@ -58,63 +87,91 @@ const ViewReviews = ({ onNavigate }) => {
     positivePercent: 98
   };
 
+  // Calculate pagination
+  const indexOfLastReview = currentPage * reviewsPerPage;
+  const indexOfFirstReview = indexOfLastReview - reviewsPerPage;
+  const currentReviews = reviews.slice(indexOfFirstReview, indexOfLastReview);
+  const totalPages = Math.ceil(reviews.length / reviewsPerPage);
+
+  const handlePageChange = (pageNumber) => {
+    setCurrentPage(pageNumber);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const StarRating = ({ rating }) => (
+    <div className="flex gap-0.5">
+      {[...Array(5)].map((_, i) => (
+        <Star
+          key={i}
+          className={`w-4 h-4 ${
+            i < rating ? 'fill-yellow-400 text-yellow-400' : 'fill-gray-300 text-gray-300'
+          }`}
+        />
+      ))}
+    </div>
+  );
+
   const ReviewCard = ({ review }) => (
-    <div className="bg-white border-2 border-gray-200 rounded-lg p-6">
+    <div className="rounded-lg border border-gray-200 p-6" style={{ backgroundColor: '#f0fdf4' }}>
       <div className="flex items-start gap-4">
-        <div className="w-12 h-12 bg-gray-200 rounded-full flex items-center justify-center flex-shrink-0">
-          <span className="text-sm font-semibold text-gray-700">{review.initials}</span>
+        <div className="w-12 h-12 rounded-full flex items-center justify-center text-white font-semibold flex-shrink-0" style={{ backgroundColor: '#065f46' }}>
+          {review.initials}
         </div>
 
         <div className="flex-1">
-          <div className="flex items-center justify-between mb-2">
-            <h3 className="font-bold text-gray-900">{review.customer}</h3>
-            <div className="flex gap-0.5">
-              {[...Array(5)].map((_, i) => (
-                <Star
-                  key={i}
-                  className={`w-4 h-4 ${
-                    i < review.rating ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300'
-                  }`}
-                />
-              ))}
+          <div className="flex items-start justify-between mb-2">
+            <div>
+              <h3 className="font-bold text-gray-900 mb-1">{review.customer}</h3>
+              <StarRating rating={review.rating} />
             </div>
+            <span className="text-sm text-gray-500">{review.date}</span>
           </div>
 
-          <p className="text-gray-700 mb-3">{review.comment}</p>
+          <p className="text-gray-700 mb-3 leading-relaxed">{review.comment}</p>
 
-          <div className="flex items-center gap-4 text-sm text-gray-600">
-            <span>Service: {review.service}</span>
-            <span>•</span>
-            <span>{review.date}</span>
-          </div>
+          <p className="text-sm text-gray-600">Service: {review.service}</p>
         </div>
       </div>
     </div>
   );
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-white">
       {/* Header */}
-      <header className="bg-gray-900 text-white border-b border-gray-800">
+      <header className="text-white shadow-sm" style={{ backgroundColor: '#1e3a8a' }}>
         <div className="max-w-7xl mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-white text-gray-900 rounded flex items-center justify-center font-bold">
-                L
+              <div className="w-8 h-8 rounded flex items-center justify-center" style={{ backgroundColor: '#ffffff' }}>
+                <svg className="w-5 h-5" style={{ color: '#1e3a8a' }} fill="currentColor" viewBox="0 0 20 20">
+                  <path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z" />
+                </svg>
               </div>
-              <span className="text-xl font-semibold">Labbi - لَبِّ</span>
+              <span className="text-lg font-semibold">ServiceHub</span>
             </div>
             
-            <nav className="flex items-center gap-6">
-              <button onClick={() => onNavigate('dashboard')} className="text-gray-400 hover:text-white">Dashboard</button>
-              <button onClick={() => onNavigate('services')} className="text-gray-400 hover:text-white">My Services</button>
-              <button onClick={() => onNavigate('bookings')} className="text-gray-400 hover:text-white">Bookings</button>
-              <button onClick={() => onNavigate('availability')} className="text-gray-400 hover:text-white">Availability</button>
-              
-              <div className="w-10 h-10 bg-gray-700 rounded-full flex items-center justify-center ml-4 cursor-pointer"
-                   onClick={() => onNavigate('profile')}>
-                <span className="text-sm font-semibold">SA</span>
-              </div>
+            <nav className="flex items-center gap-8 text-sm">
+              <button onClick={() => onNavigate('dashboard')} className="hover:text-gray-200 transition-colors">
+                Dashboard
+              </button>
+              <button onClick={() => onNavigate('services')} className="hover:text-gray-200 transition-colors">
+                My Services
+              </button>
+              <button onClick={() => onNavigate('bookings')} className="hover:text-gray-200 transition-colors">
+                Bookings
+              </button>
+              <button onClick={() => onNavigate('availability')} className="hover:text-gray-200 transition-colors">
+                Availability
+              </button>
+              <button onClick={() => onNavigate('profile')} className="hover:text-gray-200 transition-colors">
+                Profile
+              </button>
+              <button className="font-medium">
+                Reviews
+              </button>
+              <button onClick={() => onNavigate('settings')} className="hover:text-gray-200 transition-colors">
+                Settings
+              </button>
             </nav>
           </div>
         </div>
@@ -122,41 +179,80 @@ const ViewReviews = ({ onNavigate }) => {
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-6 py-8">
-        <div className="mb-8">
-          <h1 className="text-2xl font-bold text-gray-900 mb-1">My Reviews</h1>
-          <p className="text-gray-600">View all reviews from your clients</p>
+        {/* Page Header */}
+        <div className="mb-6">
+          <h1 className="text-2xl font-bold text-gray-900 mb-1">All Reviews</h1>
+          <p className="text-gray-600 text-sm">View all reviews from your customers</p>
         </div>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <div className="bg-white rounded-lg border-2 border-gray-200 p-6 text-center">
-            <div className="text-5xl font-bold text-gray-900 mb-2">{stats.avgRating}</div>
-            <p className="text-gray-600">Average Rating</p>
-          </div>
+        <div className="rounded-lg border border-gray-200 p-8 mb-6" style={{ backgroundColor: '#f0fdf4' }}>
+          <div className="grid grid-cols-3 gap-8">
+            <div className="text-center">
+              <p className="text-sm text-gray-600 mb-2">Average Rating</p>
+              <div className="text-5xl font-bold text-gray-900 mb-2">{stats.avgRating}</div>
+              <div className="flex justify-center">
+                <StarRating rating={Math.floor(stats.avgRating)} />
+              </div>
+            </div>
 
-          <div className="bg-white rounded-lg border-2 border-gray-200 p-6 text-center">
-            <div className="text-5xl font-bold text-gray-900 mb-2">{stats.totalReviews}</div>
-            <p className="text-gray-600">Total Reviews</p>
-          </div>
+            <div className="text-center border-x border-gray-200">
+              <p className="text-sm text-gray-600 mb-2">Total Reviews</p>
+              <div className="text-5xl font-bold text-gray-900">{stats.totalReviews}</div>
+            </div>
 
-          <div className="bg-white rounded-lg border-2 border-gray-200 p-6 text-center">
-            <div className="text-5xl font-bold text-gray-900 mb-2">{stats.positivePercent}%</div>
-            <p className="text-gray-600">Positive</p>
+            <div className="text-center">
+              <p className="text-sm text-gray-600 mb-2">Positive</p>
+              <div className="text-5xl font-bold text-gray-900">{stats.positivePercent}%</div>
+            </div>
           </div>
         </div>
 
         {/* Reviews List */}
-        <div className="space-y-4">
-          {reviews.map(review => (
+        <div className="space-y-4 mb-6">
+          {currentReviews.map(review => (
             <ReviewCard key={review.id} review={review} />
           ))}
         </div>
 
-        {/* Pagination or Load More */}
-        <div className="mt-8 text-center">
-          <button className="px-6 py-3 border-2 border-gray-300 rounded-lg hover:bg-gray-50 font-semibold">
-            Load More Reviews
-          </button>
+        {/* Pagination */}
+        <div className="flex items-center justify-between pt-6 border-t border-gray-200">
+          <p className="text-sm text-gray-600">
+            Showing {indexOfFirstReview + 1} to {Math.min(indexOfLastReview, reviews.length)} of {reviews.length} reviews
+          </p>
+          
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => handlePageChange(currentPage - 1)}
+              disabled={currentPage === 1}
+              className="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Previous
+            </button>
+            
+            {[...Array(totalPages)].map((_, index) => (
+              <button
+                key={index + 1}
+                onClick={() => handlePageChange(index + 1)}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  currentPage === index + 1
+                    ? 'text-white'
+                    : 'border border-gray-300 hover:bg-gray-50'
+                }`}
+                style={currentPage === index + 1 ? { backgroundColor: '#065f46' } : {}}
+              >
+                {index + 1}
+              </button>
+            ))}
+            
+            <button
+              onClick={() => handlePageChange(currentPage + 1)}
+              disabled={currentPage === totalPages}
+              className="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Next
+            </button>
+          </div>
         </div>
       </main>
     </div>

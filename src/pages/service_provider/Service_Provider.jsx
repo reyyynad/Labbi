@@ -1,154 +1,123 @@
 import React, { useState } from 'react';
-import { Plus, Search, Edit, Trash2, Eye, Clock, MapPin, DollarSign } from 'lucide-react';
+import { Briefcase, Calendar, Star, DollarSign, Clock, User, Plus } from 'lucide-react';
 
-// Mock services data
-const mockServices = [
-  {
-    id: 1,
-    title: "Web Development",
-    category: "Technology",
-    description: "Full-stack web development using React and Node.js",
-    price: 500,
-    status: "Active",
-    bookings: 15,
-    rating: 4.8,
-    availability: "Mon-Fri, 9 AM - 5 PM",
-    location: "Riyadh"
-  },
-  {
-    id: 2,
-    title: "UI/UX Design",
-    category: "Design",
-    description: "Modern and user-friendly interface design",
-    price: 350,
-    status: "Active",
-    bookings: 12,
-    rating: 4.9,
-    availability: "Flexible",
-    location: "Remote"
-  },
-  {
-    id: 3,
-    title: "Arabic Translation",
-    category: "Language",
-    description: "Professional Arabic to English translation",
-    price: 200,
-    status: "Pending Review",
-    bookings: 8,
-    rating: 5.0,
-    availability: "Weekends",
-    location: "Remote"
-  }
-];
+const Service_Provider = ({ onNavigate }) => {
+  const [pendingBookings, setPendingBookings] = useState([
+    {
+      id: 1,
+      service: "Professional House Cleaning",
+      customer: "John Doe",
+      customerInitials: "JD",
+      date: "Nov 15, 2024",
+      time: "10:00 AM",
+      price: 120
+    },
+    {
+      id: 2,
+      service: "Professional House Cleaning",
+      customer: "Alice Smith",
+      customerInitials: "AS",
+      date: "Nov 16, 2024",
+      time: "2:00 PM",
+      price: 160
+    }
+  ]);
 
-const MyServices = () => {
-  const [services, setServices] = useState(mockServices);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [filterStatus, setFilterStatus] = useState("All");
+  const [recentReviews] = useState([
+    {
+      id: 1,
+      customer: "Anna Robinson",
+      customerInitials: "AR",
+      rating: 5,
+      comment: "Excellent service! Very professional!",
+      date: "2 days ago"
+    },
+    {
+      id: 2,
+      customer: "Mike Johnson",
+      customerInitials: "MJ",
+      rating: 5,
+      comment: "Outstanding work, highly recommended!",
+      date: "5 days ago"
+    },
+    {
+      id: 3,
+      customer: "Lisa Brown",
+      customerInitials: "LB",
+      rating: 4,
+      comment: "Great service, will book again.",
+      date: "1 week ago"
+    }
+  ]);
 
-  // Filter services based on search and status
-  const filteredServices = services.filter(service => {
-    const matchesSearch = service.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         service.category.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = filterStatus === "All" || service.status === filterStatus;
-    return matchesSearch && matchesStatus;
-  });
+  const stats = {
+    totalServices: 4,
+    totalBookings: 127,
+    averageRating: 4.9,
+    totalRevenue: 12450
+  };
 
-  const getStatusColor = (status) => {
-    switch(status) {
-      case "Active": return "bg-green-100 text-green-800";
-      case "Pending Review": return "bg-yellow-100 text-yellow-800";
-      case "Inactive": return "bg-gray-100 text-gray-800";
-      default: return "bg-gray-100 text-gray-800";
+  const handleAccept = (bookingId) => {
+    // Remove the booking from pending list
+    setPendingBookings(pendingBookings.filter(b => b.id !== bookingId));
+    alert(`Booking #${bookingId} has been accepted! The customer will be notified.`);
+  };
+
+  const handleDecline = (bookingId) => {
+    if (confirm('Are you sure you want to decline this booking?')) {
+      // Remove the booking from pending list
+      setPendingBookings(pendingBookings.filter(b => b.id !== bookingId));
+      alert(`Booking #${bookingId} has been declined. The customer will be notified.`);
     }
   };
 
-  const ServiceCard = ({ service }) => (
-    <div className="bg-white rounded-lg border-2 border-gray-200 p-6 hover:shadow-lg transition-shadow">
-      {/* Header */}
-      <div className="flex items-start justify-between mb-4">
-        <div className="flex-1">
-          <div className="flex items-center gap-3 mb-2">
-            <h3 className="text-xl font-bold text-gray-900">{service.title}</h3>
-            <span className={`px-3 py-1 rounded-full text-xs font-semibold ${getStatusColor(service.status)}`}>
-              {service.status}
-            </span>
-          </div>
-          <p className="text-sm text-gray-600">{service.category}</p>
-        </div>
-        
-        {/* Action Buttons */}
-        <div className="flex gap-2">
-          <button className="p-2 hover:bg-gray-100 rounded-lg" title="View Details">
-            <Eye className="w-5 h-5 text-gray-600" />
-          </button>
-          <button className="p-2 hover:bg-gray-100 rounded-lg" title="Edit Service">
-            <Edit className="w-5 h-5 text-blue-600" />
-          </button>
-          <button className="p-2 hover:bg-gray-100 rounded-lg" title="Delete Service">
-            <Trash2 className="w-5 h-5 text-red-600" />
-          </button>
-        </div>
-      </div>
-
-      {/* Description */}
-      <p className="text-gray-700 mb-4 line-clamp-2">{service.description}</p>
-
-      {/* Info Grid */}
-      <div className="grid grid-cols-2 gap-4 mb-4 pb-4 border-b border-gray-200">
-        <div className="flex items-center gap-2 text-sm text-gray-600">
-          <DollarSign className="w-4 h-4" />
-          <span className="font-semibold text-gray-900">{service.price} SAR</span>
-        </div>
-        <div className="flex items-center gap-2 text-sm text-gray-600">
-          <Clock className="w-4 h-4" />
-          <span>{service.availability}</span>
-        </div>
-        <div className="flex items-center gap-2 text-sm text-gray-600">
-          <MapPin className="w-4 h-4" />
-          <span>{service.location}</span>
-        </div>
-        <div className="text-sm text-gray-600">
-          <span className="font-semibold text-gray-900">{service.bookings}</span> bookings
-        </div>
-      </div>
-
-      {/* Rating */}
-      <div className="flex items-center gap-2">
-        <div className="flex">
-          {[...Array(5)].map((_, i) => (
-            <span key={i} className={`text-lg ${i < Math.floor(service.rating) ? 'text-yellow-400' : 'text-gray-300'}`}>
-              ★
-            </span>
-          ))}
-        </div>
-        <span className="text-sm font-semibold text-gray-900">{service.rating}</span>
-      </div>
+  const StarRating = ({ rating }) => (
+    <div className="flex">
+      {[...Array(5)].map((_, i) => (
+        <span key={i} className={`text-base ${i < rating ? 'text-yellow-400' : 'text-gray-300'}`}>
+          ★
+        </span>
+      ))}
     </div>
   );
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-white">
       {/* Header */}
-      <header className="bg-gray-900 text-white border-b border-gray-800">
+      <header className="text-white shadow-sm" style={{ backgroundColor: '#1e3a8a' }}>
         <div className="max-w-7xl mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-white text-gray-900 rounded flex items-center justify-center font-bold">
-                L
+              <div className="w-8 h-8 rounded flex items-center justify-center" style={{ backgroundColor: '#ffffff' }}>
+                <svg className="w-5 h-5" style={{ color: '#1e3a8a' }} fill="currentColor" viewBox="0 0 20 20">
+                  <path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z" />
+                </svg>
               </div>
-              <span className="text-xl font-semibold">Labbi - لَبِّ</span>
+              <span className="text-lg font-semibold">ServiceHub</span>
             </div>
             
-            <nav className="flex items-center gap-6">
-              <button className="text-gray-400 hover:text-white">Dashboard</button>
-              <button className="text-white">My Services</button>
-              <button className="text-gray-400 hover:text-white">Bookings</button>
-              <button className="text-gray-400 hover:text-white">Availability</button>
-              
-              <div className="w-10 h-10 bg-gray-700 rounded-full flex items-center justify-center ml-4">
-                <span className="text-sm font-semibold">SA</span>
-              </div>
+            <nav className="flex items-center gap-8 text-sm">
+              <button className="font-medium">
+                Dashboard
+              </button>
+              <button onClick={() => onNavigate('services')} className="hover:text-gray-200 transition-colors">
+                My Services
+              </button>
+              <button onClick={() => onNavigate('bookings')} className="hover:text-gray-200 transition-colors">
+                Bookings
+              </button>
+              <button onClick={() => onNavigate('availability')} className="hover:text-gray-200 transition-colors">
+                Availability
+              </button>
+              <button onClick={() => onNavigate('profile')} className="hover:text-gray-200 transition-colors">
+                Profile
+              </button>
+              <button onClick={() => onNavigate('reviews')} className="hover:text-gray-200 transition-colors">
+                Reviews
+              </button>
+              <button onClick={() => onNavigate('settings')} className="hover:text-gray-200 transition-colors">
+                Settings
+              </button>
             </nav>
           </div>
         </div>
@@ -157,75 +126,210 @@ const MyServices = () => {
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-6 py-8">
         {/* Page Header */}
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900 mb-1">My Services</h1>
-            <p className="text-gray-600">Manage and track all your service listings</p>
-          </div>
-          <button className="flex items-center gap-2 px-6 py-3 bg-gray-900 text-white rounded-lg hover:bg-gray-800">
-            <Plus className="w-5 h-5" />
-            Add New Service
-          </button>
+        <div className="mb-6">
+          <h1 className="text-2xl font-bold text-gray-900 mb-1">Provider Dashboard</h1>
+          <p className="text-gray-600 text-sm">Welcome back, Sarah! Here's your business overview</p>
         </div>
 
-        {/* Search and Filter Bar */}
-        <div className="bg-white rounded-lg border-2 border-gray-200 p-4 mb-6">
-          <div className="flex gap-4 items-center">
-            {/* Search */}
-            <div className="flex-1 relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-              <input
-                type="text"
-                placeholder="Search services..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900"
-              />
+        {/* Stats Grid */}
+        <div className="grid grid-cols-4 gap-6 mb-6">
+          {/* Total Services */}
+          <div className="rounded-lg border border-gray-200 p-6" style={{ backgroundColor: '#f0fdf4' }}>
+            <div className="flex items-center justify-between mb-3">
+              <div className="w-10 h-10 rounded flex items-center justify-center" style={{ backgroundColor: '#065f46' }}>
+                <Briefcase className="w-5 h-5 text-white" />
+              </div>
             </div>
+            <p className="text-sm text-gray-600 mb-1">Total Services</p>
+            <p className="text-3xl font-bold text-gray-900">{stats.totalServices}</p>
+          </div>
 
-            {/* Status Filter */}
-            <select
-              value={filterStatus}
-              onChange={(e) => setFilterStatus(e.target.value)}
-              className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900"
+          {/* Total Bookings */}
+          <div className="rounded-lg border border-gray-200 p-6" style={{ backgroundColor: '#f0fdf4' }}>
+            <div className="flex items-center justify-between mb-3">
+              <div className="w-10 h-10 rounded flex items-center justify-center" style={{ backgroundColor: '#065f46' }}>
+                <Calendar className="w-5 h-5 text-white" />
+              </div>
+            </div>
+            <p className="text-sm text-gray-600 mb-1">Total Bookings</p>
+            <p className="text-3xl font-bold text-gray-900">{stats.totalBookings}</p>
+          </div>
+
+          {/* Average Rating */}
+          <div className="rounded-lg border border-gray-200 p-6" style={{ backgroundColor: '#f0fdf4' }}>
+            <div className="flex items-center justify-between mb-3">
+              <div className="w-10 h-10 rounded flex items-center justify-center" style={{ backgroundColor: '#065f46' }}>
+                <Star className="w-5 h-5 text-white" />
+              </div>
+            </div>
+            <p className="text-sm text-gray-600 mb-1">Average Rating</p>
+            <p className="text-3xl font-bold text-gray-900">{stats.averageRating}</p>
+          </div>
+
+          {/* Total Revenue */}
+          <div className="rounded-lg border border-gray-200 p-6" style={{ backgroundColor: '#f0fdf4' }}>
+            <div className="flex items-center justify-between mb-3">
+              <div className="w-10 h-10 rounded flex items-center justify-center" style={{ backgroundColor: '#065f46' }}>
+                <DollarSign className="w-5 h-5 text-white" />
+              </div>
+            </div>
+            <p className="text-sm text-gray-600 mb-1">Total Revenue</p>
+            <p className="text-3xl font-bold text-gray-900">${stats.totalRevenue}</p>
+          </div>
+        </div>
+
+        {/* Pending Booking Requests */}
+        <div className="rounded-lg border border-gray-200 p-6 mb-6" style={{ backgroundColor: '#f0fdf4' }}>
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-xl font-bold text-gray-900">Pending Booking Requests</h2>
+            {pendingBookings.length > 0 && (
+              <span className="px-3 py-1 text-xs font-semibold rounded-full" style={{ backgroundColor: '#fef3c7', color: '#92400e' }}>
+                {pendingBookings.length} New
+              </span>
+            )}
+          </div>
+
+          {pendingBookings.length > 0 ? (
+            <div className="space-y-4">
+              {pendingBookings.map(booking => (
+                <div key={booking.id} className="bg-white rounded-lg border border-gray-200 p-5">
+                  <div className="flex items-start gap-4">
+                    {/* Customer Avatar */}
+                    <div className="w-12 h-12 rounded-full flex items-center justify-center text-white font-semibold flex-shrink-0" style={{ backgroundColor: '#065f46' }}>
+                      {booking.customerInitials}
+                    </div>
+
+                    {/* Booking Details */}
+                    <div className="flex-1">
+                      <h3 className="font-bold text-gray-900 mb-1">{booking.service}</h3>
+                      <p className="text-sm text-gray-600 mb-3">Customer: {booking.customer}</p>
+                      
+                      <div className="flex items-center gap-6 text-sm text-gray-600">
+                        <div className="flex items-center gap-1">
+                          <Calendar className="w-4 h-4" />
+                          <span>{booking.date}</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <Clock className="w-4 h-4" />
+                          <span>{booking.time}</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <DollarSign className="w-4 h-4" />
+                          <span>${booking.price}</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Action Buttons */}
+                    <div className="flex gap-2 flex-shrink-0">
+                      <button
+                        onClick={() => handleAccept(booking.id)}
+                        className="px-5 py-2 text-white rounded-md text-sm font-medium hover:opacity-90 transition-colors"
+                        style={{ backgroundColor: '#065f46' }}
+                      >
+                        Accept
+                      </button>
+                      <button
+                        onClick={() => handleDecline(booking.id)}
+                        className="px-5 py-2 bg-white border border-gray-300 text-gray-700 rounded-md text-sm font-medium hover:bg-gray-50 transition-colors"
+                      >
+                        Decline
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="bg-white rounded-lg border-2 border-dashed border-gray-300 p-12 text-center">
+              <Calendar className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">No pending requests</h3>
+              <p className="text-gray-600">You're all caught up! New booking requests will appear here.</p>
+            </div>
+          )}
+        </div>
+
+        {/* Recent Reviews */}
+        <div className="rounded-lg border border-gray-200 p-6 mb-6" style={{ backgroundColor: '#f0fdf4' }}>
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-xl font-bold text-gray-900">Recent Reviews</h2>
+            <button 
+              onClick={() => onNavigate('reviews')}
+              className="text-sm font-medium hover:underline"
+              style={{ color: '#065f46' }}
             >
-              <option value="All">All Status</option>
-              <option value="Active">Active</option>
-              <option value="Pending Review">Pending Review</option>
-              <option value="Inactive">Inactive</option>
-            </select>
-          </div>
-        </div>
-
-        {/* Services Count */}
-        <div className="mb-4">
-          <p className="text-sm text-gray-600">
-            Showing <span className="font-semibold text-gray-900">{filteredServices.length}</span> of <span className="font-semibold text-gray-900">{services.length}</span> services
-          </p>
-        </div>
-
-        {/* Services Grid */}
-        {filteredServices.length > 0 ? (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {filteredServices.map(service => (
-              <ServiceCard key={service.id} service={service} />
-            ))}
-          </div>
-        ) : (
-          <div className="bg-white rounded-lg border-2 border-gray-200 p-12 text-center">
-            <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <Search className="w-8 h-8 text-gray-400" />
-            </div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">No services found</h3>
-            <p className="text-gray-600 mb-6">Try adjusting your search or filter criteria</p>
-            <button className="px-6 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800">
-              Clear Filters
+              View All
             </button>
           </div>
-        )}
+
+          <div className="space-y-4">
+            {recentReviews.map(review => (
+              <div key={review.id} className="bg-white rounded-lg border border-gray-200 p-5">
+                <div className="flex items-start gap-4">
+                  {/* Customer Avatar */}
+                  <div className="w-12 h-12 rounded-full flex items-center justify-center text-white font-semibold flex-shrink-0" style={{ backgroundColor: '#065f46' }}>
+                    {review.customerInitials}
+                  </div>
+
+                  {/* Review Details */}
+                  <div className="flex-1">
+                    <div className="flex items-center justify-between mb-2">
+                      <h3 className="font-bold text-gray-900">{review.customer}</h3>
+                      <span className="text-xs text-gray-500">{review.date}</span>
+                    </div>
+                    <StarRating rating={review.rating} />
+                    <p className="text-sm text-gray-700 mt-2">{review.comment}</p>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Quick Actions Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {/* Add New Service */}
+          <button
+            onClick={() => onNavigate('add-service')}
+            className="rounded-lg border border-gray-200 p-8 text-left hover:shadow-lg transition-shadow"
+            style={{ backgroundColor: '#065f46' }}
+          >
+            <div className="w-12 h-12 bg-white rounded flex items-center justify-center mb-4">
+              <Briefcase className="w-6 h-6" style={{ color: '#065f46' }} />
+            </div>
+            <h3 className="text-lg font-bold text-white mb-2">Add New Service</h3>
+            <p className="text-sm text-white opacity-90">Create a new service offering</p>
+          </button>
+
+          {/* Manage Bookings */}
+          <button
+            onClick={() => onNavigate('bookings')}
+            className="rounded-lg border border-gray-200 p-8 text-left hover:shadow-lg transition-shadow"
+            style={{ backgroundColor: '#f0fdf4' }}
+          >
+            <div className="w-12 h-12 rounded flex items-center justify-center mb-4" style={{ backgroundColor: '#065f46' }}>
+              <Calendar className="w-6 h-6 text-white" />
+            </div>
+            <h3 className="text-lg font-bold text-gray-900 mb-2">Manage Bookings</h3>
+            <p className="text-sm text-gray-600">View and manage your bookings</p>
+          </button>
+
+          {/* Update Profile */}
+          <button
+            onClick={() => onNavigate('profile')}
+            className="rounded-lg border border-gray-200 p-8 text-left hover:shadow-lg transition-shadow"
+            style={{ backgroundColor: '#f0fdf4' }}
+          >
+            <div className="w-12 h-12 rounded flex items-center justify-center mb-4" style={{ backgroundColor: '#065f46' }}>
+              <User className="w-6 h-6 text-white" />
+            </div>
+            <h3 className="text-lg font-bold text-gray-900 mb-2">Update Profile</h3>
+            <p className="text-sm text-gray-600">Edit your professional information</p>
+          </button>
+        </div>
       </main>
     </div>
   );
 };
 
-export default MyServices;
+export default Service_Provider;

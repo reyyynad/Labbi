@@ -1,40 +1,6 @@
 import React, { useState } from 'react';
 import { ChevronLeft, ChevronRight, X, Check } from 'lucide-react';
 
-// ========== HEADER COMPONENT ==========
-const Header = () => {
-  return (
-    <header className="bg-white border-b py-4 px-6">
-      <div className="max-w-7xl mx-auto flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 border-2 border-gray-900 flex items-center justify-center font-bold text-lg">
-            L
-          </div>
-          <h1 className="text-xl font-bold">Labbi - لبِّ</h1>
-        </div>
-        
-        <div className="flex items-center gap-6">
-          <button className="text-sm text-gray-600 hover:text-gray-900 transition-colors underline">
-            Dashboard
-          </button>
-          <button className="text-sm text-gray-600 hover:text-gray-900 transition-colors underline">
-            My Services
-          </button>
-          <button className="text-sm text-gray-600 hover:text-gray-900 transition-colors underline">
-            Bookings
-          </button>
-          <button className="text-sm text-gray-600 hover:text-gray-900 transition-colors font-semibold">
-            Availability
-          </button>
-          <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center text-sm font-medium hover:bg-gray-300 transition-colors cursor-pointer">
-            SA
-          </div>
-        </div>
-      </div>
-    </header>
-  );
-};
-
 // ========== CALENDAR COMPONENT ==========
 const Calendar = ({ selectedMonth, onMonthChange, availableDates, onDateToggle }) => {
   const getDaysInMonth = (year, month) => {
@@ -90,7 +56,7 @@ const Calendar = ({ selectedMonth, onMonthChange, availableDates, onDateToggle }
   };
 
   return (
-    <div className="bg-white border border-gray-300 rounded-lg p-6">
+    <div className="rounded-lg border border-gray-200 p-6" style={{ backgroundColor: '#f0fdf4' }}>
       <h2 className="text-lg font-bold text-gray-900 mb-6">Calendar</h2>
       
       {/* Month Navigation */}
@@ -133,11 +99,12 @@ const Calendar = ({ selectedMonth, onMonthChange, availableDates, onDateToggle }
               aspect-square p-2 text-sm rounded border
               ${!day ? 'invisible' : ''}
               ${isDateAvailable(day) 
-                ? 'bg-gray-900 text-white border-gray-900 hover:bg-gray-800' 
+                ? 'text-white border-transparent hover:opacity-90' 
                 : 'bg-white text-gray-900 border-gray-300 hover:bg-gray-50'
               }
               transition-colors cursor-pointer disabled:cursor-default
             `}
+            style={isDateAvailable(day) ? { backgroundColor: '#047857' } : {}}
           >
             {day}
           </button>
@@ -147,7 +114,7 @@ const Calendar = ({ selectedMonth, onMonthChange, availableDates, onDateToggle }
       {/* Legend */}
       <div className="flex items-center gap-6 mt-6 pt-6 border-t border-gray-200">
         <div className="flex items-center gap-2">
-          <div className="w-4 h-4 bg-gray-900 rounded"></div>
+          <div className="w-4 h-4 rounded" style={{ backgroundColor: '#047857' }}></div>
           <span className="text-sm text-gray-600">Available</span>
         </div>
         <div className="flex items-center gap-2">
@@ -161,7 +128,7 @@ const Calendar = ({ selectedMonth, onMonthChange, availableDates, onDateToggle }
 
 // ========== WEEKLY SCHEDULE COMPONENT ==========
 const WeeklySchedule = ({ schedule, onScheduleChange }) => {
-  const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
+  const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
   const handleTimeChange = (day, field, value) => {
     onScheduleChange({
@@ -184,7 +151,7 @@ const WeeklySchedule = ({ schedule, onScheduleChange }) => {
   };
 
   return (
-    <div className="bg-white border border-gray-300 rounded-lg p-6">
+    <div className="rounded-lg border border-gray-200 p-6" style={{ backgroundColor: '#f0fdf4' }}>
       <h2 className="text-lg font-bold text-gray-900 mb-6">Weekly Schedule</h2>
       
       <div className="space-y-4">
@@ -216,9 +183,10 @@ const WeeklySchedule = ({ schedule, onScheduleChange }) => {
               onClick={() => toggleDay(day)}
               className={`p-2 border rounded transition-colors ${
                 schedule[day].enabled
-                  ? 'bg-gray-900 text-white border-gray-900 hover:bg-gray-800'
+                  ? 'text-white border-transparent hover:opacity-90'
                   : 'bg-white text-gray-400 border-gray-300 hover:bg-gray-50'
               }`}
+              style={schedule[day].enabled ? { backgroundColor: '#047857' } : {}}
             >
               <Check size={16} />
             </button>
@@ -245,7 +213,7 @@ const BlockDates = ({ blockedDates, onAddDate, onRemoveDate }) => {
   };
 
   return (
-    <div className="bg-white border border-gray-300 rounded-lg p-6">
+    <div className="rounded-lg border border-gray-200 p-6" style={{ backgroundColor: '#f0fdf4' }}>
       <h2 className="text-lg font-bold text-gray-900 mb-6">Block Specific Dates</h2>
       
       {/* Add Date Input */}
@@ -254,11 +222,13 @@ const BlockDates = ({ blockedDates, onAddDate, onRemoveDate }) => {
           type="date"
           value={newDate}
           onChange={(e) => setNewDate(e.target.value)}
-          className="flex-1 px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-gray-900"
+          className="flex-1 px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2"
+          style={{ focusRingColor: '#047857' }}
         />
         <button 
           onClick={handleAdd}
-          className="px-6 py-2 border border-gray-300 rounded font-medium hover:bg-gray-50 transition-colors"
+          className="px-6 py-2 text-white rounded font-medium hover:opacity-90 transition-colors"
+          style={{ backgroundColor: '#065f46' }}
         >
           Add
         </button>
@@ -269,11 +239,11 @@ const BlockDates = ({ blockedDates, onAddDate, onRemoveDate }) => {
         {blockedDates.map((item, index) => (
           <div 
             key={index}
-            className="flex items-center justify-between p-3 bg-gray-50 border border-gray-200 rounded"
+            className="flex items-center justify-between p-3 bg-white border border-gray-200 rounded"
           >
             <div>
               <p className="font-medium text-gray-900">
-                {new Date(item.date).toLocaleDateString('en-US', { 
+                {new Date(item.date + 'T00:00:00').toLocaleDateString('en-US', { 
                   year: 'numeric', 
                   month: 'long', 
                   day: 'numeric' 
@@ -299,15 +269,16 @@ const BlockDates = ({ blockedDates, onAddDate, onRemoveDate }) => {
 };
 
 // ========== MAIN AVAILABILITY PAGE ==========
-const AvailabilityManagement = () => {
+const AvailabilityManagement = ({ onNavigate }) => {
   const [selectedMonth, setSelectedMonth] = useState({ 
     year: 2025, 
-    month: 9 // October (0-indexed)
+    month: 10 // November (0-indexed)
   });
   
   const [availableDates, setAvailableDates] = useState(new Set([
-    '2025-10-01', '2025-10-02', '2025-10-03', '2025-10-05',
-    '2025-10-08', '2025-10-10', '2025-10-15', '2025-10-20'
+    '2025-11-04', '2025-11-05', '2025-11-06', '2025-11-07',
+    '2025-11-11', '2025-11-12', '2025-11-13', '2025-11-14',
+    '2025-11-18', '2025-11-19', '2025-11-20', '2025-11-21'
   ]));
 
   const [schedule, setSchedule] = useState({
@@ -315,14 +286,16 @@ const AvailabilityManagement = () => {
     Tuesday: { start: '09:00', end: '17:00', enabled: true },
     Wednesday: { start: '09:00', end: '17:00', enabled: true },
     Thursday: { start: '09:00', end: '17:00', enabled: true },
-    Friday: { start: '09:00', end: '17:00', enabled: true }
+    Friday: { start: '09:00', end: '17:00', enabled: true },
+    Saturday: { start: '09:00', end: '17:00', enabled: false },
+    Sunday: { start: '09:00', end: '17:00', enabled: false }
   });
 
   const [blockedDates, setBlockedDates] = useState([
     { date: '2025-10-25', reason: 'Holiday' }
   ]);
 
-  // ========== API READY HANDLERS ==========
+  // ========== HANDLERS ==========
   
   const handleDateToggle = (dateStr) => {
     const newDates = new Set(availableDates);
@@ -361,30 +334,6 @@ const AvailabilityManagement = () => {
 
   const handleSaveAvailability = async () => {
     // TODO: API call to save all availability settings
-    /*
-    try {
-      const response = await fetch('/api/provider/availability', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          availableDates: Array.from(availableDates),
-          weeklySchedule: schedule,
-          blockedDates: blockedDates
-        })
-      });
-      
-      if (!response.ok) throw new Error('Failed to save availability');
-      
-      alert('Availability saved successfully!');
-    } catch (error) {
-      console.error('Error saving availability:', error);
-      alert('Failed to save availability');
-    }
-    */
-    
     console.log('Saving availability:', {
       availableDates: Array.from(availableDates),
       schedule,
@@ -394,15 +343,53 @@ const AvailabilityManagement = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <Header />
+    <div className="min-h-screen bg-white">
+      {/* Header */}
+      <header className="text-white shadow-sm" style={{ backgroundColor: '#1e3a8a' }}>
+        <div className="max-w-7xl mx-auto px-6 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded flex items-center justify-center" style={{ backgroundColor: '#ffffff' }}>
+                <svg className="w-5 h-5" style={{ color: '#1e3a8a' }} fill="currentColor" viewBox="0 0 20 20">
+                  <path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z" />
+                </svg>
+              </div>
+              <span className="text-lg font-semibold">ServiceHub</span>
+            </div>
+            
+            <nav className="flex items-center gap-8 text-sm">
+              <button onClick={() => onNavigate('dashboard')} className="hover:text-gray-200 transition-colors">
+                Dashboard
+              </button>
+              <button onClick={() => onNavigate('services')} className="hover:text-gray-200 transition-colors">
+                My Services
+              </button>
+              <button onClick={() => onNavigate('bookings')} className="hover:text-gray-200 transition-colors">
+                Bookings
+              </button>
+              <button className="font-medium">
+                Availability
+              </button>
+              <button onClick={() => onNavigate('profile')} className="hover:text-gray-200 transition-colors">
+                Profile
+              </button>
+              <button onClick={() => onNavigate('reviews')} className="hover:text-gray-200 transition-colors">
+                Reviews
+              </button>
+              <button onClick={() => onNavigate('settings')} className="hover:text-gray-200 transition-colors">
+                Settings
+              </button>
+            </nav>
+          </div>
+        </div>
+      </header>
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-6 py-8">
         {/* Page Header */}
-        <div className="mb-8">
+        <div className="mb-6">
           <h1 className="text-2xl font-bold text-gray-900 mb-1">Manage Availability</h1>
-          <p className="text-gray-600">Set your available time slots for bookings</p>
+          <p className="text-gray-600 text-sm">Set your available time slots for bookings</p>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -432,13 +419,14 @@ const AvailabilityManagement = () => {
             {/* Save Button */}
             <button 
               onClick={handleSaveAvailability}
-              className="w-full py-3 bg-gray-900 text-white rounded-lg font-medium hover:bg-gray-800 transition-colors"
+              className="w-full py-3 text-white rounded-lg font-medium hover:opacity-90 transition-colors"
+              style={{ backgroundColor: '#1e3a8a' }}
             >
               Save Availability
             </button>
 
             {/* Info Box */}
-            <div className="bg-white border border-gray-300 rounded-lg p-6">
+            <div className="rounded-lg border border-gray-200 p-6" style={{ backgroundColor: '#f0fdf4' }}>
               <h3 className="font-bold text-gray-900 mb-3">AVAILABILITY SYSTEM:</h3>
               <ul className="space-y-2 text-sm text-gray-600">
                 <li>• Validates no overlapping slots</li>
