@@ -2,6 +2,7 @@ import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { Search, Filter, Star, MapPin, X } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import Header from '../../components/header/Header';
+import logoPath from '../../assets/images/labbi_logo.svg';
 
 // ========== BUTTON COMPONENT ==========
 const Button = ({ 
@@ -86,7 +87,7 @@ const HeroSection = ({ onBrowseServices }) => {
           <div className="flex flex-col items-center justify-center gap-8">
             <div className="w-full max-w-md h-[400px] md:h-[500px] flex items-center justify-center">
               <img
-                src="/src/assets/images/labbi_logo.svg"
+                src={logoPath}
                 alt="Labbi Logo"
                 className="w-full h-full object-contain drop-shadow-2xl"
                 onError={(e) => {

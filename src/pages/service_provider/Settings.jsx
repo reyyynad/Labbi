@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Bell, Shield, Trash2, Clock } from 'lucide-react';
+import ProviderHeader from '../../components/header/ProviderHeader';
 
 const Settings = ({ onNavigate }) => {
   const [notifications, setNotifications] = useState({
@@ -85,45 +86,7 @@ const Settings = ({ onNavigate }) => {
 
   return (
     <div className="min-h-screen bg-white">
-      {/* Header */}
-      <header className="text-white shadow-sm" style={{ backgroundColor: '#1e3a8a' }}>
-        <div className="max-w-7xl mx-auto px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded flex items-center justify-center" style={{ backgroundColor: '#ffffff' }}>
-                <svg className="w-5 h-5" style={{ color: '#1e3a8a' }} fill="currentColor" viewBox="0 0 20 20">
-                  <path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z" />
-                </svg>
-              </div>
-              <span className="text-lg font-semibold">ServiceHub</span>
-            </div>
-            
-            <nav className="flex items-center gap-8 text-sm">
-              <button onClick={() => onNavigate('dashboard')} className="hover:text-gray-200 transition-colors">
-                Dashboard
-              </button>
-              <button onClick={() => onNavigate('services')} className="hover:text-gray-200 transition-colors">
-                My Services
-              </button>
-              <button onClick={() => onNavigate('bookings')} className="hover:text-gray-200 transition-colors">
-                Bookings
-              </button>
-              <button onClick={() => onNavigate('availability')} className="hover:text-gray-200 transition-colors">
-                Availability
-              </button>
-              <button onClick={() => onNavigate('profile')} className="hover:text-gray-200 transition-colors">
-                Profile
-              </button>
-              <button onClick={() => onNavigate('reviews')} className="hover:text-gray-200 transition-colors">
-                Reviews
-              </button>
-              <button className="font-medium">
-                Settings
-              </button>
-            </nav>
-          </div>
-        </div>
-      </header>
+      <ProviderHeader />
 
       {/* Main Content */}
       <main className="max-w-4xl mx-auto px-6 py-8">

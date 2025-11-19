@@ -1,6 +1,8 @@
 import React, { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
-import { validateEmail, validatePassword, validateForm } from '../utils/validation'
+import { validateEmail, validatePassword, validateForm } from '../../utils/validation'
+import Header from '../../components/header/Header'
+import { User, Mail, Lock, Phone, Briefcase, MapPin, ArrowLeft } from 'lucide-react'
 
 function SignupProvider() {
   const navigate = useNavigate()
@@ -63,209 +65,263 @@ function SignupProvider() {
   }
 
   return (
-    <>
-      <header className="main-header">
-        <div className="logo">
-          <div className="logo-icon">L</div>
-          <span className="logo-text">Labbi - لبِّ</span>
+    <div className="min-h-screen bg-gray-50">
+      <Header transparent showAuthButtons />
+      
+      {/* Gradient Background with Animated Blobs */}
+      <div className="relative bg-gradient-to-br from-[#1e3a8a] via-[#1e3a8a]/95 to-[#047857] text-white py-24 px-6 overflow-hidden">
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <div className="absolute -top-40 -right-40 w-96 h-96 bg-[#1e3a8a] rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob"></div>
+          <div className="absolute -bottom-40 -left-40 w-96 h-96 bg-[#065f46] rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob animation-delay-2000"></div>
+          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-[#047857] rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob animation-delay-4000"></div>
         </div>
-        <nav className="main-nav">
-          <a href="#" className="nav-link">Find Services</a>
-          <a href="#" className="nav-link">Become a Provider</a>
-          <a href="#" className="nav-link">How it works</a>
-        </nav>
-        <div className="auth-buttons">
-          <button className="btn-secondary" onClick={() => navigate('/login-provider')}>Log in</button>
-          <button className="btn-primary">Sign up</button>
-        </div>
-      </header>
 
-      <main className="signup-container">
-        <div className="signup-card signup-card-wide">
-          <Link to="/auth-registration" className="back-link">← Back</Link>
+        <div className="relative z-10 max-w-4xl mx-auto">
+          <Link 
+            to="/auth-registration" 
+            className="inline-flex items-center gap-2 text-white/80 hover:text-white mb-6 text-sm font-medium"
+          >
+            <ArrowLeft size={16} />
+            Back
+          </Link>
           
-          <h1 className="signup-title">Become a Service Provider</h1>
-          <p className="signup-subtitle">Create your professional profile and start offering your services</p>
-          
-          <form onSubmit={handleSubmit} className="signup-form">
-            <div className="form-section">
-              <h3 className="section-title">Personal Information</h3>
-              
-              <div className="form-row">
-                <div className="form-group">
-                  <label htmlFor="fullName" className="form-label">Full Name *</label>
-                  <input 
-                    type="text" 
-                    id="fullName"
-                    name="fullName"
-                    className={`form-input ${errors.fullName ? 'error' : ''}`}
-                    placeholder="Renad Al-xxx"
-                    value={formData.fullName}
-                    onChange={handleChange}
-                    required
-                  />
-                  {errors.fullName && <div className="error-message">{errors.fullName}</div>}
-                </div>
+          <div className="bg-white/10 backdrop-blur-md rounded-2xl shadow-2xl p-8 border border-white/20">
+            <h1 className="text-3xl font-bold mb-2 text-center">Become a Service Provider</h1>
+            <p className="text-gray-100 text-center mb-8">Create your professional profile and start offering your services</p>
+            
+            <form onSubmit={handleSubmit} className="space-y-8">
+              {/* Personal Information Section */}
+              <div>
+                <h3 className="text-xl font-semibold text-white mb-4 pb-2 border-b border-white/20">Personal Information</h3>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <label htmlFor="fullName" className="block text-sm font-medium text-white mb-2">
+                      Full Name *
+                    </label>
+                    <div className="relative">
+                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <User className="h-5 w-5 text-white/70" />
+                      </div>
+                      <input 
+                        type="text" 
+                        id="fullName"
+                        name="fullName"
+                        className={`block w-full pl-10 pr-3 py-3 border rounded-lg bg-white/10 backdrop-blur-sm text-white placeholder-white/60 border-white/30 focus:outline-none focus:ring-2 focus:ring-white/50 focus:border-transparent ${errors.fullName ? 'border-red-300' : ''}`}
+                        placeholder="Renad Al-xxx"
+                        value={formData.fullName}
+                        onChange={handleChange}
+                        required
+                      />
+                    </div>
+                    {errors.fullName && <p className="mt-1 text-sm text-red-200">{errors.fullName}</p>}
+                  </div>
 
-                <div className="form-group">
-                  <label htmlFor="email" className="form-label">Email Address *</label>
-                  <input 
-                    type="email" 
-                    id="email"
-                    name="email"
-                    className={`form-input ${errors.email ? 'error' : ''}`}
-                    placeholder="example@example.com"
-                    value={formData.email}
-                    onChange={handleChange}
-                    required
-                  />
-                  {errors.email && <div className="error-message">{errors.email}</div>}
+                  <div>
+                    <label htmlFor="email" className="block text-sm font-medium text-white mb-2">
+                      Email Address *
+                    </label>
+                    <div className="relative">
+                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <Mail className="h-5 w-5 text-white/70" />
+                      </div>
+                      <input 
+                        type="email" 
+                        id="email"
+                        name="email"
+                        className={`block w-full pl-10 pr-3 py-3 border rounded-lg bg-white/10 backdrop-blur-sm text-white placeholder-white/60 border-white/30 focus:outline-none focus:ring-2 focus:ring-white/50 focus:border-transparent ${errors.email ? 'border-red-300' : ''}`}
+                        placeholder="example@example.com"
+                        value={formData.email}
+                        onChange={handleChange}
+                        required
+                      />
+                    </div>
+                    {errors.email && <p className="mt-1 text-sm text-red-200">{errors.email}</p>}
+                  </div>
+
+                  <div>
+                    <label htmlFor="password" className="block text-sm font-medium text-white mb-2">
+                      Password *
+                    </label>
+                    <div className="relative">
+                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <Lock className="h-5 w-5 text-white/70" />
+                      </div>
+                      <input 
+                        type="password" 
+                        id="password"
+                        name="password"
+                        className={`block w-full pl-10 pr-3 py-3 border rounded-lg bg-white/10 backdrop-blur-sm text-white placeholder-white/60 border-white/30 focus:outline-none focus:ring-2 focus:ring-white/50 focus:border-transparent ${errors.password ? 'border-red-300' : ''}`}
+                        placeholder="Min. 8 characters"
+                        value={formData.password}
+                        onChange={handleChange}
+                        required
+                      />
+                    </div>
+                    {errors.password && <p className="mt-1 text-sm text-red-200">{errors.password}</p>}
+                  </div>
+
+                  <div>
+                    <label htmlFor="phone" className="block text-sm font-medium text-white mb-2">
+                      Phone Number
+                    </label>
+                    <div className="relative">
+                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <Phone className="h-5 w-5 text-white/70" />
+                      </div>
+                      <input 
+                        type="tel" 
+                        id="phone"
+                        name="phone"
+                        className="block w-full pl-10 pr-3 py-3 border rounded-lg bg-white/10 backdrop-blur-sm text-white placeholder-white/60 border-white/30 focus:outline-none focus:ring-2 focus:ring-white/50 focus:border-transparent"
+                        placeholder="+966 50 000 0000"
+                        value={formData.phone}
+                        onChange={handleChange}
+                      />
+                    </div>
+                  </div>
                 </div>
               </div>
 
-              <div className="form-row">
-                <div className="form-group">
-                  <label htmlFor="password" className="form-label">Password *</label>
-                  <input 
-                    type="password" 
-                    id="password"
-                    name="password"
-                    className={`form-input ${errors.password ? 'error' : ''}`}
-                    placeholder="Min. 8 characters"
-                    value={formData.password}
-                    onChange={handleChange}
-                    required
-                  />
-                  {errors.password && <div className="error-message">{errors.password}</div>}
-                </div>
+              {/* Professional Details Section */}
+              <div>
+                <h3 className="text-xl font-semibold text-white mb-4 pb-2 border-b border-white/20">Professional Details</h3>
+                
+                <div className="space-y-6">
+                  <div>
+                    <label htmlFor="category" className="block text-sm font-medium text-white mb-2">
+                      Primary Skill Category *
+                    </label>
+                    <div className="relative">
+                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <Briefcase className="h-5 w-5 text-white/70" />
+                      </div>
+                      <select 
+                        id="category"
+                        name="category"
+                        className={`block w-full pl-10 pr-3 py-3 border rounded-lg bg-white/10 backdrop-blur-sm text-white border-white/30 focus:outline-none focus:ring-2 focus:ring-white/50 focus:border-transparent ${errors.category ? 'border-red-300' : ''}`}
+                        value={formData.category}
+                        onChange={handleChange}
+                        required
+                      >
+                        <option value="" className="bg-gray-800">Select a category</option>
+                        <option value="home-services" className="bg-gray-800">Home Services</option>
+                        <option value="beauty" className="bg-gray-800">Beauty & Wellness</option>
+                        <option value="education" className="bg-gray-800">Education & Tutoring</option>
+                        <option value="tech" className="bg-gray-800">Tech & IT Services</option>
+                        <option value="events" className="bg-gray-800">Events & Entertainment</option>
+                        <option value="health" className="bg-gray-800">Health & Fitness</option>
+                        <option value="business" className="bg-gray-800">Business Services</option>
+                        <option value="other" className="bg-gray-800">Other</option>
+                      </select>
+                    </div>
+                    {errors.category && <p className="mt-1 text-sm text-red-200">{errors.category}</p>}
+                  </div>
 
-                <div className="form-group">
-                  <label htmlFor="phone" className="form-label">Phone Number</label>
-                  <input 
-                    type="tel" 
-                    id="phone"
-                    name="phone"
-                    className="form-input"
-                    placeholder="+966 50 000 0000"
-                    value={formData.phone}
-                    onChange={handleChange}
-                  />
+                  <div>
+                    <label htmlFor="bio" className="block text-sm font-medium text-white mb-2">
+                      Professional Bio *
+                    </label>
+                    <textarea 
+                      id="bio"
+                      name="bio"
+                      className={`block w-full px-3 py-3 border rounded-lg bg-white/10 backdrop-blur-sm text-white placeholder-white/60 border-white/30 focus:outline-none focus:ring-2 focus:ring-white/50 focus:border-transparent ${errors.bio ? 'border-red-300' : ''}`}
+                      placeholder="Tell clients about your experience and expertise..."
+                      rows="4"
+                      value={formData.bio}
+                      onChange={handleChange}
+                      required
+                    />
+                    <small className="text-white/70 text-xs mt-1 block">Minimum 50 characters</small>
+                    {errors.bio && <p className="mt-1 text-sm text-red-200">{errors.bio}</p>}
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                      <label htmlFor="experience" className="block text-sm font-medium text-white mb-2">
+                        Years of Experience *
+                      </label>
+                      <select 
+                        id="experience"
+                        name="experience"
+                        className={`block w-full px-3 py-3 border rounded-lg bg-white/10 backdrop-blur-sm text-white border-white/30 focus:outline-none focus:ring-2 focus:ring-white/50 focus:border-transparent ${errors.experience ? 'border-red-300' : ''}`}
+                        value={formData.experience}
+                        onChange={handleChange}
+                        required
+                      >
+                        <option value="" className="bg-gray-800">Select years</option>
+                        <option value="0-1" className="bg-gray-800">Less than 1 year</option>
+                        <option value="1-3" className="bg-gray-800">1-3 years</option>
+                        <option value="3-5" className="bg-gray-800">3-5 years</option>
+                        <option value="5-10" className="bg-gray-800">5-10 years</option>
+                        <option value="10+" className="bg-gray-800">10+ years</option>
+                      </select>
+                      {errors.experience && <p className="mt-1 text-sm text-red-200">{errors.experience}</p>}
+                    </div>
+
+                    <div>
+                      <label htmlFor="location" className="block text-sm font-medium text-white mb-2">
+                        Location
+                      </label>
+                      <div className="relative">
+                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                          <MapPin className="h-5 w-5 text-white/70" />
+                        </div>
+                        <input 
+                          type="text" 
+                          id="location"
+                          name="location"
+                          className="block w-full pl-10 pr-3 py-3 border rounded-lg bg-white/10 backdrop-blur-sm text-white placeholder-white/60 border-white/30 focus:outline-none focus:ring-2 focus:ring-white/50 focus:border-transparent"
+                          placeholder="City, Country"
+                          value={formData.location}
+                          onChange={handleChange}
+                        />
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
+
+              <div>
+                <label className="flex items-start">
+                  <input 
+                    type="checkbox" 
+                    id="terms"
+                    name="terms"
+                    checked={formData.terms}
+                    onChange={handleChange}
+                    className="h-4 w-4 text-[#047857] focus:ring-[#047857] border-white/30 rounded mt-1"
+                    required
+                  />
+                  <span className="ml-2 block text-sm text-white">
+                    I agree to the Provider Terms and understand that my profile will be reviewed before approval
+                  </span>
+                </label>
+                {errors.terms && <p className="mt-1 text-sm text-red-200">{errors.terms}</p>}
+              </div>
+
+              <button 
+                type="submit" 
+                disabled={loading}
+                className="w-full bg-[#047857] hover:bg-[#065f46] text-white font-semibold py-3 px-4 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {loading ? 'Submitting...' : 'Submit Application'}
+              </button>
+            </form>
+
+            <div className="mt-6 p-4 bg-white/5 rounded-lg border border-white/10">
+              <h3 className="text-sm font-semibold text-white mb-2">SYSTEM VALIDATION:</h3>
+              <ul className="text-xs text-white/80 space-y-1">
+                <li>• All required fields validated</li>
+                <li>• Email uniqueness check</li>
+                <li>• Bio minimum length validation</li>
+                <li>• Account pending admin approval</li>
+              </ul>
             </div>
-
-            <div className="form-section">
-              <h3 className="section-title">Professional Details</h3>
-              
-              <div className="form-group">
-                <label htmlFor="category" className="form-label">Primary Skill Category *</label>
-                <select 
-                  id="category"
-                  name="category"
-                  className={`form-input ${errors.category ? 'error' : ''}`}
-                  value={formData.category}
-                  onChange={handleChange}
-                  required
-                >
-                  <option value="">Select a category</option>
-                  <option value="home-services">Home Services</option>
-                  <option value="beauty">Beauty & Wellness</option>
-                  <option value="education">Education & Tutoring</option>
-                  <option value="tech">Tech & IT Services</option>
-                  <option value="events">Events & Entertainment</option>
-                  <option value="health">Health & Fitness</option>
-                  <option value="business">Business Services</option>
-                  <option value="other">Other</option>
-                </select>
-                {errors.category && <div className="error-message">{errors.category}</div>}
-              </div>
-
-              <div className="form-group">
-                <label htmlFor="bio" className="form-label">Professional Bio *</label>
-                <textarea 
-                  id="bio"
-                  name="bio"
-                  className={`form-textarea ${errors.bio ? 'error' : ''}`}
-                  placeholder="Tell clients about your experience and expertise..."
-                  rows="4"
-                  value={formData.bio}
-                  onChange={handleChange}
-                  required
-                />
-                <small className="form-hint">Minimum 50 characters</small>
-                {errors.bio && <div className="error-message">{errors.bio}</div>}
-              </div>
-
-              <div className="form-row">
-                <div className="form-group">
-                  <label htmlFor="experience" className="form-label">Years of Experience *</label>
-                  <select 
-                    id="experience"
-                    name="experience"
-                    className={`form-input ${errors.experience ? 'error' : ''}`}
-                    value={formData.experience}
-                    onChange={handleChange}
-                    required
-                  >
-                    <option value="">Select years</option>
-                    <option value="0-1">Less than 1 year</option>
-                    <option value="1-3">1-3 years</option>
-                    <option value="3-5">3-5 years</option>
-                    <option value="5-10">5-10 years</option>
-                    <option value="10+">10+ years</option>
-                  </select>
-                  {errors.experience && <div className="error-message">{errors.experience}</div>}
-                </div>
-
-                <div className="form-group">
-                  <label htmlFor="location" className="form-label">Location</label>
-                  <input 
-                    type="text" 
-                    id="location"
-                    name="location"
-                    className="form-input"
-                    placeholder="City, Country"
-                    value={formData.location}
-                    onChange={handleChange}
-                  />
-                </div>
-              </div>
-            </div>
-
-            <div className="form-group">
-              <label className="checkbox-container">
-                <input 
-                  type="checkbox" 
-                  id="terms"
-                  name="terms"
-                  checked={formData.terms}
-                  onChange={handleChange}
-                  required
-                />
-                <span className="checkbox-label">
-                  I agree to the Provider Terms and understand that my profile will be reviewed before approval
-                </span>
-              </label>
-              {errors.terms && <div className="error-message">{errors.terms}</div>}
-            </div>
-
-            <button type="submit" className="btn-signup" disabled={loading}>
-              {loading ? 'Submitting...' : 'Submit Application'}
-            </button>
-          </form>
-
-          <div className="system-info-box" style={{ marginTop: '1.5rem' }}>
-            <h3 className="system-title">SYSTEM VALIDATION:</h3>
-            <ul className="system-list">
-              <li>• All required fields validated</li>
-              <li>• Email uniqueness check</li>
-              <li>• Bio minimum length validation</li>
-              <li>• Account pending admin approval</li>
-            </ul>
           </div>
         </div>
-      </main>
-    </>
+      </div>
+    </div>
   )
 }
 

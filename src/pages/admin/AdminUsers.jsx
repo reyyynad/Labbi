@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import AdminHeader from '../components/admin/AdminHeader'
+import AdminHeader from '../../components/admin/AdminHeader'
 
 function AdminUsers() {
   const [searchTerm, setSearchTerm] = useState('')

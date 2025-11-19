@@ -5,7 +5,7 @@ import { setAuthData } from '../../utils/auth'
 import Header from '../../components/header/Header'
 import { User, Mail, Lock } from 'lucide-react'
 
-function LoginProvider() {
+function LoginAdmin() {
   const navigate = useNavigate()
   const [formData, setFormData] = useState({
     fullName: '',
@@ -57,13 +57,12 @@ function LoginProvider() {
 
     setTimeout(() => {
       const mockToken = 'mock_token_' + Date.now()
-      // Use the full name from the form
       const userName = formData.fullName.trim()
       
-      setAuthData(mockToken, formData.email, 'provider', userName, formData.remember)
+      setAuthData(mockToken, formData.email, 'admin', userName, formData.remember)
       
       setLoading(false)
-      navigate('/provider')
+      navigate('/admin-panel')
     }, 1500)
   }
 
@@ -81,8 +80,8 @@ function LoginProvider() {
 
         <div className="relative z-10 max-w-md mx-auto">
           <div className="bg-white/10 backdrop-blur-md rounded-2xl shadow-2xl p-8 border border-white/20">
-            <h1 className="text-3xl font-bold mb-2 text-center">Welcome back</h1>
-            <p className="text-gray-100 text-center mb-8">Log in to your Labbi - لبِّ provider account</p>
+            <h1 className="text-3xl font-bold mb-2 text-center">Admin Login</h1>
+            <p className="text-gray-100 text-center mb-8">Log in to your Labbi - لبِّ admin account</p>
             
             <form onSubmit={handleSubmit} className="space-y-6">
               <div>
@@ -98,7 +97,7 @@ function LoginProvider() {
                     id="fullName"
                     name="fullName"
                     className={`block w-full pl-10 pr-3 py-3 border rounded-lg bg-white/10 backdrop-blur-sm text-white placeholder-white/60 border-white/30 focus:outline-none focus:ring-2 focus:ring-white/50 focus:border-transparent ${errors.fullName ? 'border-red-300' : ''}`}
-                    placeholder="Arwa Aldawoud"
+                    placeholder="Admin Name"
                     value={formData.fullName}
                     onChange={handleChange}
                     required
@@ -120,7 +119,7 @@ function LoginProvider() {
                     id="email"
                     name="email"
                     className={`block w-full pl-10 pr-3 py-3 border rounded-lg bg-white/10 backdrop-blur-sm text-white placeholder-white/60 border-white/30 focus:outline-none focus:ring-2 focus:ring-white/50 focus:border-transparent ${errors.email ? 'border-red-300' : ''}`}
-                    placeholder="example@example.com"
+                    placeholder="admin@labbi.com"
                     value={formData.email}
                     onChange={handleChange}
                     required
@@ -173,52 +172,14 @@ function LoginProvider() {
                 disabled={loading}
                 className="w-full bg-[#047857] hover:bg-[#065f46] text-white font-semibold py-3 px-4 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {loading ? 'Logging in...' : 'Log in'}
-              </button>
-
-              <div className="relative">
-                <div className="absolute inset-0 flex items-center">
-                  <div className="w-full border-t border-white/30"></div>
-                </div>
-                <div className="relative flex justify-center text-sm">
-                  <span className="px-2 bg-transparent text-white/80">Or continue with</span>
-                </div>
-              </div>
-
-              <button 
-                type="button"
-                className="w-full bg-white hover:bg-gray-50 text-gray-700 font-medium py-3 px-4 rounded-lg transition-colors flex items-center justify-center gap-2"
-              >
-                <svg width="20" height="20" viewBox="0 0 20 20">
-                  <path d="M19.6 10.23c0-.82-.1-1.42-.25-2.05H10v3.72h5.5c-.15.96-.74 2.31-2.04 3.22v2.45h3.16c1.89-1.73 2.98-4.3 2.98-7.34z" fill="#4285F4"/>
-                  <path d="M13.46 15.13c-.83.59-1.96 1-3.46 1-2.64 0-4.88-1.74-5.68-4.15H1.07v2.52C2.72 17.75 6.09 20 10 20c2.7 0 4.96-.89 6.62-2.42l-3.16-2.45z" fill="#34A853"/>
-                  <path d="M3.99 10c0-.69.12-1.35.32-1.97V5.51H1.07A9.973 9.973 0 000 10c0 1.61.39 3.14 1.07 4.49l3.24-2.52c-.2-.62-.32-1.28-.32-1.97z" fill="#FBBC05"/>
-                  <path d="M10 3.88c1.88 0 3.13.81 3.85 1.48l2.84-2.76C14.96.99 12.7 0 10 0 6.09 0 2.72 2.25 1.07 5.51l3.24 2.52C5.12 5.62 7.36 3.88 10 3.88z" fill="#EA4335"/>
-                </svg>
-                Google
+                {loading ? 'Logging in...' : 'Log in as Admin'}
               </button>
 
               <p className="text-center text-sm text-white/80">
-                Don't have an account?{' '}
-                <Link to="/signup-provider" className="font-medium text-white hover:underline">
-                  Sign up
-                </Link>
-              </p>
-
-              <div className="relative mt-4">
-                <div className="absolute inset-0 flex items-center">
-                  <div className="w-full border-t border-white/30"></div>
-                </div>
-                <div className="relative flex justify-center text-sm">
-                  <span className="px-2 bg-transparent text-white/80">Or</span>
-                </div>
-              </div>
-
-              <p className="text-center text-sm text-white/80 mt-4">
-                Are you a customer?{' '}
-                <Link to="/login" className="font-medium text-white hover:underline">
-                  Log in as Customer
-                </Link>
+                Not an admin?{' '}
+                <Link to="/login" className="font-medium text-white hover:underline">Customer Login</Link>
+                {' | '}
+                <Link to="/login-provider" className="font-medium text-white hover:underline">Provider Login</Link>
               </p>
             </form>
           </div>
@@ -228,5 +189,5 @@ function LoginProvider() {
   )
 }
 
-export default LoginProvider
+export default LoginAdmin
 

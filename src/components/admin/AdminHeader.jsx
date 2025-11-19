@@ -1,10 +1,16 @@
 import React, { useState, useEffect } from 'react'
-import { Link, useLocation } from 'react-router-dom'
-import { getUserName, getUserEmail } from '../../utils/auth'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
+import { getUserName, getUserEmail, logout } from '../../utils/auth'
+import { LogOut } from 'lucide-react'
 
 function AdminHeader() {
   const location = useLocation()
+  const navigate = useNavigate()
   const [userInitials, setUserInitials] = useState('AD')
+
+  const handleLogout = () => {
+    logout(navigate)
+  }
 
   useEffect(() => {
     const name = getUserName()
@@ -61,8 +67,29 @@ function AdminHeader() {
         </Link>
       </nav>
       <div className="admin-header-actions">
-        <button className="btn-user-avatar" title="Settings">
+        <button className="btn-user-avatar" title={getUserName() || 'Admin'}>
           {userInitials}
+        </button>
+        <button 
+          onClick={handleLogout}
+          className="btn-logout-admin"
+          title="Logout"
+          style={{
+            marginLeft: '1rem',
+            padding: '0.5rem 1rem',
+            background: 'transparent',
+            border: '1px solid rgba(255, 255, 255, 0.3)',
+            color: 'white',
+            borderRadius: '4px',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.5rem',
+            fontSize: '0.875rem'
+          }}
+        >
+          <LogOut size={16} />
+          Logout
         </button>
       </div>
     </header>
