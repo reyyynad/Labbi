@@ -222,15 +222,6 @@ function SignupCustomer() {
                 Google
               </button>
             </form>
-
-            <div className="mt-6 p-4 bg-white/5 rounded-lg border border-white/10">
-              <h3 className="text-sm font-semibold text-white mb-2">SYSTEM VALIDATION:</h3>
-              <ul className="text-xs text-white/80 space-y-1">
-                <li>• Email uniqueness check</li>
-                <li>• Password strength validation</li>
-                <li>• Confirmation email sent upon submission</li>
-              </ul>
-            </div>
           </div>
         </div>
       </div>
