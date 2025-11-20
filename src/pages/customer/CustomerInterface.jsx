@@ -57,7 +57,7 @@ const HeroSection = ({ onBrowseServices }) => {
           <div className="max-w-lg">
             <h2 className="text-3xl md:text-4xl font-bold mb-6 leading-tight">About Labbi</h2>
             <p className="text-lg leading-relaxed mb-10 text-gray-100">
-              Labbi is a digital marketplace built to create a win-win environment for both service providers and clients...
+            Labbi is a digital marketplace built to create a win-win environment for both service providers and clients. It allows individuals to share their skills, earn money, and build credibility, while giving clients a simple way to find reliable services that match their needs.
             </p>
             <button
               type="button"
