@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import { Link, useLocation, useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { getUserEmail, getUserName, logout } from '../../utils/auth'
 import logoPath from '../../assets/images/labbi_logo.svg'
 import { LayoutDashboard, Users, Layers, BarChart3, LogOut } from 'lucide-react'
@@ -31,7 +31,6 @@ const getInitials = (name, email) => {
 }
 
 function AdminHeader() {
-  const location = useLocation()
   const navigate = useNavigate()
   const [userName, setUserName] = useState('Admin')
   const [userEmail, setUserEmail] = useState('')
@@ -48,8 +47,6 @@ function AdminHeader() {
   const handleLogout = () => {
     logout(navigate)
   }
-
-  const isActive = (path) => location.pathname === path
 
   return (
     <header className="bg-[#1e3a8a] text-white shadow-md py-4 px-6 transition-all duration-300">
@@ -73,35 +70,33 @@ function AdminHeader() {
           </div>
         </div>
 
-        <nav className="flex flex-wrap items-center gap-4 text-sm font-medium">
+        <div className="flex items-center gap-6">
           {navLinks.map(({ label, path, icon: Icon }) => (
             <Link
               key={path}
               to={path}
-              className={`text-white hover:text-gray-200 inline-flex items-center gap-1 ${
-                isActive(path) ? 'border-b-2 border-white pb-1' : ''
-              }`}
+              className="text-white hover:text-gray-200 text-sm font-medium transition-colors inline-flex items-center gap-1"
             >
               <Icon size={16} />
               {label}
             </Link>
           ))}
-        </nav>
-
-        <div className="flex items-center gap-3">
-          <div
-            className="w-11 h-11 rounded-full bg-white/20 border border-white/30 flex items-center justify-center font-semibold"
-            title={userName || 'Admin'}
-          >
-            {userInitials}
+          <div className="flex items-center gap-3 ml-2 pl-4 border-l border-white/20">
+            <div
+              className="w-10 h-10 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center font-semibold border border-white/30"
+              title={userName || 'Admin'}
+            >
+              <span className="text-sm font-bold text-white">{userInitials}</span>
+            </div>
+            <button
+              onClick={handleLogout}
+              className="text-white hover:text-gray-200 text-sm font-medium inline-flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-white/10 transition-all"
+              title="Logout"
+            >
+              <LogOut size={16} />
+              <span className="hidden md:inline">Logout</span>
+            </button>
           </div>
-          <button
-            onClick={handleLogout}
-            className="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold border border-white/40 rounded-lg hover:bg-white/10 transition-colors"
-          >
-            <LogOut size={16} />
-            Logout
-          </button>
         </div>
       </div>
     </header>

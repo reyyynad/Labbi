@@ -113,7 +113,7 @@ function Login() {
                   <label htmlFor="password" className="block text-sm font-medium text-white">
                     Password
                   </label>
-                  <a href="#" className="text-sm text-white/80 hover:text-white">Forgot?</a>
+                  <Link to="/forgot-password" className="text-sm text-white/80 hover:text-white">Forgot password?</Link>
                 </div>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">

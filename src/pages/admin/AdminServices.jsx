@@ -1,8 +1,11 @@
 import React from 'react'
+import { useNavigate } from 'react-router-dom'
 import AdminHeader from '../../components/admin/AdminHeader'
 import { Layers, ShieldCheck, Eye, Plus, AlertCircle, CheckCircle2 } from 'lucide-react'
 
 function AdminServices() {
+  const navigate = useNavigate()
+  
   const summaryCards = [
     { label: 'Total Services', value: 3842, change: '+92 this month', icon: Layers },
     { label: 'Pending Reviews', value: 27, change: 'Avg 6 hrs review time', icon: AlertCircle },
@@ -62,7 +65,10 @@ function AdminServices() {
               Moderate listings, monitor categories, and keep the marketplace healthy
             </p>
           </div>
-          <button className="inline-flex items-center gap-2 px-5 py-3 bg-[#047857] text-white text-sm font-semibold rounded-lg shadow hover:bg-[#065f46] transition-colors">
+          <button 
+            onClick={() => navigate('/admin/add-category')}
+            className="inline-flex items-center gap-2 px-5 py-3 bg-[#047857] text-white text-sm font-semibold rounded-lg shadow hover:bg-[#065f46] transition-colors"
+          >
             <Plus className="w-4 h-4" />
             Add New Category
           </button>

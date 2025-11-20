@@ -11,6 +11,7 @@ import SignupCustomer from './pages/auth_registration/SignupCustomer';
 import SignupProvider from './pages/auth_registration/SignupProvider';
 import VerifyEmail from './pages/auth_registration/VerifyEmail';
 import VerifyEmailProvider from './pages/auth_registration/VerifyEmailProvider';
+import ForgotPassword from './pages/auth_registration/ForgotPassword';
 
 // Customer Pages
 import CustomerInterface from './pages/customer/CustomerInterface';
@@ -35,6 +36,7 @@ import ProviderSettings from './pages/service_provider/ProviderSettings';
 import AdminPanel from './pages/admin/AdminPanel';
 import AdminUsers from './pages/admin/AdminUsers';
 import AdminServices from './pages/admin/AdminServices';
+import AdminAddCategory from './pages/admin/AdminAddCategory';
 import Analytics from './pages/admin/Analytics';
 
 function App() {
@@ -45,6 +47,7 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/login-provider" element={<LoginProvider />} />
         <Route path="/login-admin" element={<LoginAdmin />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/auth-registration" element={<AuthRegistration />} />
         <Route path="/signup-customer" element={<SignupCustomer />} />
         <Route path="/signup-provider" element={<SignupProvider />} />
@@ -208,6 +211,14 @@ function App() {
           element={
             <ProtectedRoute allowedUserTypes={['admin']}>
               <AdminServices />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/add-category"
+          element={
+            <ProtectedRoute allowedUserTypes={['admin']}>
+              <AdminAddCategory />
             </ProtectedRoute>
           }
         />
