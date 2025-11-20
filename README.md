@@ -1,6 +1,7 @@
 # Labbi (لبِّ) - Service Marketplace Platform
 
-![Labbi Logo](src/assets/images/labbi_logo.svg)
+<img width="1004" height="544" alt="Screenshot 2025-11-20 at 12 59 41 AM" src="https://github.com/user-attachments/assets/228f0464-c640-4e21-a308-efed69cd41f3" /> 
+
 **Frontend Repository:** https://github.com/reyyynad/Labbi  
 **Current Version:** Milestone 4 – Fully Interactive React Prototype (November 2025)
 
@@ -67,6 +68,8 @@ Labbi empowers young providers to earn money and build reputation, while custome
 - “Remember me”  
 - Protected routes per role  
 
+
+
 ---
 
 ## 🎨 Design & UX Excellence
@@ -101,12 +104,13 @@ npm run dev
 
 Visit: **[http://localhost:5173](http://localhost:5173)**
 
-### 🔑 Admin Login (Demo)
 
-* Email: anything
-* Name: anything
-* Password: anything
-  → Redirects to `/admin-panel`
+
+> **Note:**  
+> To test **Customer** or **Service Provider** flows, just clone the repo, run normally, and login/signup as usual.  
+> To test **Admin** pages, use the following credentials:
+> * **Email:** `admin123@gmail.com`
+> * **Name & Password:** anything (redirects to `/admin-panel`)
 
 ---
 
@@ -146,6 +150,7 @@ Junior Software Engineering Student
 **Arwa Aldawoud**  
 Junior Computer Science Student 
 
+---
 
 This project represents a **high-quality Milestone 4 submission**—built with passion, precision, and real-world readiness.
 
@@ -153,7 +158,7 @@ This project represents a **high-quality Milestone 4 submission**—built with p
 لبِّ
 
 
----
+
 
 ### 💚 لبِّ – خدمتك مطلوبة وحاجتك موجودة
 
