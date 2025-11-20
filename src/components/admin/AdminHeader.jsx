@@ -83,7 +83,8 @@ function AdminHeader() {
           ))}
           <div className="flex items-center gap-3 ml-2 pl-4 border-l border-white/20">
             <div
-              className="w-10 h-10 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center font-semibold border border-white/30"
+              onClick={() => navigate('/admin/profile')}
+              className="w-10 h-10 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center font-semibold border border-white/30 cursor-pointer hover:bg-white/30 transition-all"
               title={userName || 'Admin'}
             >
               <span className="text-sm font-bold text-white">{userInitials}</span>

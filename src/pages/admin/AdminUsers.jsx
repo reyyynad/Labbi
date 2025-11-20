@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react'
 import AdminHeader from '../../components/admin/AdminHeader'
-import { Search, Filter } from 'lucide-react'
+import { Search, Filter, Download } from 'lucide-react'
 
 function AdminUsers() {
   const [searchTerm, setSearchTerm] = useState('')
@@ -36,6 +36,43 @@ function AdminUsers() {
   const typeVariants = {
     Client: 'bg-[#eef2ff] text-[#3730a3]',
     Provider: 'bg-[#e0f2fe] text-[#075985]'
+  }
+
+  const handleExportList = () => {
+    // Create CSV headers
+    const headers = ['Name', 'Email', 'Type', 'Status', 'Join Date', 'Activity']
+    
+    // Convert users data to CSV rows
+    const csvRows = [
+      headers.join(','),
+      ...filteredUsers.map(user => [
+        `"${user.name}"`,
+        `"${user.email}"`,
+        `"${user.type}"`,
+        `"${user.status}"`,
+        `"${user.joinDate}"`,
+        `"${user.activity}"`
+      ].join(','))
+    ]
+    
+    // Create CSV content
+    const csvContent = csvRows.join('\n')
+    
+    // Create blob and download
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
+    const link = document.createElement('a')
+    const url = URL.createObjectURL(blob)
+    
+    link.setAttribute('href', url)
+    link.setAttribute('download', `users_export_${new Date().toISOString().split('T')[0]}.csv`)
+    link.style.visibility = 'hidden'
+    
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    
+    // Clean up the URL
+    URL.revokeObjectURL(url)
   }
 
   return (
@@ -95,7 +132,11 @@ function AdminUsers() {
                 Showing {filteredUsers.length} of {allUsers.length} users
               </p>
             </div>
-            <button className="px-4 py-2 text-sm font-semibold text-white bg-[#047857] rounded-lg hover:bg-[#065f46] transition-colors">
+            <button 
+              onClick={handleExportList}
+              className="px-4 py-2 text-sm font-semibold text-white bg-[#047857] rounded-lg hover:bg-[#065f46] transition-colors inline-flex items-center gap-2"
+            >
+              <Download size={16} />
               Export List
             </button>
           </div>

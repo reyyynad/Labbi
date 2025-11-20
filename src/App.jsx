@@ -38,6 +38,7 @@ import AdminUsers from './pages/admin/AdminUsers';
 import AdminServices from './pages/admin/AdminServices';
 import AdminAddCategory from './pages/admin/AdminAddCategory';
 import Analytics from './pages/admin/Analytics';
+import AdminProfile from './pages/admin/AdminProfile';
 
 function App() {
   return (
@@ -227,6 +228,14 @@ function App() {
           element={
             <ProtectedRoute allowedUserTypes={['admin']}>
               <Analytics />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/profile"
+          element={
+            <ProtectedRoute allowedUserTypes={['admin']}>
+              <AdminProfile />
             </ProtectedRoute>
           }
         />

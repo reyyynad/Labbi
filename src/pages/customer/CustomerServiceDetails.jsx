@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ArrowLeft, Star, MapPin, Mail, Phone, Calendar, Clock } from 'lucide-react';
+import { ArrowLeft, Star, MapPin, Mail, Phone } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import Header from '../../components/header/Header';
 import { getAuthToken } from '../../utils/auth';
@@ -126,12 +126,6 @@ const ProviderInfo = ({ provider }) => {
 
 // ========== BOOKING FORM WIDGET ==========
 const BookingForm = ({ price, serviceId, navigate, isAuthenticated }) => {
-  const [formData, setFormData] = useState({
-    date: '',
-    time: '',
-    duration: ''
-  });
-
   const subtotal = 50;
   const serviceFee = 5;
   const total = subtotal + serviceFee;
@@ -149,49 +143,6 @@ const BookingForm = ({ price, serviceId, navigate, isAuthenticated }) => {
       <div className="text-center mb-6 pb-6 border-b border-gray-200">
         <p className="text-sm text-gray-600 mb-1">Starting at</p>
         <p className="text-3xl font-bold text-[#047857]">{price} SR<span className="text-base font-normal">/hr</span></p>
-      </div>
-
-      <div className="space-y-4 mb-6">
-        <div>
-          <label className="block text-sm font-medium mb-2">Preferred Date</label>
-          <div className="relative">
-            <Calendar size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-            <input
-              type="date"
-              value={formData.date}
-              onChange={(e) => setFormData({...formData, date: e.target.value})}
-              className="w-full pl-10 pr-3 py-2 text-sm border border-gray-300 rounded bg-white focus:outline-none focus:ring-2 focus:ring-[#047857]"
-            />
-          </div>
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium mb-2">Preferred Time</label>
-          <div className="relative">
-            <Clock size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-            <input
-              type="time"
-              value={formData.time}
-              onChange={(e) => setFormData({...formData, time: e.target.value})}
-              className="w-full pl-10 pr-3 py-2 text-sm border border-gray-300 rounded bg-white focus:outline-none focus:ring-2 focus:ring-[#047857]"
-            />
-          </div>
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium mb-2">Duration</label>
-          <select 
-            value={formData.duration}
-            onChange={(e) => setFormData({...formData, duration: e.target.value})}
-            className="w-full px-3 py-2 text-sm border border-gray-300 rounded bg-white focus:outline-none focus:ring-2 focus:ring-[#047857]"
-          >
-            <option value="">Select duration</option>
-            <option>1 hour</option>
-            <option>2 hours</option>
-            <option>3 hours</option>
-            <option>4+ hours</option>
-          </select>
-        </div>
       </div>
 
       <div className="space-y-2 mb-6 pb-6 border-b border-gray-200">
@@ -216,15 +167,6 @@ const BookingForm = ({ price, serviceId, navigate, isAuthenticated }) => {
         <Button variant="outline" size="medium">
           Save for Later
         </Button>
-      </div>
-
-      <div className="mt-6 pt-6 border-t border-gray-200">
-        <h4 className="text-xs font-semibold mb-2 text-[#374151]">BOOKING FLOW:</h4>
-        <ul className="text-xs text-gray-600 space-y-1">
-          <li>• Select date/time</li>
-          <li>• Provider confirms</li>
-          <li>• Payment processed</li>
-        </ul>
       </div>
     </div>
   );
