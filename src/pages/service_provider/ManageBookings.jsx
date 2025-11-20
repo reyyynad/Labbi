@@ -6,43 +6,43 @@ import ProviderHeader from '../../components/header/ProviderHeader';
 const mockBookings = [
   {
     id: 1000,
-    customer: "John Doe",
+    customer: "Renad Elsafi",
     service: "Professional House Cleaning",
     date: "Nov 15, 2024",
     time: "10:00 AM - 12:00 PM",
     price: 120,
     status: "Pending",
-    location: "123 Main St, New York, NY"
+    location: "King Saud Rd, Dhahran, Saudi Arabia"
   },
   {
     id: 1001,
-    customer: "Alice Smith",
+    customer: "Shatha Alharbi",
     service: "Professional House Cleaning",
     date: "Nov 16, 2024",
     time: "2:00 PM - 4:00 PM",
     price: 160,
     status: "Confirmed",
-    location: "456 Oak Ave, New York, NY"
+    location: "Al Olaya District, Riyadh, Saudi Arabia"
   },
   {
     id: 1002,
-    customer: "Mike Johnson",
+    customer: "Adel Hassan",
     service: "Deep Cleaning Service",
     date: "Nov 10, 2024",
     time: "9:00 AM - 1:00 PM",
     price: 240,
     status: "Completed",
-    location: "789 Pine St, New York, NY"
+    location: "King Abdullah Rd, Riyadh, Saudi Arabia"
   },
   {
     id: 1003,
-    customer: "Sarah Williams",
+    customer: "Mohammed Ali",
     service: "Move-In/Out Cleaning",
     date: "Nov 8, 2024",
     time: "10:00 AM - 2:00 PM",
     price: 150,
     status: "Completed",
-    location: "321 Elm St, New York, NY"
+    location: "Diplomatic Quarter, Riyadh, Saudi Arabia"
   }
 ];
 
@@ -129,7 +129,7 @@ const ManageBookings = ({ onNavigate }) => {
         </div>
         <div className="flex items-center gap-2 text-gray-700">
           <DollarSign className="w-4 h-4 text-gray-500" />
-          <span>${booking.price}</span>
+          <span>SR{booking.price}</span>
         </div>
       </div>
 

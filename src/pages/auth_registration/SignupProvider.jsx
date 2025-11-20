@@ -309,15 +309,6 @@ function SignupProvider() {
               </button>
             </form>
 
-            <div className="mt-6 p-4 bg-white/5 rounded-lg border border-white/10">
-              <h3 className="text-sm font-semibold text-white mb-2">SYSTEM VALIDATION:</h3>
-              <ul className="text-xs text-white/80 space-y-1">
-                <li>• All required fields validated</li>
-                <li>• Email uniqueness check</li>
-                <li>• Bio minimum length validation</li>
-                <li>• Account pending admin approval</li>
-              </ul>
-            </div>
           </div>
         </div>
       </div>

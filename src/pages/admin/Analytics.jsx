@@ -94,15 +94,7 @@ function Analytics() {
             </div>
           </div>
 
-          <div className="admin-info-box">
-            <h3 className="info-title">ANALYTICS FEATURES:</h3>
-            <ul className="info-list">
-              <li>• Real-time data visualization</li>
-              <li>• Custom date range selection</li>
-              <li>• Export reports (CSV, PDF)</li>
-              <li>• Trend analysis and forecasting</li>
-            </ul>
-          </div>
+
         </div>
       </main>
     </>

@@ -47,10 +47,10 @@ const CustomerBookingConfirmation = () => {
 
   const bookingData = {
     service: 'Professional House Cleaning',
-    provider: 'Sarah Johnson',
+    provider: 'Renad Elsafi',
     date: 'November 15, 2024',
     time: '10:00 AM - 12:00 PM',
-    location: '123 Main St, New York, NY 10001',
+    location: 'King Saud Rd, Dhahran, Saudi Arabia',
     duration: '2 hours',
     serviceCost: 80.00,
     platformFee: 8.00,
@@ -94,7 +94,7 @@ const CustomerBookingConfirmation = () => {
                 <div className="flex-1">
                   <h3 className="font-semibold text-[#374151] mb-1">{bookingData.service}</h3>
                   <p className="text-sm text-gray-600">by {bookingData.provider}</p>
-                  <p className="text-sm font-semibold text-[#047857] mt-1">${bookingData.serviceCost/bookingData.duration.split(' ')[0]}/hour</p>
+                  <p className="text-sm font-semibold text-[#047857] mt-1">SR{bookingData.serviceCost/bookingData.duration.split(' ')[0]}/hour</p>
                 </div>
               </div>
             </div>
@@ -171,19 +171,19 @@ const CustomerBookingConfirmation = () => {
               <div className="space-y-3 mb-4">
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-600">Service Fee ({bookingData.duration}):</span>
-                  <span className="font-medium text-[#374151]">${bookingData.serviceCost.toFixed(2)}</span>
+                  <span className="font-medium text-[#374151]">SR{bookingData.serviceCost.toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-600">Platform Fee:</span>
-                  <span className="font-medium text-[#374151]">${bookingData.platformFee.toFixed(2)}</span>
+                  <span className="font-medium text-[#374151]">SR{bookingData.platformFee.toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-600">Tax:</span>
-                  <span className="font-medium text-[#374151]">${bookingData.tax.toFixed(2)}</span>
+                  <span className="font-medium text-[#374151]">SR{bookingData.tax.toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between pt-3 border-t-2 border-gray-200">
                   <span className="font-semibold text-[#374151]">Total:</span>
-                  <span className="font-bold text-xl text-[#374151]">${bookingData.total.toFixed(2)}</span>
+                  <span className="font-bold text-xl text-[#374151]">SR{bookingData.total.toFixed(2)}</span>
                 </div>
               </div>
 

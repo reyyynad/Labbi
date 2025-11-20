@@ -3,6 +3,7 @@ import { Search, Filter, Star, MapPin, X } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import Header from '../../components/header/Header';
 import logoPath from '../../assets/images/labbi_logo.svg';
+import servicesCatalog from '../../data/services';
 
 // ========== BUTTON COMPONENT ==========
 const Button = ({ 
@@ -176,7 +177,7 @@ const FilterSidebar = ({ filters, setFilters, onClose, show }) => {
 
           {/* Price Range */}
           <div className="mb-6">
-            <label className="block text-sm font-semibold text-[#374151] mb-2">Price Range ($/hr)</label>
+            <label className="block text-sm font-semibold text-[#374151] mb-2">Price Range (SR/hr)</label>
             <div className="flex gap-2">
               <input
                 type="number"
@@ -221,11 +222,8 @@ const FilterSidebar = ({ filters, setFilters, onClose, show }) => {
               className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-[#047857]"
             >
               <option value="">All Locations</option>
-              <option>New York, NY</option>
-              <option>Los Angeles, CA</option>
-              <option>Chicago, IL</option>
-              <option>Houston, TX</option>
-              <option>Miami, FL</option>
+              <option>Dhahran, Saudi Arabia</option>
+              <option>Riyadh, Saudi Arabia</option>
             </select>
           </div>
 
@@ -350,7 +348,7 @@ const ServiceCard = ({ service, onViewDetails }) => {
         <div className="flex items-center justify-between pt-4 border-t border-gray-100">
           <div>
             <span className="text-xs text-gray-500">Starting at</span>
-            <div className="font-bold text-[#374151] text-xl">${service.price}<span className="text-sm font-normal">/{service.unit}</span></div>
+            <div className="font-bold text-[#374151] text-xl">SR{service.price}<span className="text-sm font-normal">/{service.unit}</span></div>
           </div>
           <Button size="small" variant="primary" onClick={onViewDetails}>
             View Details
@@ -375,125 +373,7 @@ const CustomerInterface = () => {
     location: ''
   });
 
-  const allServices = [
-    {
-      id: 1,
-      title: 'Professional House Cleaning',
-      description: 'Thorough and reliable cleaning services',
-      provider: 'Sarah Johnson',
-      rating: 4.9,
-      reviews: 127,
-      price: 40,
-      unit: 'hour',
-      location: 'New York, NY',
-      category: 'Home Services',
-      image: 'https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=400'
-    },
-    {
-      id: 2,
-      title: 'Expert Plumbing Services',
-      description: 'Fast and professional plumbing solutions',
-      provider: 'Mike Davis',
-      rating: 4.8,
-      reviews: 94,
-      price: 60,
-      unit: 'hour',
-      location: 'New York, NY',
-      category: 'Home Services',
-      image: 'https://images.unsplash.com/photo-1607472586893-edb57bdc0e39?w=400'
-    },
-    {
-      id: 3,
-      title: 'Personal Training Sessions',
-      description: 'Customized fitness and wellness programs',
-      provider: 'Emma Wilson',
-      rating: 5.0,
-      reviews: 203,
-      price: 50,
-      unit: 'session',
-      location: 'New York, NY',
-      category: 'Health & Wellness',
-      image: 'https://images.unsplash.com/photo-1571019614242-c5c5dee9f50b?w=400'
-    },
-    {
-      id: 4,
-      title: 'Web Development Services',
-      description: 'Modern and responsive web solutions',
-      provider: 'David Chen',
-      rating: 4.9,
-      reviews: 156,
-      price: 80,
-      unit: 'hour',
-      location: 'Los Angeles, CA',
-      category: 'Professional Services',
-      image: 'https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=400'
-    },
-    {
-      id: 5,
-      title: 'Professional Photography',
-      description: 'Capture your special moments',
-      provider: 'Lisa Anderson',
-      rating: 4.7,
-      reviews: 89,
-      price: 150,
-      unit: 'session',
-      location: 'Chicago, IL',
-      category: 'Creative Services',
-      image: 'https://images.unsplash.com/photo-1542038784456-1ea8e935640e?w=400'
-    },
-    {
-      id: 6,
-      title: 'Yoga & Meditation Classes',
-      description: 'Find your inner peace and balance',
-      provider: 'Rachel Green',
-      rating: 4.9,
-      reviews: 178,
-      price: 30,
-      unit: 'session',
-      location: 'Miami, FL',
-      category: 'Health & Wellness',
-      image: 'https://images.unsplash.com/photo-1506126613408-eca07ce68773?w=400'
-    },
-    {
-      id: 7,
-      title: 'Graphic Design Services',
-      description: 'Creative designs for your brand',
-      provider: 'Alex Martinez',
-      rating: 4.8,
-      reviews: 142,
-      price: 65,
-      unit: 'hour',
-      location: 'Houston, TX',
-      category: 'Creative Services',
-      image: 'https://images.unsplash.com/photo-1626785774573-4b799315345d?w=400'
-    },
-    {
-      id: 8,
-      title: 'Home Renovation Consulting',
-      description: 'Expert advice for your home projects',
-      provider: 'Tom Builder',
-      rating: 4.6,
-      reviews: 76,
-      price: 55,
-      unit: 'hour',
-      location: 'New York, NY',
-      category: 'Home Services',
-      image: 'https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=400'
-    },
-    {
-      id: 9,
-      title: 'Business Consulting',
-      description: 'Strategic guidance for your business',
-      provider: 'Jennifer Smith',
-      rating: 5.0,
-      reviews: 234,
-      price: 120,
-      unit: 'hour',
-      location: 'Los Angeles, CA',
-      category: 'Professional Services',
-      image: 'https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?w=400'
-    }
-  ];
+  const allServices = servicesCatalog;
 
   // Filter and search logic
   const filteredServices = useMemo(() => {
@@ -537,7 +417,7 @@ const CustomerInterface = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Header transparent />
+      <Header transparent showAuthButtons />
       <HeroSection onBrowseServices={handleBrowseServices} />
       <SearchBar 
         searchQuery={searchQuery}

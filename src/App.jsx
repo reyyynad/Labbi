@@ -1,7 +1,6 @@
 import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import ProtectedRoute from './components/common/ProtectedRoute';
-import { getAuthToken, getUserType } from './utils/auth';
 
 // Auth & Registration Pages
 import Login from './pages/auth_registration/Login';
@@ -38,26 +37,6 @@ import AdminUsers from './pages/admin/AdminUsers';
 import AdminServices from './pages/admin/AdminServices';
 import Analytics from './pages/admin/Analytics';
 
-// Redirect component that checks auth and redirects appropriately
-const HomeRedirect = () => {
-  const token = getAuthToken();
-  const userType = getUserType();
-
-  if (!token) {
-    return <Navigate to="/login" replace />;
-  }
-
-  if (userType === 'customer') {
-    return <Navigate to="/customer" replace />;
-  } else if (userType === 'provider') {
-    return <Navigate to="/provider" replace />;
-  } else if (userType === 'admin') {
-    return <Navigate to="/admin-panel" replace />;
-  }
-
-  return <Navigate to="/login" replace />;
-};
-
 function App() {
   return (
     <BrowserRouter>
@@ -72,8 +51,9 @@ function App() {
         <Route path="/verify-email" element={<VerifyEmail />} />
         <Route path="/verify-email-provider" element={<VerifyEmailProvider />} />
 
-        {/* Root redirect */}
-        <Route path="/" element={<HomeRedirect />} />
+        {/* Public Customer Interface */}
+        <Route path="/" element={<CustomerInterface />} />
+        <Route path="/services/:id" element={<CustomerServiceDetails />} />
 
         {/* Customer Protected Routes */}
         <Route
@@ -139,7 +119,6 @@ function App() {
         <Route path="/settings" element={<Navigate to="/customer/settings" replace />} />
         <Route path="/booking/confirmation" element={<Navigate to="/customer/booking/confirmation" replace />} />
         <Route path="/booking/datetime/:id" element={<Navigate to="/customer/booking/datetime/:id" replace />} />
-        <Route path="/services/:id" element={<Navigate to="/customer/services/:id" replace />} />
 
         {/* Provider Protected Routes */}
         <Route
@@ -241,8 +220,8 @@ function App() {
           }
         />
 
-        {/* Catch all - redirect to login */}
-        <Route path="*" element={<Navigate to="/login" replace />} />
+        {/* Catch all - redirect to home */}
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>
   );

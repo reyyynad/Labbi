@@ -7,8 +7,8 @@ const Service_Provider = ({ onNavigate }) => {
     {
       id: 1,
       service: "Professional House Cleaning",
-      customer: "John Doe",
-      customerInitials: "JD",
+      customer: "Shatha Alharbi",
+      customerInitials: "SA",
       date: "Nov 15, 2024",
       time: "10:00 AM",
       price: 120
@@ -16,8 +16,8 @@ const Service_Provider = ({ onNavigate }) => {
     {
       id: 2,
       service: "Professional House Cleaning",
-      customer: "Alice Smith",
-      customerInitials: "AS",
+      customer: "Mohammed Ali",
+      customerInitials: "MA",
       date: "Nov 16, 2024",
       time: "2:00 PM",
       price: 160
@@ -27,24 +27,24 @@ const Service_Provider = ({ onNavigate }) => {
   const [recentReviews] = useState([
     {
       id: 1,
-      customer: "Anna Robinson",
-      customerInitials: "AR",
+      customer: "Renad Elsafi",
+      customerInitials: "RE",
       rating: 5,
       comment: "Excellent service! Very professional!",
       date: "2 days ago"
     },
     {
       id: 2,
-      customer: "Mike Johnson",
-      customerInitials: "MJ",
+      customer: "Adel Hassan",
+      customerInitials: "AH",
       rating: 5,
       comment: "Outstanding work, highly recommended!",
       date: "5 days ago"
     },
     {
       id: 3,
-      customer: "Lisa Brown",
-      customerInitials: "LB",
+      customer: "Mohammed Ali",
+      customerInitials: "MA",
       rating: 4,
       comment: "Great service, will book again.",
       date: "1 week ago"
@@ -91,7 +91,7 @@ const Service_Provider = ({ onNavigate }) => {
         {/* Page Header */}
         <div className="mb-6">
           <h1 className="text-2xl font-bold text-gray-900 mb-1">Provider Dashboard</h1>
-          <p className="text-gray-600 text-sm">Welcome back, Sarah! Here's your business overview</p>
+          <p className="text-gray-600 text-sm">Welcome back, Arwa! Here's your business overview</p>
         </div>
 
         {/* Stats Grid */}
@@ -137,7 +137,7 @@ const Service_Provider = ({ onNavigate }) => {
               </div>
             </div>
             <p className="text-sm text-gray-600 mb-1">Total Revenue</p>
-            <p className="text-3xl font-bold text-gray-900">${stats.totalRevenue}</p>
+            <p className="text-3xl font-bold text-gray-900">SR{stats.totalRevenue}</p>
           </div>
         </div>
 
@@ -178,7 +178,7 @@ const Service_Provider = ({ onNavigate }) => {
                         </div>
                         <div className="flex items-center gap-1">
                           <DollarSign className="w-4 h-4" />
-                          <span>${booking.price}</span>
+                          <span>SR{booking.price}</span>
                         </div>
                       </div>
                     </div>

@@ -4,11 +4,11 @@ import ProviderHeader from '../../components/header/ProviderHeader';
 
 const ProviderProfile = ({ onNavigate }) => {
   const [profileData, setProfileData] = useState({
-    fullName: 'Sarah Johnson',
+    fullName: 'Arwa Aldawoud',
     title: 'Professional Cleaning Specialist',
-    email: 'sarah.j@example.com',
-    phone: '+1 (555) 234-5678',
-    location: 'New York, NY',
+    email: 'arwa.a@example.com',
+    phone: '+966 55 234 5678',
+    location: 'Jeddah, Saudi Arabia',
     experience: '8 Years Experience',
     bio: 'Professional cleaner with 8 years of experience providing top-quality cleaning services. I specialize in residential and commercial cleaning using eco-friendly products. Committed to delivering exceptional results and ensuring customer satisfaction in every project.',
     memberSince: 'Sep 2024',
@@ -26,21 +26,21 @@ const ProviderProfile = ({ onNavigate }) => {
     { 
       id: 1,
       service: 'Professional House Cleaning', 
-      customer: 'John Doe',
+      customer: 'Renad Elsafi',
       date: 'Nov 15, 2024',
       price: 120 
     },
     { 
       id: 2,
       service: 'Deep Cleaning Service', 
-      customer: 'Alice Smith',
+      customer: 'Shatha Alharbi',
       date: 'Nov 12, 2024',
       price: 240 
     },
     { 
       id: 3,
       service: 'Move-In/Out Cleaning', 
-      customer: 'Mike Johnson',
+      customer: 'Mohammed Ali',
       date: 'Nov 8, 2024',
       price: 150 
     }
@@ -61,6 +61,14 @@ const ProviderProfile = ({ onNavigate }) => {
     setIsEditing(true);
   };
 
+  const initials = profileData.fullName
+    .split(' ')
+    .filter(Boolean)
+    .map((name) => name[0])
+    .join('')
+    .toUpperCase()
+    .slice(0, 2);
+
   return (
     <div className="min-h-screen bg-white">
       <ProviderHeader />
@@ -80,7 +88,7 @@ const ProviderProfile = ({ onNavigate }) => {
               {/* Profile Picture */}
               <div className="relative">
                 <div className="w-24 h-24 rounded-full flex items-center justify-center text-3xl font-bold text-white" style={{ backgroundColor: '#065f46' }}>
-                  SJ
+                  {initials}
                 </div>
               </div>
 
@@ -180,12 +188,12 @@ const ProviderProfile = ({ onNavigate }) => {
               <div className="space-y-4">
                 <div>
                   <p className="text-sm text-gray-600 mb-1">This Month</p>
-                  <p className="text-3xl font-bold text-gray-900">${profileData.thisMonthEarnings}</p>
+                  <p className="text-3xl font-bold text-gray-900">SR{profileData.thisMonthEarnings}</p>
                 </div>
                 
                 <div className="pt-4 border-t border-gray-200">
                   <p className="text-sm text-gray-600 mb-1">Total Earnings</p>
-                  <p className="text-2xl font-bold text-gray-900">${profileData.totalEarnings}</p>
+                  <p className="text-2xl font-bold text-gray-900">SR{profileData.totalEarnings}</p>
                 </div>
 
                 <button 
@@ -313,7 +321,7 @@ const ProviderProfile = ({ onNavigate }) => {
                         {booking.customer} • {booking.date}
                       </p>
                     </div>
-                    <p className="text-sm font-bold text-gray-900">${booking.price}</p>
+                    <p className="text-sm font-bold text-gray-900">SR{booking.price}</p>
                   </div>
                 ))}
               </div>

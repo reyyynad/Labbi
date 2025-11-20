@@ -57,7 +57,7 @@ function ProviderDashboard() {
             <div className="dashboard-card">
               <div className="card-icon">💰</div>
               <h3>Revenue</h3>
-              <p className="card-number">0 SAR</p>
+              <p className="card-number">0 SR</p>
               <p className="card-label">This month</p>
               <button className="btn-card">View Report</button>
             </div>

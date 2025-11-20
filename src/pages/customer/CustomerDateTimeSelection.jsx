@@ -179,7 +179,7 @@ const CustomerDateTimeSelection = () => {
   
   const service = {
     title: 'Professional House Cleaning',
-    provider: 'Sarah Johnson'
+    provider: 'Mohammed Ali'
   };
   
   const handleContinue = () => {

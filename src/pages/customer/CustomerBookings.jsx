@@ -88,7 +88,7 @@ const BookingCard = ({ booking }) => {
         </div>
         <div className="flex items-center gap-2 text-sm text-gray-700">
           <DollarSign size={16} className="text-[#047857]" />
-          <span>${booking.price}</span>
+          <span>SR{booking.price}</span>
         </div>
       </div>
 
@@ -120,37 +120,37 @@ const CustomerBookings = () => {
       id: '1000',
       status: 'Upcoming',
       service: 'Professional House Cleaning',
-      provider: 'Sarah Johnson',
+      provider: 'Renad Elsafi',
       date: 'Nov 15, 2024',
       time: '10:00 AM - 12:00 PM',
-      location: '123 Main St, New York, NY',
+      location: 'King Saud Rd, Dhahran, Saudi Arabia',
       price: '120'
     },
     {
       id: '1001',
       status: 'Confirmed',
       service: 'Personal Training Session',
-      provider: 'Emma Wilson',
+      provider: 'Shatha Alharbi',
       date: 'Nov 12, 2024',
       time: '6:00 PM - 7:00 PM',
-      location: 'FitLife Gym, New York, NY',
+      location: 'Al Olaya District, Riyadh, Saudi Arabia',
       price: '50'
     },
     {
       id: '1002',
       status: 'Completed',
       service: 'Plumbing Repair',
-      provider: 'Mike Davis',
+      provider: 'Arwa Aldawoud',
       date: 'Nov 8, 2024',
       time: '2:00 PM - 3:30 PM',
-      location: '123 Main St, New York, NY',
+      location: 'King Saud Rd, Dhahran, Saudi Arabia',
       price: '85'
     },
     {
       id: '1003',
       status: 'Completed',
       service: 'Web Development Consultation',
-      provider: 'David Chen',
+      provider: 'Adel Hassan',
       date: 'Nov 5, 2024',
       time: '3:00 PM - 4:00 PM',
       location: 'Online Meeting',

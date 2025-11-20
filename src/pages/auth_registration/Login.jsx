@@ -3,12 +3,11 @@ import { useNavigate, Link } from 'react-router-dom'
 import { validateEmail, validatePassword } from '../../utils/validation'
 import { setAuthData } from '../../utils/auth'
 import Header from '../../components/header/Header'
-import { User, Mail, Lock } from 'lucide-react'
+import { Mail, Lock } from 'lucide-react'
 
 function Login() {
   const navigate = useNavigate()
   const [formData, setFormData] = useState({
-    fullName: '',
     email: '',
     password: '',
     remember: false
@@ -38,9 +37,6 @@ function Login() {
     e.preventDefault()
     
     const newErrors = {}
-    if (!formData.fullName || formData.fullName.trim().length < 2) {
-      newErrors.fullName = 'Please enter your full name'
-    }
     if (!validateEmail(formData.email)) {
       newErrors.email = 'Please enter a valid email address'
     }
@@ -57,12 +53,14 @@ function Login() {
 
     setTimeout(() => {
       const mockToken = 'mock_token_' + Date.now()
-      const userName = formData.fullName.trim()
+      const isAdmin = formData.email.trim().toLowerCase() === 'admin123@gmail.com'
+      const userType = isAdmin ? 'admin' : 'customer'
+      const userName = isAdmin ? 'Admin' : formData.email.split('@')[0] || 'Customer'
       
-      setAuthData(mockToken, formData.email, 'customer', userName, formData.remember)
+      setAuthData(mockToken, formData.email, userType, userName, formData.remember)
       
       setLoading(false)
-      navigate('/customer')
+      navigate(isAdmin ? '/admin-panel' : '/customer')
     }, 1500)
   }
 
@@ -88,28 +86,6 @@ function Login() {
             <p className="text-gray-100 text-center mb-8">Log in to your Labbi - لبِّ account</p>
             
             <form onSubmit={handleSubmit} className="space-y-6">
-              <div>
-                <label htmlFor="fullName" className="block text-sm font-medium text-white mb-2">
-                  Full Name
-                </label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <User className="h-5 w-5 text-white/70" />
-                  </div>
-                  <input 
-                    type="text" 
-                    id="fullName"
-                    name="fullName"
-                    className={`block w-full pl-10 pr-3 py-3 border rounded-lg bg-white/10 backdrop-blur-sm text-white placeholder-white/60 border-white/30 focus:outline-none focus:ring-2 focus:ring-white/50 focus:border-transparent ${errors.fullName ? 'border-red-300' : ''}`}
-                    placeholder="Arwa Aldawoud"
-                    value={formData.fullName}
-                    onChange={handleChange}
-                    required
-                  />
-                </div>
-                {errors.fullName && <p className="mt-1 text-sm text-red-200">{errors.fullName}</p>}
-              </div>
-
               <div>
                 <label htmlFor="email" className="block text-sm font-medium text-white mb-2">
                   Email Address

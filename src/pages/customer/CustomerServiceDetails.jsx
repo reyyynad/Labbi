@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { ArrowLeft, Star, MapPin, Mail, Phone, Calendar, Clock } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import Header from '../../components/header/Header';
+import { getAuthToken } from '../../utils/auth';
+import { getServiceById } from '../../data/services';
 
 
 // ========== BUTTON COMPONENT ==========
@@ -16,7 +18,7 @@ const Button = ({
   const baseStyles = 'rounded font-medium transition-colors focus:outline-none inline-flex items-center justify-center w-full';
   
   const variants = {
-    primary: 'bg-[#047857] text-white hover:bg-[#065f46]',
+    primary: 'bg-[#047857] text-white hover:bg-[#065f46]', 
     secondary: 'bg-white text-[#047857] border-2 border-[#047857] hover:bg-[#f0fdf4]',
     outline: 'border-2 border-gray-300 bg-white text-gray-700 hover:bg-gray-50'
   };
@@ -41,8 +43,10 @@ const Button = ({
 };
 
 // ========== SERVICE GALLERY WIDGET ==========
-const ServiceGallery = ({ images, serviceName }) => {
-  const primaryImage = images?.[0] || 'https://via.placeholder.com/600x400/cccccc/666666?text=No+Image';
+const ServiceGallery = ({ images = [], serviceName }) => {
+  const fallbackImage = 'https://via.placeholder.com/600x400/cccccc/666666?text=No+Image';
+  const primaryImage = images[0] || fallbackImage;
+  const thumbnails = images.slice(1, 5);
 
   return (
     <div className="mb-4">
@@ -58,11 +62,24 @@ const ServiceGallery = ({ images, serviceName }) => {
           />
         </div>
         {/* Thumbnails */}
-        {[1, 2, 3, 4].map((num) => (
-          <div key={num} className="bg-gray-100 border border-gray-300 rounded flex items-center justify-center h-24">
-            <span className="text-xs text-gray-400">({num})</span>
-          </div>
-        ))}
+        {thumbnails.length > 0
+          ? thumbnails.map((thumb, index) => (
+              <div key={`${thumb}-${index}`} className="bg-gray-100 border border-gray-300 rounded overflow-hidden h-24">
+                <img
+                  src={thumb}
+                  alt={`${serviceName} preview ${index + 1}`}
+                  className="w-full h-full object-cover"
+                  onError={(e) => {
+                    e.target.src = fallbackImage;
+                  }}
+                />
+              </div>
+            ))
+          : [1, 2, 3, 4].map((num) => (
+              <div key={num} className="bg-gray-100 border border-gray-300 rounded flex items-center justify-center h-24">
+                <span className="text-xs text-gray-400">({num})</span>
+              </div>
+            ))}
       </div>
     </div>
   );
@@ -108,7 +125,7 @@ const ProviderInfo = ({ provider }) => {
 };
 
 // ========== BOOKING FORM WIDGET ==========
-const BookingForm = ({ price, serviceId, navigate }) => {
+const BookingForm = ({ price, serviceId, navigate, isAuthenticated }) => {
   const [formData, setFormData] = useState({
     serviceType: '',
     date: '',
@@ -121,14 +138,18 @@ const BookingForm = ({ price, serviceId, navigate }) => {
   const total = subtotal + serviceFee;
 
   const handleBookNow = () => {
-    navigate(`/booking/datetime/${serviceId}`);
+    if (!isAuthenticated) {
+      navigate('/auth-registration', { state: { from: `/services/${serviceId}` } });
+      return;
+    }
+    navigate(`/customer/booking/datetime/${serviceId}`);
   };
 
   return (
     <div className="bg-white border-2 border-[#047857] rounded-lg p-6 sticky top-6">
       <div className="text-center mb-6 pb-6 border-b border-gray-200">
         <p className="text-sm text-gray-600 mb-1">Starting at</p>
-        <p className="text-3xl font-bold text-[#047857]">{price} SAR<span className="text-base font-normal">/hr</span></p>
+        <p className="text-3xl font-bold text-[#047857]">{price} SR<span className="text-base font-normal">/hr</span></p>
       </div>
 
       <div className="space-y-4 mb-6">
@@ -191,15 +212,15 @@ const BookingForm = ({ price, serviceId, navigate }) => {
       <div className="space-y-2 mb-6 pb-6 border-b border-gray-200">
         <div className="flex justify-between text-sm">
           <span className="text-gray-600">Subtotal:</span>
-          <span className="font-medium">{subtotal} SAR</span>
+          <span className="font-medium">{subtotal} SR</span>
         </div>
         <div className="flex justify-between text-sm">
           <span className="text-gray-600">Service Fee:</span>
-          <span className="font-medium">{serviceFee} SAR</span>
+          <span className="font-medium">{serviceFee} SR</span>
         </div>
         <div className="flex justify-between text-base font-semibold pt-2">
           <span>Total:</span>
-          <span>{total} SAR</span>
+          <span>{total} SR</span>
         </div>
       </div>
 
@@ -286,34 +307,60 @@ const ReviewsSection = ({ reviews, totalReviews }) => {
 const CustomerServiceDetails = () => {
   const navigate = useNavigate();
   const { id } = useParams();
+  const isAuthenticated = !!getAuthToken();
+  const serviceData = getServiceById(id);
 
-  const service = {
-    name: 'Professional Web Development',
-    status: 'Online',
-    rating: 4.9,
-    reviews: 127,
-    location: 'San Francisco, CA',
-    price: 50,
-    images: []
+  const buildGalleryImages = (baseUrl) => {
+    if (!baseUrl) return [];
+    const separator = baseUrl.includes('?') ? '&' : '?';
+    return [
+      baseUrl,
+      `${baseUrl}${separator}variant=center`,
+      `${baseUrl}${separator}variant=entropy`,
+      `${baseUrl}${separator}variant=faces`,
+      `${baseUrl}${separator}variant=edge`
+    ];
   };
 
+  const service = serviceData
+    ? {
+        name: serviceData.title,
+        status: 'Available',
+        rating: serviceData.rating,
+        reviews: serviceData.reviews,
+        location: serviceData.location,
+        price: serviceData.price,
+        images: buildGalleryImages(serviceData.image)
+      }
+    : {
+        name: 'Professional Web Development',
+        status: 'Online',
+        rating: 4.9,
+        reviews: 127,
+        location: 'Riyadh, Saudi Arabia',
+        price: 50,
+        images: []
+      };
+
   const provider = {
-    name: 'Renad Elsafi',
-    title: 'Full-Stack Developer',
-    rating: 4.0,
-    reviews: 127,
-    bookings: 89,
-    email: 'renadelafi@example.com',
+    name: serviceData?.provider || 'Renad Elsafi',
+    title: serviceData ? `${serviceData.category} Specialist` : 'Full-Stack Developer',
+    rating: serviceData?.rating ?? 4.0,
+    reviews: serviceData?.reviews ?? 127,
+    bookings: serviceData ? Math.max(60, Math.round(serviceData.reviews * 0.7)) : 89,
+    email: 'support@labbi.com',
     phone: '+966501234567'
   };
 
-  const description = "I provide professional full-stack web development services using modern technologies including React, Node.js, and PostgreSQL. With over 5 years of experience, I can help you build scalable web applications.";
+  const description =
+    serviceData?.description ||
+    'I provide professional full-stack web development services using modern technologies including React, Node.js, and PostgreSQL. With over 5 years of experience, I can help you build scalable web applications.';
 
   const features = [
-    'Custom web application development',
-    'API development and integration',
-    'Database design and optimization',
-    'Performance optimization'
+    `${serviceData?.category || 'Premium'} service expertise`,
+    `Average rating of ${service.rating} from ${service.reviews}+ reviews`,
+    `Available in ${service.location}`,
+    'Flexible scheduling and quick response'
   ];
 
   const reviews = [
@@ -324,22 +371,22 @@ const CustomerServiceDetails = () => {
       date: '2 days ago'
     },
     {
-      author: 'Shatha Alharbi',
-      rating: 5,
-      comment: 'Excellent service! Very professional and delivered exactly what I needed.',
-      date: '2 days ago'
+      author: 'Arwa Aldawoud',
+      rating: 4,
+      comment: 'Great quality and friendly communication. Looking forward to booking again.',
+      date: '1 week ago'
     },
     {
-      author: 'Shatha Alharbi',
+      author: 'Adel Hassan',
       rating: 5,
-      comment: 'Excellent service! Very professional and delivered exactly what I needed.',
-      date: '2 days ago'
+      comment: 'Super smooth experience and fast turnaround. Highly recommended.',
+      date: '2 weeks ago'
     }
   ];
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Header />
+      <Header showAuthButtons />
 
       <div className="max-w-7xl mx-auto px-6 py-6">
         {/* Back Button */}
@@ -382,7 +429,12 @@ const CustomerServiceDetails = () => {
 
           {/* Right Column - Booking Form */}
           <div className="lg:col-span-1">
-            <BookingForm price={service.price} serviceId={id} navigate={navigate} />
+            <BookingForm
+              price={service.price}
+              serviceId={id}
+              navigate={navigate}
+              isAuthenticated={isAuthenticated}
+            />
           </div>
         </div>
       </div>

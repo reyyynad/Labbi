@@ -43,11 +43,11 @@ const CustomerProfile = () => {
   const [isEditing, setIsEditing] = useState(false);
   
   const [profileData, setProfileData] = useState({
-    initials: 'JD',
-    fullName: 'John Doe',
-    email: 'john.doe@example.com',
-    phone: '+1 (555) 123-4567',
-    location: 'New York, NY',
+    initials: 'MA',
+    fullName: 'Mohammed Ali',
+    email: 'mohammed.ali@example.com',
+    phone: '+966 50 123 4567',
+    location: 'Riyadh, Saudi Arabia',
     memberSince: 'October 2024'
   });
 
@@ -60,21 +60,21 @@ const CustomerProfile = () => {
   const [recentBookings] = useState([
     {
       service: 'House Cleaning',
-      provider: 'Sarah Johnson',
+      provider: 'Renad Elsafi',
       date: 'Nov 10, 2024',
       status: 'Completed',
       price: '120'
     },
     {
       service: 'Plumbing Repair',
-      provider: 'Mike Davis',
+      provider: 'Shatha Alharbi',
       date: 'Nov 8, 2024',
       status: 'Completed',
       price: '85'
     },
     {
       service: 'Personal Training',
-      provider: 'Emma Wilson',
+      provider: 'Arwa Aldawoud',
       date: 'Nov 5, 2024',
       status: 'Completed',
       price: '50'
@@ -140,7 +140,7 @@ const CustomerProfile = () => {
               
               <div>
                 <p className="text-sm text-gray-600 mb-1">Total Spent</p>
-                <p className="font-semibold text-[#374151]">${stats.totalSpent}</p>
+                <p className="font-semibold text-[#374151]">SR{stats.totalSpent}</p>
               </div>
               
               <div>
@@ -232,7 +232,7 @@ const CustomerProfile = () => {
               
               <div className="bg-[#f0fdf4] border-2 border-[#047857] rounded-lg p-6">
                 <p className="text-sm text-gray-600 mb-1">Total Spent</p>
-                <p className="text-3xl font-bold text-[#374151]">${stats.totalSpent.toLocaleString()}</p>
+                <p className="text-3xl font-bold text-[#374151]">SR{stats.totalSpent.toLocaleString()}</p>
               </div>
               
               <div className="bg-[#f0fdf4] border-2 border-[#047857] rounded-lg p-6">
@@ -298,7 +298,7 @@ const CustomerProfile = () => {
                       <span className="inline-block px-3 py-1 bg-[#047857] text-white text-xs rounded-full mb-2">
                         {booking.status}
                       </span>
-                      <p className="font-semibold text-[#374151]">${booking.price}</p>
+                      <p className="font-semibold text-[#374151]">SR{booking.price}</p>
                     </div>
                   </div>
                 ))}

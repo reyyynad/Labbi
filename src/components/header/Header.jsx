@@ -2,7 +2,7 @@
 import React from 'react';
 import { Search, LogOut } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
-import { logout, getUserName, getAuthToken } from '../../utils/auth';
+import { logout, getUserName, getAuthToken, getUserType } from '../../utils/auth';
 import logoPath from '../../assets/images/labbi_logo.svg';
 
 const Header = ({ transparent = false, showAuthButtons = false }) => {
@@ -11,6 +11,8 @@ const Header = ({ transparent = false, showAuthButtons = false }) => {
   const isAuthenticated = !!token;
   const userName = getUserName();
   const userInitials = userName ? userName.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) : 'SA';
+  const userType = getUserType();
+  const showServiceProviderCTA = userType !== 'provider';
 
   const handleLogout = () => {
     logout(navigate);
@@ -51,6 +53,15 @@ const Header = ({ transparent = false, showAuthButtons = false }) => {
         </div>
 
         <div className="flex items-center gap-6">
+          {showServiceProviderCTA && (
+            <button
+              type="button"
+              onClick={() => navigate('/signup-provider')}
+              className={`${buttonClasses} px-4 py-2 text-xs md:text-sm rounded-lg font-semibold transition-all shadow-lg`}
+            >
+              Become Service Provider!
+            </button>
+          )}
           {isAuthenticated ? (
             <>
               <Link

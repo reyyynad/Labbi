@@ -5,8 +5,8 @@ import ProviderHeader from '../../components/header/ProviderHeader';
 const mockReviews = [
   {
     id: 1,
-    customer: 'Anna Robinson',
-    initials: 'AR',
+    customer: 'Renad Elsafi',
+    initials: 'RE',
     rating: 5,
     comment: 'Excellent service! Very professional and delivered exactly what I needed. Would definitely recommend! The attention to detail was outstanding.',
     service: 'Professional House Cleaning',
@@ -14,8 +14,8 @@ const mockReviews = [
   },
   {
     id: 2,
-    customer: 'Adel Hassan',
-    initials: 'AH',
+    customer: 'Shatha Alharbi',
+    initials: 'SA',
     rating: 5,
     comment: 'Excellent service. Very professional and delivered exactly what I needed. Would definitely recommend!',
     service: 'Deep Cleaning Service',
@@ -23,44 +23,44 @@ const mockReviews = [
   },
   {
     id: 3,
-    customer: 'Dana Jaber',
-    initials: 'DJ',
+    customer: 'Arwa Aldawoud',
+    initials: 'AA',
     rating: 5,
-    comment: 'Excellent service. Very professional and delivered exactly what I needed. Would definitely recommend!',
+    comment: 'Super organized and friendly team. They handled everything effortlessly.',
     service: 'Professional House Cleaning',
     date: '2 weeks ago'
   },
   {
     id: 4,
-    customer: 'Shatha Alharbi',
-    initials: 'SA',
+    customer: 'Adel Hassan',
+    initials: 'AH',
     rating: 5,
-    comment: 'Outstanding work! Sarah was punctual, thorough, and my house has never looked better. Highly recommend her services.',
+    comment: 'Outstanding work! The provider was punctual, thorough, and my house has never looked better.',
     service: 'Move-In/Out Cleaning',
     date: '3 weeks ago'
   },
   {
     id: 5,
-    customer: 'Viper Abdullah',
-    initials: 'VA',
+    customer: 'Mohammed Ali',
+    initials: 'MA',
     rating: 4,
-    comment: 'Great service overall. The cleaning was thorough and Sarah was very professional. Would use again.',
+    comment: 'Great service overall. The cleaning was thorough and communication was clear.',
     service: 'Professional House Cleaning',
     date: '1 month ago'
   },
   {
     id: 6,
-    customer: 'Mike Johnson',
-    initials: 'MJ',
+    customer: 'Renad Elsafi',
+    initials: 'RE',
     rating: 5,
-    comment: 'Best cleaning service I\'ve ever used. Sarah is amazing and the results speak for themselves!',
+    comment: 'Best cleaning service I\'ve ever used. Amazing results that speak for themselves!',
     service: 'Deep Cleaning Service',
     date: '1 month ago'
   },
   {
     id: 7,
-    customer: 'Lisa Brown',
-    initials: 'LB',
+    customer: 'Shatha Alharbi',
+    initials: 'SA',
     rating: 4,
     comment: 'Very good service. Professional and efficient. My home looks great!',
     service: 'Professional House Cleaning',
@@ -68,10 +68,10 @@ const mockReviews = [
   },
   {
     id: 8,
-    customer: 'Tom Wilson',
-    initials: 'TW',
+    customer: 'Arwa Aldawoud',
+    initials: 'AA',
     rating: 5,
-    comment: 'Exceptional service! Sarah went above and beyond. Highly professional and thorough.',
+    comment: 'Exceptional service! The team went above and beyond. Highly professional and thorough.',
     service: 'Office Cleaning',
     date: '2 months ago'
   }
