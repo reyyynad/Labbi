@@ -44,10 +44,10 @@ function VerifyEmailProvider() {
             </div>
 
             <Link
-              to="/login"
+              to="/login-provider"
               className="text-white/80 hover:text-white text-sm font-medium inline-flex items-center gap-2"
             >
-              Back to login
+              ← Back to login
             </Link>
 
           </div>
