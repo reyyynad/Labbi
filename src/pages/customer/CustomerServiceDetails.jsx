@@ -127,7 +127,6 @@ const ProviderInfo = ({ provider }) => {
 // ========== BOOKING FORM WIDGET ==========
 const BookingForm = ({ price, serviceId, navigate, isAuthenticated }) => {
   const [formData, setFormData] = useState({
-    serviceType: '',
     date: '',
     time: '',
     duration: ''
@@ -153,20 +152,6 @@ const BookingForm = ({ price, serviceId, navigate, isAuthenticated }) => {
       </div>
 
       <div className="space-y-4 mb-6">
-        <div>
-          <label className="block text-sm font-medium mb-2">Service Type</label>
-          <select 
-            value={formData.serviceType}
-            onChange={(e) => setFormData({...formData, serviceType: e.target.value})}
-            className="w-full px-3 py-2 text-sm border border-gray-300 rounded bg-white focus:outline-none focus:ring-2 focus:ring-[#047857]"
-          >
-            <option value="">Select service</option>
-            <option>Web Development</option>
-            <option>UI/UX Design</option>
-            <option>Consultation</option>
-          </select>
-        </div>
-
         <div>
           <label className="block text-sm font-medium mb-2">Preferred Date</label>
           <div className="relative">
