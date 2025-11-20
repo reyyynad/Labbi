@@ -9,7 +9,7 @@ function Analytics() {
   return (
     <>
       <AdminHeader />
-      <main className="admin-main">
+      <main className="admin-main" style={{ backgroundColor: 'white', minHeight: '100vh' }}>
         <div className="admin-container">
           <h1 className="admin-page-title">Analytics & Insights</h1>
           <p className="admin-subtitle">Platform performance and trends</p>
