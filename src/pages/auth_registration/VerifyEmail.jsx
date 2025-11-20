@@ -51,14 +51,6 @@ function VerifyEmail() {
               </button>
             </div>
 
-            <div className="bg-white/5 rounded-lg p-4 mb-6 text-left">
-              <h3 className="text-sm font-semibold text-white mb-2">SYSTEM PROCESS:</h3>
-              <ul className="text-xs text-white/80 space-y-1">
-                <li>• Verification email sent automatically</li>
-                <li>• Account activated upon link click</li>
-                <li>• User redirected to dashboard after verification</li>
-              </ul>
-            </div>
 
             <Link 
               to="/login" 
