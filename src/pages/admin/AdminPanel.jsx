@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useState } from 'react'
 import AdminHeader from '../../components/admin/AdminHeader'
 import {
   Users,
@@ -7,10 +7,229 @@ import {
   DollarSign,
   CheckCircle,
   AlertTriangle,
-  Clock
+  Clock,
+  X,
+  User,
+  Mail,
+  Phone,
+  MapPin,
+  FileText,
+  Star
 } from 'lucide-react'
 
+// ========== REVIEW MODAL COMPONENT ==========
+const ReviewModal = ({ isOpen, onClose, approval, onApprove, onReject }) => {
+  if (!isOpen || !approval) return null;
+
+  // Mock service details - in a real app, this would come from the approval data
+  const serviceDetails = {
+    description: 'Professional web development services using modern technologies including React, Node.js, and PostgreSQL. With over 5 years of experience, I can help you build scalable web applications.',
+    price: 80,
+    location: 'Riyadh, Saudi Arabia',
+    duration: '2 hours',
+    features: [
+      'Full-stack development',
+      'Responsive design',
+      'Database integration',
+      'API development',
+      'Deployment support'
+    ],
+    providerEmail: 'renad@example.com',
+    providerPhone: '+966 50 123 4567',
+    bio: 'Experienced full-stack developer with expertise in modern web technologies.',
+    experience: '5+ years'
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={onClose}>
+      <div 
+        className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div className="flex items-center justify-between p-6 border-b border-gray-200 sticky top-0 bg-white z-10">
+          <div>
+            <h2 className="text-2xl font-bold text-[#111827]">Review Service Approval</h2>
+            <p className="text-sm text-[#6b7280] mt-1">Service ID: #{approval.id}</p>
+          </div>
+          <button
+            onClick={onClose}
+            className="text-gray-400 hover:text-gray-600 transition-colors"
+          >
+            <X size={24} />
+          </button>
+        </div>
+
+        {/* Content */}
+        <div className="p-6">
+          {/* Service Overview */}
+          <div className="bg-[#f8fafc] border border-gray-200 rounded-lg p-6 mb-6">
+            <div className="flex items-start justify-between mb-4">
+              <div className="flex-1">
+                <h3 className="text-xl font-semibold text-[#111827] mb-2">{approval.title}</h3>
+                <div className="flex items-center gap-4 text-sm text-[#6b7280] mb-2">
+                  <div className="flex items-center gap-1">
+                    <User size={16} />
+                    <span>{approval.owner}</span>
+                  </div>
+                  <span>•</span>
+                  <span>{approval.category}</span>
+                  <span>•</span>
+                  <div className="flex items-center gap-1">
+                    <Clock size={16} />
+                    <span>Submitted {approval.submitted}</span>
+                  </div>
+                </div>
+                <span className={`inline-block px-3 py-1 text-xs font-semibold rounded-full ${
+                  approval.status === 'High Priority' 
+                    ? 'bg-red-100 text-red-800 border border-red-300' 
+                    : 'bg-blue-100 text-blue-800 border border-blue-300'
+                }`}>
+                  {approval.status}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Service Details */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+            {/* Left Column */}
+            <div className="space-y-6">
+              <div>
+                <h4 className="text-sm font-semibold text-[#111827] mb-3 flex items-center gap-2">
+                  <FileText size={16} />
+                  Service Description
+                </h4>
+                <p className="text-sm text-[#6b7280] leading-relaxed bg-white border border-gray-200 rounded-lg p-4">
+                  {serviceDetails.description}
+                </p>
+              </div>
+
+              <div>
+                <h4 className="text-sm font-semibold text-[#111827] mb-3">Service Features</h4>
+                <ul className="space-y-2">
+                  {serviceDetails.features.map((feature, index) => (
+                    <li key={index} className="flex items-center gap-2 text-sm text-[#6b7280]">
+                      <CheckCircle size={16} className="text-[#047857]" />
+                      {feature}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+
+            {/* Right Column */}
+            <div className="space-y-6">
+              <div>
+                <h4 className="text-sm font-semibold text-[#111827] mb-3">Pricing & Details</h4>
+                <div className="bg-white border border-gray-200 rounded-lg p-4 space-y-3">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-[#6b7280]">Price:</span>
+                    <span className="font-semibold text-[#111827]">SR{serviceDetails.price}/hr</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-[#6b7280]">Duration:</span>
+                    <span className="font-semibold text-[#111827]">{serviceDetails.duration}</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-sm">
+                    <MapPin size={16} className="text-[#6b7280]" />
+                    <span className="text-[#6b7280]">{serviceDetails.location}</span>
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <h4 className="text-sm font-semibold text-[#111827] mb-3">Provider Information</h4>
+                <div className="bg-white border border-gray-200 rounded-lg p-4 space-y-3">
+                  <div className="flex items-center gap-2 text-sm">
+                    <User size={16} className="text-[#6b7280]" />
+                    <span className="text-[#111827] font-medium">{approval.owner}</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-sm">
+                    <Mail size={16} className="text-[#6b7280]" />
+                    <span className="text-[#6b7280]">{serviceDetails.providerEmail}</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-sm">
+                    <Phone size={16} className="text-[#6b7280]" />
+                    <span className="text-[#6b7280]">{serviceDetails.providerPhone}</span>
+                  </div>
+                  <div className="pt-3 border-t border-gray-200">
+                    <p className="text-xs text-[#6b7280] mb-1">Bio:</p>
+                    <p className="text-sm text-[#111827]">{serviceDetails.bio}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-[#6b7280]">Experience: <span className="font-medium text-[#111827]">{serviceDetails.experience}</span></p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Action Buttons */}
+          <div className="flex items-center justify-end gap-3 pt-6 border-t border-gray-200">
+            <button
+              onClick={onClose}
+              className="px-6 py-2.5 text-sm font-medium text-[#6b7280] bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={() => {
+                if (window.confirm(`Are you sure you want to reject "${approval.title}"?`)) {
+                  onReject(approval.id);
+                  onClose();
+                }
+              }}
+              className="px-6 py-2.5 text-sm font-medium text-[#b91c1c] bg-white border border-[#fecaca] rounded-lg hover:bg-[#fef2f2] transition-colors"
+            >
+              Reject
+            </button>
+            <button
+              onClick={() => {
+                onApprove(approval.id);
+                onClose();
+              }}
+              className="px-6 py-2.5 text-sm font-medium text-white bg-[#047857] rounded-lg hover:bg-[#065f46] transition-colors"
+            >
+              Approve Service
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 function AdminPanel() {
+  const [selectedApproval, setSelectedApproval] = useState(null);
+  const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
+  const [pendingApprovals, setPendingApprovals] = useState([
+    {
+      id: 1,
+      title: 'Advanced Web Development',
+      owner: 'Renad Elsafi',
+      category: 'Web Development',
+      submitted: 'Oct 10, 2025',
+      status: 'High Priority'
+    },
+    {
+      id: 2,
+      title: 'Brand Strategy Consulting',
+      owner: 'Adel Hassan',
+      category: 'Consulting',
+      submitted: 'Oct 11, 2025',
+      status: 'Normal'
+    },
+    {
+      id: 3,
+      title: 'Corporate Photography',
+      owner: 'Shatha Alharbi',
+      category: 'Creative',
+      submitted: 'Oct 12, 2025',
+      status: 'Normal'
+    }
+  ]);
+
   const stats = [
     {
       label: 'Total Users',
@@ -43,33 +262,6 @@ function AdminPanel() {
       trend: '+22%',
       icon: DollarSign,
       accent: 'bg-[#fce7f3] text-[#9d174d]'
-    }
-  ]
-
-  const pendingApprovals = [
-    {
-      id: 1,
-      title: 'Advanced Web Development',
-      owner: 'Renad Elsafi',
-      category: 'Web Development',
-      submitted: 'Oct 10, 2025',
-      status: 'High Priority'
-    },
-    {
-      id: 2,
-      title: 'Brand Strategy Consulting',
-      owner: 'Adel Hassan',
-      category: 'Consulting',
-      submitted: 'Oct 11, 2025',
-      status: 'Normal'
-    },
-    {
-      id: 3,
-      title: 'Corporate Photography',
-      owner: 'Shatha Alharbi',
-      category: 'Creative',
-      submitted: 'Oct 12, 2025',
-      status: 'Normal'
     }
   ]
 
@@ -107,6 +299,21 @@ function AdminPanel() {
       color: 'bg-[#fce7f3] text-[#9d174d]'
     }
   ]
+
+  const handleReview = (approval) => {
+    setSelectedApproval(approval);
+    setIsReviewModalOpen(true);
+  };
+
+  const handleApprove = (id) => {
+    setPendingApprovals(pendingApprovals.filter(approval => approval.id !== id));
+    alert(`Service "${pendingApprovals.find(a => a.id === id)?.title}" has been approved!`);
+  };
+
+  const handleReject = (id) => {
+    setPendingApprovals(pendingApprovals.filter(approval => approval.id !== id));
+    alert(`Service "${pendingApprovals.find(a => a.id === id)?.title}" has been rejected.`);
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -172,13 +379,26 @@ function AdminPanel() {
                       </p>
                     </div>
                     <div className="flex items-center gap-2">
-                      <button className="px-4 py-2 text-sm font-medium text-[#6b7280] bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+                      <button 
+                        onClick={() => handleReview(approval)}
+                        className="px-4 py-2 text-sm font-medium text-[#6b7280] bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+                      >
                         Review
                       </button>
-                      <button className="px-4 py-2 text-sm font-medium text-white bg-[#047857] rounded-lg hover:bg-[#065f46] transition-colors">
+                      <button 
+                        onClick={() => handleApprove(approval.id)}
+                        className="px-4 py-2 text-sm font-medium text-white bg-[#047857] rounded-lg hover:bg-[#065f46] transition-colors"
+                      >
                         Approve
                       </button>
-                      <button className="px-4 py-2 text-sm font-medium text-[#b91c1c] bg-white border border-[#fecaca] rounded-lg hover:bg-[#fef2f2] transition-colors">
+                      <button 
+                        onClick={() => {
+                          if (window.confirm(`Are you sure you want to reject "${approval.title}"?`)) {
+                            handleReject(approval.id);
+                          }
+                        }}
+                        className="px-4 py-2 text-sm font-medium text-[#b91c1c] bg-white border border-[#fecaca] rounded-lg hover:bg-[#fef2f2] transition-colors"
+                      >
                         Reject
                       </button>
                     </div>
@@ -219,6 +439,15 @@ function AdminPanel() {
           </section>
         </div>
       </main>
+
+      {/* Review Modal */}
+      <ReviewModal
+        isOpen={isReviewModalOpen}
+        onClose={() => setIsReviewModalOpen(false)}
+        approval={selectedApproval}
+        onApprove={handleApprove}
+        onReject={handleReject}
+      />
     </div>
   )
 }
