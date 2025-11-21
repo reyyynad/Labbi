@@ -389,14 +389,7 @@ const AvailabilityManagement = ({ onNavigate }) => {
             </button>
 
             {/* Info Box */}
-            <div className="rounded-lg border border-gray-200 p-6" style={{ backgroundColor: '#f0fdf4' }}>
-              <h3 className="font-bold text-gray-900 mb-3">AVAILABILITY SYSTEM:</h3>
-              <ul className="space-y-2 text-sm text-gray-600">
-                <li>• Validates no overlapping slots</li>
-                <li>• Changes visible to clients immediately</li>
-                <li>• Automatic booking conflict checks</li>
-              </ul>
-            </div>
+
           </div>
         </div>
       </main>
