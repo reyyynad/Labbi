@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { ArrowLeft, Star, MapPin, Mail, Phone } from 'lucide-react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import Header from '../../components/header/Header';
 import { getAuthToken } from '../../utils/auth';
 import { getServiceById } from '../../data/services';
@@ -234,8 +234,12 @@ const ReviewsSection = ({ reviews, totalReviews }) => {
 const CustomerServiceDetails = () => {
   const navigate = useNavigate();
   const { id } = useParams();
+  const location = useLocation();
   const isAuthenticated = !!getAuthToken();
   const serviceData = getServiceById(id);
+  
+  // Check if viewing from bookings page
+  const fromBooking = location.state?.fromBooking || false;
 
   const buildGalleryImages = (baseUrl) => {
     if (!baseUrl) return [];
@@ -318,16 +322,16 @@ const CustomerServiceDetails = () => {
       <div className="max-w-7xl mx-auto px-6 py-6">
         {/* Back Button */}
         <button 
-          onClick={() => navigate('/')}
+          onClick={() => navigate(fromBooking ? '/customer/bookings' : '/')}
           className="flex items-center gap-2 text-sm text-gray-700 hover:text-[#047857] mb-6 font-medium"
         >
           <ArrowLeft size={16} />
-          Back to results
+          {fromBooking ? 'Back to Bookings' : 'Back to results'}
         </button>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Left Column - Service Details */}
-          <div className="lg:col-span-2">
+          <div className={fromBooking ? 'lg:col-span-3' : 'lg:col-span-2'}>
             {/* Service Header */}
             <div className="bg-white border border-gray-300 rounded p-6 mb-4">
               <div className="flex items-start justify-between mb-3">
@@ -354,15 +358,17 @@ const CustomerServiceDetails = () => {
             <ReviewsSection reviews={reviews} totalReviews={service.reviews} />
           </div>
 
-          {/* Right Column - Booking Form */}
-          <div className="lg:col-span-1">
-            <BookingForm
-              price={service.price}
-              serviceId={id}
-              navigate={navigate}
-              isAuthenticated={isAuthenticated}
-            />
-          </div>
+          {/* Right Column - Booking Form (only show if not from booking) */}
+          {!fromBooking && (
+            <div className="lg:col-span-1">
+              <BookingForm
+                price={service.price}
+                serviceId={id}
+                navigate={navigate}
+                isAuthenticated={isAuthenticated}
+              />
+            </div>
+          )}
         </div>
       </div>
     </div>

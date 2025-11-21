@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Calendar, Clock, DollarSign, MapPin, User } from 'lucide-react';
+import { Calendar, Clock, DollarSign, MapPin, User, Star, X } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import Header from '../../components/header/Header';
 
@@ -37,6 +37,151 @@ const Button = ({
     >
       {children}
     </button>
+  );
+};
+
+// ========== REVIEW MODAL COMPONENT ==========
+const ReviewModal = ({ isOpen, onClose, booking, onSubmit }) => {
+  const [rating, setRating] = useState(0);
+  const [hoveredRating, setHoveredRating] = useState(0);
+  const [reviewText, setReviewText] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  if (!isOpen) return null;
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (rating === 0) {
+      alert('Please select a rating');
+      return;
+    }
+    if (reviewText.trim().length < 10) {
+      alert('Please write at least 10 characters in your review');
+      return;
+    }
+
+    setIsSubmitting(true);
+    // Simulate API call
+    setTimeout(() => {
+      onSubmit({
+        bookingId: booking.id,
+        rating,
+        comment: reviewText,
+        service: booking.service,
+        provider: booking.provider
+      });
+      setRating(0);
+      setReviewText('');
+      setIsSubmitting(false);
+      onClose();
+    }, 1000);
+  };
+
+  const handleClose = () => {
+    setRating(0);
+    setReviewText('');
+    setHoveredRating(0);
+    onClose();
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={handleClose}>
+      <div 
+        className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div className="flex items-center justify-between p-6 border-b border-gray-200">
+          <h2 className="text-2xl font-bold text-[#374151]">Leave a Review</h2>
+          <button
+            onClick={handleClose}
+            className="text-gray-400 hover:text-gray-600 transition-colors"
+          >
+            <X size={24} />
+          </button>
+        </div>
+
+        {/* Content */}
+        <form onSubmit={handleSubmit} className="p-6">
+          <div className="mb-6">
+            <h3 className="text-lg font-semibold text-[#374151] mb-2">{booking.service}</h3>
+            <p className="text-sm text-gray-600">Provider: {booking.provider}</p>
+            <p className="text-sm text-gray-600">Date: {booking.date} at {booking.time}</p>
+          </div>
+
+          {/* Rating */}
+          <div className="mb-6">
+            <label className="block text-sm font-medium text-[#374151] mb-3">
+              Your Rating <span className="text-red-500">*</span>
+            </label>
+            <div className="flex items-center gap-2">
+              {[1, 2, 3, 4, 5].map((star) => (
+                <button
+                  key={star}
+                  type="button"
+                  onClick={() => setRating(star)}
+                  onMouseEnter={() => setHoveredRating(star)}
+                  onMouseLeave={() => setHoveredRating(0)}
+                  className="transition-transform hover:scale-110"
+                >
+                  <Star
+                    size={32}
+                    className={
+                      star <= (hoveredRating || rating)
+                        ? 'fill-yellow-400 text-yellow-400'
+                        : 'text-gray-300'
+                    }
+                  />
+                </button>
+              ))}
+              {rating > 0 && (
+                <span className="ml-2 text-sm text-gray-600">
+                  {rating === 5 ? 'Excellent' : rating === 4 ? 'Good' : rating === 3 ? 'Average' : rating === 2 ? 'Poor' : 'Very Poor'}
+                </span>
+              )}
+            </div>
+          </div>
+
+          {/* Review Text */}
+          <div className="mb-6">
+            <label htmlFor="reviewText" className="block text-sm font-medium text-[#374151] mb-2">
+              Your Review <span className="text-red-500">*</span>
+            </label>
+            <textarea
+              id="reviewText"
+              value={reviewText}
+              onChange={(e) => setReviewText(e.target.value)}
+              placeholder="Share your experience with this service..."
+              rows={6}
+              className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#047857] focus:border-transparent resize-none"
+              required
+            />
+            <p className="text-xs text-gray-500 mt-1">
+              {reviewText.length} characters (minimum 10 required)
+            </p>
+          </div>
+
+          {/* Actions */}
+          <div className="flex gap-3 justify-end">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={handleClose}
+              disabled={isSubmitting}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              variant="primary"
+              disabled={isSubmitting || rating === 0 || reviewText.trim().length < 10}
+            >
+              {isSubmitting ? 'Submitting...' : 'Submit Review'}
+            </Button>
+          </div>
+        </form>
+      </div>
+    </div>
   );
 };
 
@@ -112,6 +257,8 @@ const BookingCard = ({ booking }) => {
 const CustomerBookings = () => {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('All Bookings');
+  const [selectedBookingForReview, setSelectedBookingForReview] = useState(null);
+  const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
 
   const tabs = ['All Bookings', 'Upcoming', 'Confirmed', 'Completed', 'Cancelled'];
 
@@ -158,12 +305,23 @@ const CustomerBookings = () => {
     }
   ];
 
+  const handleLeaveReview = (booking) => {
+    setSelectedBookingForReview(booking);
+    setIsReviewModalOpen(true);
+  };
+
+  const handleReviewSubmit = (reviewData) => {
+    console.log('Review submitted:', reviewData);
+    alert(`Thank you! Your review for "${reviewData.service}" has been submitted.`);
+    // Here you would typically send the review to your backend API
+  };
+
   const bookings = bookingsData.map((booking) => {
     const standardActions = [
       {
         label: 'View Details',
         variant: 'primary',
-        onClick: () => navigate(`/services/${booking.id}`)
+        onClick: () => navigate(`/services/${booking.id}`, { state: { fromBooking: true } })
       }
     ];
 
@@ -179,7 +337,7 @@ const CustomerBookings = () => {
           {
             label: 'Leave Review',
             variant: 'outline',
-            onClick: () => navigate('/bookings')
+            onClick: () => handleLeaveReview(booking)
           },
           ...standardActions
         ]
@@ -261,6 +419,14 @@ const CustomerBookings = () => {
           )}
         </div>
       </div>
+
+      {/* Review Modal */}
+      <ReviewModal
+        isOpen={isReviewModalOpen}
+        onClose={() => setIsReviewModalOpen(false)}
+        booking={selectedBookingForReview}
+        onSubmit={handleReviewSubmit}
+      />
     </div>
   );
 };
