@@ -351,7 +351,14 @@ const CustomerBookings = () => {
         {
           label: 'Reschedule',
           variant: 'outline',
-          onClick: () => navigate(`/booking/datetime/${booking.id}`)
+          onClick: () => navigate(`/customer/booking/datetime/${booking.id}`, { 
+            state: { 
+              isReschedule: true, 
+              bookingId: booking.id,
+              currentDate: booking.date,
+              currentTime: booking.time
+            } 
+          })
         },
         {
           label: 'Cancel',

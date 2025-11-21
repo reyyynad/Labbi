@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { ArrowLeft, Calendar, Clock } from 'lucide-react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { ArrowLeft, Calendar, Clock, CheckCircle } from 'lucide-react';
+import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import Header from '../../components/header/Header';
 
 // ========== BUTTON COMPONENT ==========
@@ -173,6 +173,13 @@ const TimeSlots = ({ selectedTime, setSelectedTime }) => {
 const CustomerDateTimeSelection = () => {
   const navigate = useNavigate();
   const { id } = useParams();
+  const location = useLocation();
+  
+  // Check if this is a reschedule
+  const isReschedule = location.state?.isReschedule || false;
+  const bookingId = location.state?.bookingId || id;
+  const currentDate = location.state?.currentDate || null;
+  const currentTime = location.state?.currentTime || null;
   
   const [selectedDate, setSelectedDate] = useState(null);
   const [selectedTime, setSelectedTime] = useState(null);
@@ -181,14 +188,32 @@ const CustomerDateTimeSelection = () => {
     title: 'Professional House Cleaning',
     provider: 'Mohammed Ali'
   };
-  
+
   const handleContinue = () => {
     if (selectedDate && selectedTime) {
-      console.log('Continue to booking:', { selectedDate, selectedTime });
-      navigate('/booking/confirmation');
+      if (isReschedule) {
+        // For reschedule, directly update and go back to bookings
+        console.log('Rescheduling booking:', { 
+          bookingId, 
+          newDate: selectedDate, 
+          newTime: selectedTime 
+        });
+        alert(`Booking rescheduled successfully!\nNew date: ${selectedDate}\nNew time: ${selectedTime}`);
+        navigate('/customer/bookings');
+      } else {
+        // For new booking, go to confirmation page
+        console.log('Continue to booking:', { selectedDate, selectedTime });
+        navigate('/customer/booking/confirmation', {
+          state: { 
+            serviceId: id,
+            date: selectedDate,
+            time: selectedTime
+          }
+        });
+      }
     }
   };
-  
+
   return (
     <div className="min-h-screen bg-gray-50">
       <Header />
@@ -196,17 +221,30 @@ const CustomerDateTimeSelection = () => {
       <div className="max-w-4xl mx-auto px-6 py-8">
         {/* Back Button */}
         <button 
-          onClick={() => navigate(`/services/${id}`)}
+          onClick={() => navigate(isReschedule ? '/customer/bookings' : `/services/${id}`)}
           className="flex items-center gap-2 text-sm text-[#374151] hover:text-[#047857] mb-6 font-medium"
         >
           <ArrowLeft size={16} />
-          Back to Service Details
+          {isReschedule ? 'Back to Bookings' : 'Back to Service Details'}
         </button>
         
         {/* Page Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-[#374151] mb-2">Select Date & Time</h1>
-          <p className="text-gray-600">Choose your preferred appointment slot</p>
+          <h1 className="text-3xl font-bold text-[#374151] mb-2">
+            {isReschedule ? 'Reschedule Booking' : 'Select Date & Time'}
+          </h1>
+          <p className="text-gray-600">
+            {isReschedule 
+              ? 'Choose a new date and time for your booking. No additional payment required.'
+              : 'Choose your preferred appointment slot'}
+          </p>
+          {isReschedule && currentDate && currentTime && (
+            <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+              <p className="text-sm text-blue-800">
+                <strong>Current booking:</strong> {currentDate} at {currentTime}
+              </p>
+            </div>
+          )}
         </div>
         
         {/* Service Info Banner */}
@@ -227,14 +265,29 @@ const CustomerDateTimeSelection = () => {
           </div>
         )}
         
-        {/* Continue Button */}
+        {/* Info Box for Reschedule */}
+        {isReschedule && (
+          <div className="mb-6 p-4 bg-[#f0fdf4] border border-[#047857] rounded-lg">
+            <div className="flex items-start gap-3">
+              <CheckCircle className="text-[#047857] mt-0.5" size={20} />
+              <div>
+                <p className="text-sm font-medium text-[#047857] mb-1">No Payment Required</p>
+                <p className="text-xs text-gray-700">
+                  Since you've already paid for this booking, changing the date and time will not require any additional payment.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+        
+        {/* Continue/Reschedule Button */}
         <Button 
           variant="primary" 
           size="large"
           disabled={!selectedDate || !selectedTime}
           onClick={handleContinue}
         >
-          Continue to Booking
+          {isReschedule ? 'Confirm Reschedule' : 'Continue to Booking'}
         </Button>
       </div>
     </div>
