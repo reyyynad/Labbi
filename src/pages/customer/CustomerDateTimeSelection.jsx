@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { ArrowLeft, Calendar, Clock, CheckCircle } from 'lucide-react';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import Header from '../../components/header/Header';
+import { bookingsAPI } from '../../services/api';
 
 // ========== BUTTON COMPONENT ==========
 const Button = ({ 
@@ -13,7 +14,6 @@ const Button = ({
   disabled = false
 }) => {
   const baseStyles = 'rounded-lg font-medium transition-colors focus:outline-none inline-flex items-center justify-center w-full';
-  
   const variants = {
     primary: 'bg-[#047857] text-white hover:bg-[#065f46]',
     secondary: 'bg-[#1e3a8a] text-white hover:bg-[#1e40af]',
@@ -56,11 +56,17 @@ const CalendarWidget = ({ selectedDate, setSelectedDate }) => {
     days.push(i);
   }
   
+  const today = new Date();
   const isToday = (day) => {
-    const today = new Date();
     return day === today.getDate() && 
            currentMonth.getMonth() === today.getMonth() && 
            currentMonth.getFullYear() === today.getFullYear();
+  };
+
+  const isPastDate = (day) => {
+    const checkDate = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), day);
+    const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    return checkDate < todayStart;
   };
   
   return (
@@ -100,15 +106,22 @@ const CalendarWidget = ({ selectedDate, setSelectedDate }) => {
         {days.map((day, index) => (
           <button
             key={index}
-            disabled={!day || day < 15}
-            onClick={() => day && setSelectedDate(day)}
+            disabled={!day || isPastDate(day)}
+            onClick={() => day && setSelectedDate({
+              day,
+              month: currentMonth.getMonth(),
+              year: currentMonth.getFullYear(),
+              displayDate: `${monthNames[currentMonth.getMonth()]} ${day}, ${currentMonth.getFullYear()}`
+            })}
             className={`
               py-2 text-sm rounded-lg transition-colors
               ${!day ? 'invisible' : ''}
-              ${day && day < 15 ? 'text-gray-300 cursor-not-allowed' : ''}
-              ${day && day >= 15 && selectedDate === day 
+              ${day && isPastDate(day) ? 'text-gray-300 cursor-not-allowed' : ''}
+              ${day && !isPastDate(day) && selectedDate?.day === day && 
+                selectedDate?.month === currentMonth.getMonth() && 
+                selectedDate?.year === currentMonth.getFullYear()
                 ? 'bg-[#047857] text-white font-semibold' 
-                : day && day >= 15 
+                : day && !isPastDate(day)
                   ? 'hover:bg-white text-[#374151]' 
                   : ''}
               ${day && isToday(day) ? 'border-2 border-[#047857]' : ''}
@@ -183,34 +196,73 @@ const CustomerDateTimeSelection = () => {
   
   const [selectedDate, setSelectedDate] = useState(null);
   const [selectedTime, setSelectedTime] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
   
+  // Service data from state or defaults
   const service = {
-    title: 'Professional House Cleaning',
-    provider: 'Mohammed Ali'
+    title: location.state?.serviceName || 'Professional House Cleaning',
+    provider: location.state?.providerName || 'Mohammed Ali',
+    providerId: location.state?.providerId || null,
+    serviceId: location.state?.serviceId || id,
+    location: location.state?.location || 'To be confirmed',
+    serviceCost: location.state?.serviceCost || 80,
+    serviceImage: location.state?.serviceImage || ''
   };
 
-  const handleContinue = () => {
-    if (selectedDate && selectedTime) {
-      if (isReschedule) {
-        // For reschedule, directly update and go back to bookings
-        console.log('Rescheduling booking:', { 
-          bookingId, 
-          newDate: selectedDate, 
-          newTime: selectedTime 
-        });
-        alert(`Booking rescheduled successfully!\nNew date: ${selectedDate}\nNew time: ${selectedTime}`);
-        navigate('/customer/bookings');
-      } else {
-        // For new booking, go to confirmation page
-        console.log('Continue to booking:', { selectedDate, selectedTime });
-        navigate('/customer/booking/confirmation', {
-          state: { 
-            serviceId: id,
-            date: selectedDate,
-            time: selectedTime
+  const handleContinue = async () => {
+    if (!selectedDate || !selectedTime) return;
+    
+    setLoading(true);
+    setError('');
+
+    if (isReschedule) {
+      // Handle reschedule
+      try {
+        const dateObj = new Date(selectedDate.year, selectedDate.month, selectedDate.day);
+        await bookingsAPI.reschedule(
+          bookingId,
+          dateObj.toISOString(),
+          selectedDate.displayDate,
+          selectedTime
+        );
+        
+        navigate('/customer/bookings', {
+          state: {
+            success: true,
+            message: 'Booking rescheduled successfully!'
           }
         });
+      } catch (err) {
+        setError(err.message || 'Failed to reschedule booking');
+        setLoading(false);
       }
+    } else {
+      // For new booking, go to confirmation page with all data
+      const dateObj = new Date(selectedDate.year, selectedDate.month, selectedDate.day);
+      const serviceCost = service.serviceCost;
+      const platformFee = serviceCost * 0.1;
+      const tax = (serviceCost + platformFee) * 0.08;
+      const total = serviceCost + platformFee + tax;
+
+      navigate('/customer/booking/confirmation', {
+        state: { 
+          serviceId: service.serviceId,
+          serviceName: service.title,
+          providerName: service.provider,
+          providerId: service.providerId,
+          date: dateObj.toISOString(),
+          displayDate: selectedDate.displayDate,
+          time: selectedTime,
+          location: service.location,
+          duration: '1 hour',
+          serviceImage: service.serviceImage,
+          serviceCost,
+          platformFee,
+          tax,
+          total
+        }
+      });
     }
   };
 
@@ -246,6 +298,12 @@ const CustomerDateTimeSelection = () => {
             </div>
           )}
         </div>
+        
+        {error && (
+          <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+            <p className="text-sm text-red-600">{error}</p>
+          </div>
+        )}
         
         {/* Service Info Banner */}
         <div className="bg-white border border-gray-200 rounded-lg p-4 mb-6">
@@ -284,10 +342,14 @@ const CustomerDateTimeSelection = () => {
         <Button 
           variant="primary" 
           size="large"
-          disabled={!selectedDate || !selectedTime}
+          disabled={!selectedDate || !selectedTime || loading}
           onClick={handleContinue}
         >
-          {isReschedule ? 'Confirm Reschedule' : 'Continue to Booking'}
+          {loading 
+            ? 'Processing...' 
+            : isReschedule 
+              ? 'Confirm Reschedule' 
+              : 'Continue to Booking'}
         </Button>
       </div>
     </div>

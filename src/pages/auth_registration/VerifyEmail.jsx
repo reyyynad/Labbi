@@ -1,16 +1,29 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { useNavigate, useLocation, Link } from 'react-router-dom'
 import Header from '../../components/header/Header'
-import { Mail } from 'lucide-react'
+import { Mail, CheckCircle } from 'lucide-react'
+import { isAuthenticated } from '../../utils/auth'
 
 function VerifyEmail() {
   const navigate = useNavigate()
   const location = useLocation()
-  const email = location.state?.email || 'Arwa@example.com'
+  const email = location.state?.email || 'your@email.com'
+  const name = location.state?.name || 'User'
+  const [resent, setResent] = useState(false)
 
   const handleResend = () => {
     console.log('Resending verification email to:', email)
-    // In a real app, this would call an API
+    setResent(true)
+    setTimeout(() => setResent(false), 3000)
+  }
+
+  const handleContinue = () => {
+    // If user is authenticated, go to customer interface
+    if (isAuthenticated()) {
+      navigate('/customer')
+    } else {
+      navigate('/login')
+    }
   }
 
   return (
@@ -33,24 +46,38 @@ function VerifyEmail() {
               </div>
             </div>
 
-            <h1 className="text-3xl font-bold mb-4">Verify your email</h1>
+            <h1 className="text-3xl font-bold mb-4">Welcome, {name}!</h1>
             
             <p className="text-gray-100 mb-6">
               We've sent a verification link to <strong className="text-white">{email}</strong>
               <br />
-              Please check your inbox and click the link to activate your account.
+              Please check your inbox and click the link to verify your email.
             </p>
+
+            {resent && (
+              <div className="flex items-center justify-center gap-2 mb-4 p-3 bg-green-500/20 rounded-lg">
+                <CheckCircle className="w-5 h-5 text-green-300" />
+                <span className="text-green-100 text-sm">Verification email resent!</span>
+              </div>
+            )}
 
             <div className="bg-white/5 rounded-lg p-4 mb-6">
               <p className="text-white/80 text-sm mb-3">Didn't receive the email?</p>
               <button 
                 onClick={handleResend}
-                className="w-full bg-[#047857] hover:bg-[#065f46] text-white font-medium py-2 px-4 rounded-lg transition-colors"
+                className="w-full bg-white/20 hover:bg-white/30 text-white font-medium py-2 px-4 rounded-lg transition-colors mb-3"
               >
                 Resend verification email
               </button>
             </div>
 
+            {/* Continue button - allows users to proceed */}
+            <button 
+              onClick={handleContinue}
+              className="w-full bg-[#047857] hover:bg-[#065f46] text-white font-semibold py-3 px-4 rounded-lg transition-colors mb-4"
+            >
+              Continue to Dashboard
+            </button>
 
             <Link 
               to="/login" 
@@ -66,4 +93,3 @@ function VerifyEmail() {
 }
 
 export default VerifyEmail
-

@@ -1,7 +1,9 @@
-import React, { useState } from 'react';
-import { ArrowLeft, Bell, Shield, Trash2, User, CheckCircle } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { ArrowLeft, Bell, Shield, Trash2, User, CheckCircle, Loader2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import Header from '../../components/header/Header';
+import { userAPI, authAPI } from '../../services/api';
+import { clearAuthData } from '../../utils/auth';
 
 // ========== BUTTON COMPONENT ==========
 const Button = ({ 
@@ -41,7 +43,7 @@ const Button = ({
 };
 
 // ========== NOTIFICATION TOGGLE ==========
-const NotificationToggle = ({ title, description, enabled, onToggle }) => {
+const NotificationToggle = ({ title, description, enabled, onToggle, disabled }) => {
   return (
     <div className="flex items-center justify-between p-4 rounded-lg bg-white border border-gray-200">
       <div>
@@ -50,7 +52,8 @@ const NotificationToggle = ({ title, description, enabled, onToggle }) => {
       </div>
       <button
         onClick={onToggle}
-        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors`}
+        disabled={disabled}
+        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${disabled ? 'opacity-50' : ''}`}
         style={{ backgroundColor: enabled ? '#047857' : '#d1d5db' }}
       >
         <span
@@ -64,7 +67,7 @@ const NotificationToggle = ({ title, description, enabled, onToggle }) => {
 };
 
 // ========== NOTIFICATIONS SECTION ==========
-const NotificationsSection = ({ notifications, onToggle }) => {
+const NotificationsSection = ({ notifications, onToggle, saving }) => {
   return (
     <div className="bg-[#f0fdf4] border border-[#047857] rounded-lg p-6 mb-4">
       <h2 className="text-lg font-semibold text-[#047857] mb-4 flex items-center gap-2">
@@ -72,6 +75,7 @@ const NotificationsSection = ({ notifications, onToggle }) => {
           <Bell className="w-5 h-5 text-white" />
         </div>
         Notifications
+        {saving && <Loader2 className="w-4 h-4 animate-spin text-[#047857]" />}
       </h2>
       <div className="space-y-3">
         <NotificationToggle 
@@ -79,18 +83,21 @@ const NotificationsSection = ({ notifications, onToggle }) => {
           description="Receive booking confirmations and updates via email"
           enabled={notifications.email}
           onToggle={() => onToggle('email')}
+          disabled={saving}
         />
         <NotificationToggle 
           title="SMS Notifications"
           description="Get text messages for important booking updates"
           enabled={notifications.sms}
           onToggle={() => onToggle('sms')}
+          disabled={saving}
         />
         <NotificationToggle 
           title="Marketing Emails"
           description="Receive newsletters and promotional offers"
           enabled={notifications.marketing}
           onToggle={() => onToggle('marketing')}
+          disabled={saving}
         />
       </div>
     </div>
@@ -98,7 +105,7 @@ const NotificationsSection = ({ notifications, onToggle }) => {
 };
 
 // ========== SECURITY SECTION ==========
-const SecuritySection = ({ passwords, onChange, onUpdate }) => {
+const SecuritySection = ({ passwords, onChange, onUpdate, updating, error, success }) => {
   return (
     <div className="bg-[#f0fdf4] border border-[#047857] rounded-lg p-6 mb-4">
       <h2 className="text-lg font-semibold text-[#047857] mb-4 flex items-center gap-2">
@@ -107,6 +114,19 @@ const SecuritySection = ({ passwords, onChange, onUpdate }) => {
         </div>
         Security
       </h2>
+      
+      {error && (
+        <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+          <p className="text-sm text-red-600">{error}</p>
+        </div>
+      )}
+      
+      {success && (
+        <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg">
+          <p className="text-sm text-green-600">{success}</p>
+        </div>
+      )}
+      
       <div className="space-y-4">
         <div>
           <label className="block text-sm font-semibold mb-2 text-[#374151]">
@@ -150,8 +170,8 @@ const SecuritySection = ({ passwords, onChange, onUpdate }) => {
           />
         </div>
 
-        <Button onClick={onUpdate} variant="primary" size="large">
-          Update Password
+        <Button onClick={onUpdate} variant="primary" size="large" disabled={updating}>
+          {updating ? 'Updating...' : 'Update Password'}
         </Button>
       </div>
     </div>
@@ -159,7 +179,7 @@ const SecuritySection = ({ passwords, onChange, onUpdate }) => {
 };
 
 // ========== DANGER ZONE SECTION ==========
-const DangerZoneSection = ({ onDelete }) => {
+const DangerZoneSection = ({ onDelete, deleting }) => {
   return (
     <div className="bg-white border-2 border-red-200 rounded-lg p-6">
       <h2 className="text-lg font-semibold text-red-600 mb-4 flex items-center gap-2">
@@ -171,15 +191,15 @@ const DangerZoneSection = ({ onDelete }) => {
       <p className="text-sm text-gray-700 mb-4">
         Once you delete your account, there is no going back. Please be certain.
       </p>
-      <Button onClick={onDelete} variant="danger" size="large">
-        Delete Account
+      <Button onClick={onDelete} variant="danger" size="large" disabled={deleting}>
+        {deleting ? 'Deleting...' : 'Delete Account'}
       </Button>
     </div>
   );
 };
 
 // ========== QUICK ACTIONS SIDEBAR ==========
-const QuickActionsSidebar = ({ onNavigate }) => {
+const QuickActionsSidebar = ({ onNavigate, memberSince }) => {
   return (
     <div className="sticky top-6">
       <div className="bg-white border-2 border-[#047857] rounded-lg p-6 shadow-lg">
@@ -187,14 +207,14 @@ const QuickActionsSidebar = ({ onNavigate }) => {
         
         <div className="space-y-3 mb-6">
           <button 
-            onClick={() => onNavigate('/profile')}
+            onClick={() => onNavigate('/customer/profile')}
             className="w-full flex items-center gap-3 p-3 rounded-lg border border-gray-200 hover:bg-[#f0fdf4] transition-colors text-left"
           >
             <User className="w-5 h-5 text-[#047857]" />
             <span className="text-sm font-medium text-[#374151]">View Profile</span>
           </button>
           <button 
-            onClick={() => onNavigate('/bookings')}
+            onClick={() => onNavigate('/customer/bookings')}
             className="w-full flex items-center gap-3 p-3 rounded-lg border border-gray-200 hover:bg-[#f0fdf4] transition-colors text-left"
           >
             <CheckCircle className="w-5 h-5 text-[#047857]" />
@@ -208,7 +228,7 @@ const QuickActionsSidebar = ({ onNavigate }) => {
             <div className="w-2 h-2 bg-green-500 rounded-full"></div>
             <span className="text-sm text-gray-700">Active</span>
           </div>
-          <p className="text-xs text-gray-600">Member since Jan 2024</p>
+          <p className="text-xs text-gray-600">Member since {memberSince || 'Recently'}</p>
         </div>
       </div>
     </div>
@@ -218,24 +238,68 @@ const QuickActionsSidebar = ({ onNavigate }) => {
 // ========== MAIN SETTINGS PAGE ==========
 const CustomerSettings = () => {
   const navigate = useNavigate();
+  const [loading, setLoading] = useState(true);
+  const [memberSince, setMemberSince] = useState('');
   
   const [notifications, setNotifications] = useState({
     email: true,
     sms: true,
     marketing: false
   });
+  const [savingNotifications, setSavingNotifications] = useState(false);
 
   const [passwords, setPasswords] = useState({
     current: '',
     new: '',
     confirm: ''
   });
+  const [updatingPassword, setUpdatingPassword] = useState(false);
+  const [passwordError, setPasswordError] = useState('');
+  const [passwordSuccess, setPasswordSuccess] = useState('');
 
-  const handleNotificationToggle = (type) => {
-    setNotifications(prev => ({
-      ...prev,
-      [type]: !prev[type]
-    }));
+  const [deletingAccount, setDeletingAccount] = useState(false);
+
+  // Load user data on mount
+  useEffect(() => {
+    loadUserData();
+  }, []);
+
+  const loadUserData = async () => {
+    try {
+      const response = await authAPI.getMe();
+      if (response.success) {
+        setNotifications(response.data.notifications || {
+          email: true,
+          sms: true,
+          marketing: false
+        });
+        setMemberSince(response.data.memberSince);
+      }
+    } catch (error) {
+      console.error('Failed to load user data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleNotificationToggle = async (type) => {
+    const newNotifications = {
+      ...notifications,
+      [type]: !notifications[type]
+    };
+    
+    setNotifications(newNotifications);
+    setSavingNotifications(true);
+    
+    try {
+      await userAPI.updateNotifications(newNotifications);
+    } catch (error) {
+      // Revert on error
+      setNotifications(notifications);
+      console.error('Failed to update notifications:', error);
+    } finally {
+      setSavingNotifications(false);
+    }
   };
 
   const handlePasswordChange = (e) => {
@@ -244,24 +308,84 @@ const CustomerSettings = () => {
       ...prev,
       [name]: value
     }));
+    setPasswordError('');
+    setPasswordSuccess('');
   };
 
-  const handleUpdatePassword = () => {
-    if (passwords.new !== passwords.confirm) {
-      alert('New passwords do not match!');
+  const handleUpdatePassword = async () => {
+    if (!passwords.current || !passwords.new || !passwords.confirm) {
+      setPasswordError('Please fill in all password fields');
       return;
     }
-    console.log('Password update requested');
-    alert('Password updated successfully!');
-    setPasswords({ current: '', new: '', confirm: '' });
-  };
-
-  const handleDeleteAccount = () => {
-    if (window.confirm('Are you sure you want to delete your account? This action cannot be undone.')) {
-      console.log('Account deletion requested');
-      alert('Account deletion request submitted. You will receive a confirmation email.');
+    
+    if (passwords.new !== passwords.confirm) {
+      setPasswordError('New passwords do not match!');
+      return;
+    }
+    
+    if (passwords.new.length < 8) {
+      setPasswordError('New password must be at least 8 characters');
+      return;
+    }
+    
+    setUpdatingPassword(true);
+    setPasswordError('');
+    setPasswordSuccess('');
+    
+    try {
+      const response = await authAPI.updatePassword(passwords.current, passwords.new);
+      if (response.success) {
+        setPasswordSuccess('Password updated successfully!');
+        setPasswords({ current: '', new: '', confirm: '' });
+        
+        // Update token if returned
+        if (response.data?.token) {
+          const storage = localStorage.getItem('authToken') ? localStorage : sessionStorage;
+          storage.setItem('authToken', response.data.token);
+        }
+      }
+    } catch (error) {
+      setPasswordError(error.message || 'Failed to update password');
+    } finally {
+      setUpdatingPassword(false);
     }
   };
+
+  const handleDeleteAccount = async () => {
+    const confirmed = window.confirm(
+      'Are you sure you want to delete your account? This action cannot be undone and all your data will be permanently deleted.'
+    );
+    
+    if (!confirmed) return;
+    
+    const doubleConfirm = window.confirm(
+      'This is your final warning. All your bookings, reviews, and personal data will be deleted. Continue?'
+    );
+    
+    if (!doubleConfirm) return;
+    
+    setDeletingAccount(true);
+    
+    try {
+      await userAPI.deleteAccount();
+      clearAuthData();
+      navigate('/');
+    } catch (error) {
+      alert(error.message || 'Failed to delete account');
+      setDeletingAccount(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <Header />
+        <div className="flex items-center justify-center h-[60vh]">
+          <Loader2 className="w-8 h-8 animate-spin text-[#047857]" />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -270,7 +394,7 @@ const CustomerSettings = () => {
       <div className="max-w-7xl mx-auto px-6 py-6">
         {/* Back Button */}
         <button 
-          onClick={() => navigate('/profile')}
+          onClick={() => navigate('/customer/profile')}
           className="flex items-center gap-2 text-sm text-[#374151] hover:text-[#047857] mb-6 font-medium"
         >
           <ArrowLeft size={16} />
@@ -289,18 +413,28 @@ const CustomerSettings = () => {
             <NotificationsSection 
               notifications={notifications}
               onToggle={handleNotificationToggle}
+              saving={savingNotifications}
             />
             <SecuritySection 
               passwords={passwords}
               onChange={handlePasswordChange}
               onUpdate={handleUpdatePassword}
+              updating={updatingPassword}
+              error={passwordError}
+              success={passwordSuccess}
             />
-            <DangerZoneSection onDelete={handleDeleteAccount} />
+            <DangerZoneSection 
+              onDelete={handleDeleteAccount}
+              deleting={deletingAccount}
+            />
           </div>
 
           {/* Right Column - Quick Actions Sidebar */}
           <div className="lg:col-span-1">
-            <QuickActionsSidebar onNavigate={navigate} />
+            <QuickActionsSidebar 
+              onNavigate={navigate}
+              memberSince={memberSince}
+            />
           </div>
         </div>
       </div>
