@@ -56,6 +56,67 @@ const userSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Service'
   }],
+  // Provider-specific fields
+  providerProfile: {
+    bio: {
+      type: String,
+      default: ''
+    },
+    category: {
+      type: String,
+      enum: ['home-services', 'beauty', 'education', 'tech', 'events', 'health', 'business', 'other', ''],
+      default: ''
+    },
+    experience: {
+      type: String,
+      enum: ['0-1', '1-3', '3-5', '5-10', '10+', ''],
+      default: ''
+    },
+    title: {
+      type: String,
+      default: ''
+    },
+    isVerified: {
+      type: Boolean,
+      default: false
+    },
+    isIdentityVerified: {
+      type: Boolean,
+      default: false
+    },
+    isBackgroundChecked: {
+      type: Boolean,
+      default: false
+    },
+    rating: {
+      type: Number,
+      default: 0
+    },
+    totalReviews: {
+      type: Number,
+      default: 0
+    },
+    totalBookings: {
+      type: Number,
+      default: 0
+    },
+    totalEarnings: {
+      type: Number,
+      default: 0
+    },
+    thisMonthEarnings: {
+      type: Number,
+      default: 0
+    },
+    responseRate: {
+      type: Number,
+      default: 100
+    },
+    completionRate: {
+      type: Number,
+      default: 100
+    }
+  },
   createdAt: {
     type: Date,
     default: Date.now

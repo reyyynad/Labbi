@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
-import { ArrowLeft, Star, MapPin, Mail, Phone } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { ArrowLeft, Star, MapPin, Mail, Phone, Loader2, AlertCircle } from 'lucide-react';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import Header from '../../components/header/Header';
 import { getAuthToken } from '../../utils/auth';
-import { getServiceById } from '../../data/services';
+import { servicesAPI } from '../../services/api';
 
 
 // ========== BUTTON COMPONENT ==========
@@ -125,8 +125,8 @@ const ProviderInfo = ({ provider }) => {
 };
 
 // ========== BOOKING FORM WIDGET ==========
-const BookingForm = ({ price, serviceId, navigate, isAuthenticated }) => {
-  const subtotal = 50;
+const BookingForm = ({ price, priceType, serviceId, navigate, isAuthenticated }) => {
+  const subtotal = price || 50;
   const serviceFee = 5;
   const total = subtotal + serviceFee;
 
@@ -142,21 +142,21 @@ const BookingForm = ({ price, serviceId, navigate, isAuthenticated }) => {
     <div className="bg-white border-2 border-[#047857] rounded-lg p-6 sticky top-6">
       <div className="text-center mb-6 pb-6 border-b border-gray-200">
         <p className="text-sm text-gray-600 mb-1">Starting at</p>
-        <p className="text-3xl font-bold text-[#047857]">{price} SR<span className="text-base font-normal">/hr</span></p>
+        <p className="text-3xl font-bold text-[#047857]">SR{price}<span className="text-base font-normal">/{priceType || 'hr'}</span></p>
       </div>
 
       <div className="space-y-2 mb-6 pb-6 border-b border-gray-200">
         <div className="flex justify-between text-sm">
           <span className="text-gray-600">Subtotal:</span>
-          <span className="font-medium">{subtotal} SR</span>
+          <span className="font-medium">SR{subtotal}</span>
         </div>
         <div className="flex justify-between text-sm">
           <span className="text-gray-600">Service Fee:</span>
-          <span className="font-medium">{serviceFee} SR</span>
+          <span className="font-medium">SR{serviceFee}</span>
         </div>
         <div className="flex justify-between text-base font-semibold pt-2">
           <span>Total:</span>
-          <span>{total} SR</span>
+          <span>SR{total}</span>
         </div>
       </div>
 
@@ -236,59 +236,148 @@ const CustomerServiceDetails = () => {
   const { id } = useParams();
   const location = useLocation();
   const isAuthenticated = !!getAuthToken();
-  const serviceData = getServiceById(id);
+  const [serviceData, setServiceData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
   
   // Check if viewing from bookings page
   const fromBooking = location.state?.fromBooking || false;
 
-  const buildGalleryImages = (baseUrl) => {
-    if (!baseUrl) return [];
-    const separator = baseUrl.includes('?') ? '&' : '?';
-    return [
-      baseUrl,
-      `${baseUrl}${separator}variant=center`,
-      `${baseUrl}${separator}variant=entropy`,
-      `${baseUrl}${separator}variant=faces`,
-      `${baseUrl}${separator}variant=edge`
-    ];
+  useEffect(() => {
+    fetchService();
+  }, [id]);
+
+  const fetchService = async () => {
+    try {
+      setLoading(true);
+      setError('');
+      
+      const response = await servicesAPI.getById(id);
+      
+      if (response.success) {
+        setServiceData(response.data);
+      } else {
+        setError('Service not found');
+      }
+    } catch (err) {
+      console.error('Fetch service error:', err);
+      setError(err.message || 'Failed to load service');
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const service = serviceData
-    ? {
-        name: serviceData.title,
-        status: 'Available',
-        rating: serviceData.rating,
-        reviews: serviceData.reviews,
-        location: serviceData.location,
-        price: serviceData.price,
-        images: buildGalleryImages(serviceData.image)
-      }
-    : {
-        name: 'Professional Web Development',
-        status: 'Online',
-        rating: 4.9,
-        reviews: 127,
-        location: 'Riyadh, Saudi Arabia',
-        price: 50,
-        images: []
-      };
+  const buildGalleryImages = (images) => {
+    if (!images || images.length === 0) return [];
+    return images;
+  };
+
+  // Helper function to get default image based on category
+  const getDefaultImage = (category) => {
+    const imageMap = {
+      'home': 'https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=800&auto=format&fit=crop&q=80',
+      'technology': 'https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=800&auto=format&fit=crop&q=80',
+      'tech': 'https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=800&auto=format&fit=crop&q=80',
+      'design': 'https://images.unsplash.com/photo-1626785774573-4b799315345d?w=800&auto=format&fit=crop&q=80',
+      'beauty': 'https://images.unsplash.com/photo-1560750588-73207b1ef5b8?w=800&auto=format&fit=crop&q=80',
+      'health': 'https://images.unsplash.com/photo-1571019614242-c5c5dee9f50b?w=800&auto=format&fit=crop&q=80',
+      'education': 'https://images.unsplash.com/photo-1523050854058-8df90110c9f1?w=800&auto=format&fit=crop&q=80',
+      'tutoring': 'https://images.unsplash.com/photo-1523050854058-8df90110c9f1?w=800&auto=format&fit=crop&q=80',
+      'events': 'https://images.unsplash.com/photo-1492684223066-81342ee5ff30?w=800&auto=format&fit=crop&q=80',
+      'business': 'https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?w=800&auto=format&fit=crop&q=80'
+    };
+    return imageMap[category] || 'https://images.unsplash.com/photo-1521737711867-e3b97375f902?w=800&auto=format&fit=crop&q=80';
+  };
+
+  // Format category for display
+  const formatCategory = (category) => {
+    const categoryMap = {
+      'home': 'Home Services',
+      'technology': 'Professional Services',
+      'tech': 'Professional Services',
+      'design': 'Creative Services',
+      'beauty': 'Health & Wellness',
+      'health': 'Health & Wellness',
+      'education': 'Professional Services',
+      'tutoring': 'Professional Services',
+      'language': 'Professional Services',
+      'events': 'Creative Services',
+      'business': 'Professional Services',
+      'other': 'Other Services'
+    };
+    return categoryMap[category] || category || 'Other Services';
+  };
+
+  // Show loading state
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <Header showAuthButtons />
+        <div className="flex flex-col items-center justify-center py-32">
+          <Loader2 size={48} className="animate-spin text-[#047857] mb-4" />
+          <p className="text-gray-600">Loading service details...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Show error state
+  if (error || !serviceData) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <Header showAuthButtons />
+        <div className="max-w-7xl mx-auto px-6 py-6">
+          <button 
+            onClick={() => navigate('/')}
+            className="flex items-center gap-2 text-sm text-gray-700 hover:text-[#047857] mb-6 font-medium"
+          >
+            <ArrowLeft size={16} />
+            Back to services
+          </button>
+          
+          <div className="text-center py-20 bg-white rounded-2xl border border-gray-200">
+            <div className="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <AlertCircle size={40} className="text-red-500" />
+            </div>
+            <h3 className="text-xl font-semibold text-gray-900 mb-2">Service Not Found</h3>
+            <p className="text-gray-600 mb-6">{error || 'The service you are looking for does not exist or has been removed.'}</p>
+            <button
+              onClick={() => navigate('/')}
+              className="px-6 py-3 bg-[#047857] text-white rounded-lg font-medium hover:bg-[#065f46] transition-colors"
+            >
+              Browse Services
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  const service = {
+    name: serviceData.title,
+    status: serviceData.status === 'Active' ? 'Available' : serviceData.status,
+    rating: serviceData.rating || 0,
+    reviews: serviceData.reviewsCount || 0,
+    location: serviceData.location || serviceData.provider?.location || 'Saudi Arabia',
+    price: serviceData.price,
+    priceType: serviceData.priceType || 'hour',
+    images: serviceData.images?.length > 0 ? serviceData.images : [getDefaultImage(serviceData.category)]
+  };
 
   const provider = {
-    name: serviceData?.provider || 'Renad Elsafi',
-    title: serviceData ? `${serviceData.category} Specialist` : 'Full-Stack Developer',
-    rating: serviceData?.rating ?? 4.0,
-    reviews: serviceData?.reviews ?? 127,
-    bookings: serviceData ? Math.max(60, Math.round(serviceData.reviews * 0.7)) : 89,
-    email: 'support@labbi.com',
-    phone: '+966501234567'
+    name: serviceData.provider?.fullName || 'Service Provider',
+    title: `${formatCategory(serviceData.category)} Specialist`,
+    rating: serviceData.rating || 0,
+    reviews: serviceData.reviewsCount || 0,
+    bookings: serviceData.bookings || 0,
+    email: serviceData.provider?.email || 'contact@labbi.com',
+    phone: serviceData.provider?.phone || '+966 50 000 0000'
   };
 
-  const description =
-    serviceData?.description ||
-    'I provide professional full-stack web development services using modern technologies including React, Node.js, and PostgreSQL. With over 5 years of experience, I can help you build scalable web applications.';
+  const description = serviceData.description || 'Professional service with high quality standards.';
 
   const features = [
-    `${serviceData?.category || 'Premium'} service expertise`,
+    `${formatCategory(serviceData.category)} service expertise`,
     `Average rating of ${service.rating} from ${service.reviews}+ reviews`,
     `Available in ${service.location}`,
     'Flexible scheduling and quick response'
@@ -296,22 +385,10 @@ const CustomerServiceDetails = () => {
 
   const reviews = [
     {
-      author: 'Shatha Alharbi',
+      author: 'Customer',
       rating: 5,
-      comment: 'Excellent service! Very professional and delivered exactly what I needed.',
-      date: '2 days ago'
-    },
-    {
-      author: 'Arwa Aldawoud',
-      rating: 4,
-      comment: 'Great quality and friendly communication. Looking forward to booking again.',
-      date: '1 week ago'
-    },
-    {
-      author: 'Adel Hassan',
-      rating: 5,
-      comment: 'Super smooth experience and fast turnaround. Highly recommended.',
-      date: '2 weeks ago'
+      comment: 'Excellent service! Very professional.',
+      date: 'Recently'
     }
   ];
 
@@ -363,6 +440,7 @@ const CustomerServiceDetails = () => {
             <div className="lg:col-span-1">
               <BookingForm
                 price={service.price}
+                priceType={service.priceType}
                 serviceId={id}
                 navigate={navigate}
                 isAuthenticated={isAuthenticated}

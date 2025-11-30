@@ -1,74 +1,105 @@
-import React, { useState } from 'react';
-import { Briefcase, Calendar, Star, DollarSign, Clock, User, Plus } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Briefcase, Calendar, Star, DollarSign, Clock, User, Plus, Loader2 } from 'lucide-react';
 import ProviderHeader from '../../components/header/ProviderHeader';
+import { providerAPI, servicesAPI, reviewsAPI } from '../../services/api';
+import { getUserName } from '../../utils/auth';
 
 const Service_Provider = ({ onNavigate }) => {
-  const [pendingBookings, setPendingBookings] = useState([
-    {
-      id: 1,
-      service: "Professional House Cleaning",
-      customer: "Shatha Alharbi",
-      customerInitials: "SA",
-      date: "Nov 15, 2024",
-      time: "10:00 AM",
-      price: 120
-    },
-    {
-      id: 2,
-      service: "Professional House Cleaning",
-      customer: "Mohammed Ali",
-      customerInitials: "MA",
-      date: "Nov 16, 2024",
-      time: "2:00 PM",
-      price: 160
-    }
-  ]);
+  const [pendingBookings, setPendingBookings] = useState([]);
+  const [recentReviews, setRecentReviews] = useState([]);
+  const [stats, setStats] = useState({
+    totalServices: 0,
+    totalBookings: 0,
+    averageRating: 0,
+    totalRevenue: 0
+  });
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const userName = getUserName() || 'Provider';
 
-  const [recentReviews] = useState([
-    {
-      id: 1,
-      customer: "Renad Elsafi",
-      customerInitials: "RE",
-      rating: 5,
-      comment: "Excellent service! Very professional!",
-      date: "2 days ago"
-    },
-    {
-      id: 2,
-      customer: "Adel Hassan",
-      customerInitials: "AH",
-      rating: 5,
-      comment: "Outstanding work, highly recommended!",
-      date: "5 days ago"
-    },
-    {
-      id: 3,
-      customer: "Mohammed Ali",
-      customerInitials: "MA",
-      rating: 4,
-      comment: "Great service, will book again.",
-      date: "1 week ago"
-    }
-  ]);
+  useEffect(() => {
+    fetchDashboardData();
+  }, []);
 
-  const stats = {
-    totalServices: 4,
-    totalBookings: 127,
-    averageRating: 4.9,
-    totalRevenue: 12450
+  const fetchDashboardData = async () => {
+    try {
+      setLoading(true);
+      setError('');
+
+      // Fetch all data in parallel
+      const [statsRes, bookingsRes, reviewsRes, servicesRes] = await Promise.all([
+        providerAPI.getStats().catch(() => ({ success: false })),
+        providerAPI.getBookings('Pending').catch(() => ({ success: false, data: [] })),
+        providerAPI.getReviews().catch(() => ({ success: false, data: [] })),
+        servicesAPI.getMyServices().catch(() => ({ success: false, data: [] }))
+      ]);
+
+      // Update stats
+      if (statsRes.success) {
+        setStats({
+          totalServices: servicesRes.success ? servicesRes.count || servicesRes.data?.length || 0 : 0,
+          totalBookings: statsRes.data?.totalBookings || 0,
+          averageRating: reviewsRes.success ? reviewsRes.avgRating || 0 : 0,
+          totalRevenue: statsRes.data?.totalRevenue || 0
+        });
+      }
+
+      // Update pending bookings
+      if (bookingsRes.success && bookingsRes.data) {
+        setPendingBookings(bookingsRes.data.map(b => ({
+          id: b.id,
+          service: b.service,
+          customer: b.customer,
+          customerInitials: b.customerInitials || b.customer?.split(' ').map(n => n[0]).join('').toUpperCase() || 'C',
+          date: b.date,
+          time: b.time,
+          price: b.price
+        })));
+      }
+
+      // Update recent reviews (limit to 3)
+      if (reviewsRes.success && reviewsRes.data) {
+        setRecentReviews(reviewsRes.data.slice(0, 3).map(r => ({
+          id: r.id,
+          customer: r.customer,
+          customerInitials: r.initials || r.customer?.split(' ').map(n => n[0]).join('').toUpperCase() || 'C',
+          rating: r.rating,
+          comment: r.comment,
+          date: r.date
+        })));
+      }
+
+    } catch (err) {
+      console.error('Dashboard fetch error:', err);
+      setError('Failed to load dashboard data');
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleAccept = (bookingId) => {
-    // Remove the booking from pending list
-    setPendingBookings(pendingBookings.filter(b => b.id !== bookingId));
-    alert(`Booking #${bookingId} has been accepted! The customer will be notified.`);
+  const handleAccept = async (bookingId) => {
+    try {
+      const response = await providerAPI.acceptBooking(bookingId);
+      if (response.success) {
+        setPendingBookings(pendingBookings.filter(b => b.id !== bookingId));
+        alert('Booking accepted! The customer will be notified.');
+      }
+    } catch (err) {
+      alert(err.message || 'Failed to accept booking');
+    }
   };
 
-  const handleDecline = (bookingId) => {
+  const handleDecline = async (bookingId) => {
     if (confirm('Are you sure you want to decline this booking?')) {
-      // Remove the booking from pending list
-      setPendingBookings(pendingBookings.filter(b => b.id !== bookingId));
-      alert(`Booking #${bookingId} has been declined. The customer will be notified.`);
+      try {
+        const response = await providerAPI.declineBooking(bookingId);
+        if (response.success) {
+          setPendingBookings(pendingBookings.filter(b => b.id !== bookingId));
+          alert('Booking declined. The customer will be notified.');
+        }
+      } catch (err) {
+        alert(err.message || 'Failed to decline booking');
+      }
     }
   };
 
@@ -91,8 +122,25 @@ const Service_Provider = ({ onNavigate }) => {
         {/* Page Header */}
         <div className="mb-6">
           <h1 className="text-2xl font-bold text-gray-900 mb-1">Provider Dashboard</h1>
-          <p className="text-gray-600 text-sm">Welcome back, Arwa! Here's your business overview</p>
+          <p className="text-gray-600 text-sm">Welcome back, {userName}! Here's your business overview</p>
         </div>
+
+        {loading && (
+          <div className="flex items-center justify-center py-12">
+            <Loader2 className="w-8 h-8 animate-spin text-gray-400" />
+            <span className="ml-2 text-gray-600">Loading dashboard...</span>
+          </div>
+        )}
+
+        {error && (
+          <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+            <p className="text-sm text-red-600">{error}</p>
+            <button onClick={fetchDashboardData} className="mt-2 text-sm text-red-700 underline">Try again</button>
+          </div>
+        )}
+
+        {!loading && !error && (
+          <>
 
         {/* Stats Grid */}
         <div className="grid grid-cols-4 gap-6 mb-6">
@@ -290,6 +338,8 @@ const Service_Provider = ({ onNavigate }) => {
             <p className="text-sm text-gray-600">Edit your professional information</p>
           </button>
         </div>
+        </>
+        )}
       </main>
     </div>
   );

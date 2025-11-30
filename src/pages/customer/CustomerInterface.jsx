@@ -1,11 +1,11 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
-import { Search, Filter, Star, MapPin, X } from 'lucide-react';
+import { Search, Filter, Star, MapPin, X, Loader2, Briefcase } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import Header from '../../components/header/Header';
 import logoPath from '../../assets/images/labbi_logo.svg';
-import servicesCatalog from '../../data/services';
+import { servicesAPI } from '../../services/api';
 
-// ========== BUTTON COMPONENT (unchanged) ==========
+// ========== BUTTON COMPONENT (unchanged) ========== 
 const Button = ({ 
   children, 
   onClick, 
@@ -303,8 +303,83 @@ const CustomerInterface = () => {
     category: 'All Categories',
     priceMin: '', priceMax: '', ratings: [], location: ''
   });
+  const [allServices, setAllServices] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
-  const allServices = servicesCatalog;
+  // Fetch services from backend
+  useEffect(() => {
+    fetchServices();
+  }, []);
+
+  const fetchServices = async () => {
+    try {
+      setLoading(true);
+      setError('');
+      
+      const response = await servicesAPI.getAll();
+      
+      if (response.success) {
+        // Transform backend data to match the expected format
+        const services = response.data.map(service => ({
+          id: service.id,
+          title: service.title,
+          description: service.description,
+          provider: service.provider?.fullName || 'Service Provider',
+          rating: service.rating || 0,
+          reviews: service.reviewsCount || 0,
+          price: service.price,
+          unit: service.priceType || 'hour',
+          location: service.location || service.provider?.location || 'Saudi Arabia',
+          category: formatCategory(service.category),
+          image: service.images?.[0] || getDefaultImage(service.category)
+        }));
+        setAllServices(services);
+      }
+    } catch (err) {
+      console.error('Fetch services error:', err);
+      setError('Failed to load services');
+      setAllServices([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Helper function to format category names
+  const formatCategory = (category) => {
+    const categoryMap = {
+      'home': 'Home Services',
+      'technology': 'Professional Services',
+      'tech': 'Professional Services',
+      'design': 'Creative Services',
+      'beauty': 'Health & Wellness',
+      'health': 'Health & Wellness',
+      'education': 'Professional Services',
+      'tutoring': 'Professional Services',
+      'language': 'Professional Services',
+      'events': 'Creative Services',
+      'business': 'Professional Services',
+      'other': 'Other Services'
+    };
+    return categoryMap[category] || category || 'Other Services';
+  };
+
+  // Helper function to get default image based on category
+  const getDefaultImage = (category) => {
+    const imageMap = {
+      'home': 'https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=800&auto=format&fit=crop&q=80',
+      'technology': 'https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=800&auto=format&fit=crop&q=80',
+      'tech': 'https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=800&auto=format&fit=crop&q=80',
+      'design': 'https://images.unsplash.com/photo-1626785774573-4b799315345d?w=800&auto=format&fit=crop&q=80',
+      'beauty': 'https://images.unsplash.com/photo-1560750588-73207b1ef5b8?w=800&auto=format&fit=crop&q=80',
+      'health': 'https://images.unsplash.com/photo-1571019614242-c5c5dee9f50b?w=800&auto=format&fit=crop&q=80',
+      'education': 'https://images.unsplash.com/photo-1523050854058-8df90110c9f1?w=800&auto=format&fit=crop&q=80',
+      'tutoring': 'https://images.unsplash.com/photo-1523050854058-8df90110c9f1?w=800&auto=format&fit=crop&q=80',
+      'events': 'https://images.unsplash.com/photo-1492684223066-81342ee5ff30?w=800&auto=format&fit=crop&q=80',
+      'business': 'https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?w=800&auto=format&fit=crop&q=80'
+    };
+    return imageMap[category] || 'https://images.unsplash.com/photo-1521737711867-e3b97375f902?w=800&auto=format&fit=crop&q=80';
+  };
 
   const filteredServices = useMemo(() => {
     return allServices.filter(service => {
@@ -349,30 +424,81 @@ const CustomerInterface = () => {
 
           {/* SERVICES GRID - Full width on mobile */}
           <div className="flex-1">
-            <div className="mb-6">
-              <h3 className="text-xl font-semibold text-[#374151]">
-                {filteredServices.length} Services Found
-              </h3>
-              {searchQuery && (
-                <p className="text-sm text-gray-600 mt-1">Showing results for "{searchQuery}"</p>
-              )}
-            </div>
-
-            {filteredServices.length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {filteredServices.map((service) => (
-                  <ServiceCard key={service.id} service={service} onViewDetails={() => navigate(`/services/${service.id}`)} />
-                ))}
+            {/* Loading State */}
+            {loading && (
+              <div className="flex flex-col items-center justify-center py-20">
+                <Loader2 size={48} className="animate-spin text-[#047857] mb-4" />
+                <p className="text-gray-600">Loading services...</p>
               </div>
-            ) : (
+            )}
+
+            {/* Error State */}
+            {!loading && error && (
               <div className="text-center py-20">
-                <Search size={64} className="mx-auto text-gray-400 mb-4" />
-                <h3 className="text-xl font-semibold text-[#374151] mb-2">No services found</h3>
-                <p className="text-gray-600 mb-6">Try adjusting your search or filters</p>
-                <Button variant="outline" onClick={() => { setSearchQuery(''); setFilters({ category: 'All Categories', priceMin: '', priceMax: '', ratings: [], location: '' }); }}>
-                  Clear All Filters
+                <div className="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <X size={40} className="text-red-500" />
+                </div>
+                <h3 className="text-xl font-semibold text-[#374151] mb-2">Failed to load services</h3>
+                <p className="text-gray-600 mb-6">{error}</p>
+                <Button variant="primary" onClick={fetchServices}>
+                  Try Again
                 </Button>
               </div>
+            )}
+
+            {/* Empty State - No services available at all */}
+            {!loading && !error && allServices.length === 0 && (
+              <div className="text-center py-20 bg-white rounded-2xl border-2 border-dashed border-gray-200">
+                <div className="w-24 h-24 bg-[#f0fdf4] rounded-full flex items-center justify-center mx-auto mb-6">
+                  <Briefcase size={48} className="text-[#047857]" />
+                </div>
+                <h3 className="text-2xl font-bold text-[#374151] mb-3">No Services Available Yet</h3>
+                <p className="text-gray-600 mb-2 max-w-md mx-auto">
+                  We're just getting started! Service providers haven't added any services yet.
+                </p>
+                <p className="text-gray-500 text-sm max-w-md mx-auto mb-8">
+                  Check back soon or become a service provider yourself and be the first to offer your services!
+                </p>
+                <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                  <Button variant="outline" onClick={fetchServices}>
+                    Refresh
+                  </Button>
+                  <Button variant="primary" onClick={() => navigate('/signup-provider')}>
+                    Become a Provider
+                  </Button>
+                </div>
+              </div>
+            )}
+
+            {/* Services Found */}
+            {!loading && !error && allServices.length > 0 && (
+              <>
+                <div className="mb-6">
+                  <h3 className="text-xl font-semibold text-[#374151]">
+                    {filteredServices.length} Service{filteredServices.length !== 1 ? 's' : ''} Found
+                  </h3>
+                  {searchQuery && (
+                    <p className="text-sm text-gray-600 mt-1">Showing results for "{searchQuery}"</p>
+                  )}
+                </div>
+
+                {filteredServices.length > 0 ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {filteredServices.map((service) => (
+                      <ServiceCard key={service.id} service={service} onViewDetails={() => navigate(`/services/${service.id}`)} />
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-20">
+                    <Search size={64} className="mx-auto text-gray-400 mb-4" />
+                    <h3 className="text-xl font-semibold text-[#374151] mb-2">No services match your filters</h3>
+                    <p className="text-gray-600 mb-6">Try adjusting your search or filters</p>
+                    <Button variant="outline" onClick={() => { setSearchQuery(''); setFilters({ category: 'All Categories', priceMin: '', priceMax: '', ratings: [], location: '' }); }}>
+                      Clear All Filters
+                    </Button>
+                  </div>
+                )}
+              </>
             )}
           </div>
         </div>

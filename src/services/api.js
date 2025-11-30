@@ -195,6 +195,142 @@ export const reviewsAPI = {
     }
     return data;
   },
+
+  // Get my reviews (for providers)
+  getMyReviews: async () => {
+    return authFetch('/reviews/my-reviews');
+  },
+};
+
+// ============ SERVICES API ============
+
+export const servicesAPI = {
+  // Get all active services (public)
+  getAll: async (category = null) => {
+    const query = category ? `?category=${category}` : '';
+    const response = await fetch(`${API_BASE_URL}/services${query}`);
+    const data = await response.json();
+    if (!response.ok) {
+      throw new Error(data.message || 'Failed to get services');
+    }
+    return data;
+  },
+
+  // Get single service (public)
+  getById: async (id) => {
+    const response = await fetch(`${API_BASE_URL}/services/${id}`);
+    const data = await response.json();
+    if (!response.ok) {
+      throw new Error(data.message || 'Failed to get service');
+    }
+    return data;
+  },
+
+  // Get my services (provider only)
+  getMyServices: async () => {
+    return authFetch('/services/my-services');
+  },
+
+  // Create new service (provider only)
+  create: async (serviceData) => {
+    return authFetch('/services', {
+      method: 'POST',
+      body: JSON.stringify(serviceData),
+    });
+  },
+
+  // Update service (provider only)
+  update: async (id, serviceData) => {
+    return authFetch(`/services/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(serviceData),
+    });
+  },
+
+  // Delete service (provider only)
+  delete: async (id) => {
+    return authFetch(`/services/${id}`, {
+      method: 'DELETE',
+    });
+  },
+
+  // Update service status
+  updateStatus: async (id, status) => {
+    return authFetch(`/services/${id}/status`, {
+      method: 'PUT',
+      body: JSON.stringify({ status }),
+    });
+  },
+
+  // Get services by provider (public)
+  getByProvider: async (providerId) => {
+    const response = await fetch(`${API_BASE_URL}/services/provider/${providerId}`);
+    const data = await response.json();
+    if (!response.ok) {
+      throw new Error(data.message || 'Failed to get provider services');
+    }
+    return data;
+  },
+};
+
+// ============ PROVIDER API ============
+
+export const providerAPI = {
+  // Get provider bookings
+  getBookings: async (status = null) => {
+    const query = status && status !== 'All Bookings' ? `?status=${status}` : '';
+    return authFetch(`/bookings/provider${query}`);
+  },
+
+  // Get provider stats for dashboard
+  getStats: async () => {
+    return authFetch('/bookings/provider/stats');
+  },
+
+  // Accept booking
+  acceptBooking: async (bookingId) => {
+    return authFetch(`/bookings/${bookingId}/accept`, {
+      method: 'PUT',
+    });
+  },
+
+  // Decline booking
+  declineBooking: async (bookingId, reason = '') => {
+    return authFetch(`/bookings/${bookingId}/decline`, {
+      method: 'PUT',
+      body: JSON.stringify({ reason }),
+    });
+  },
+
+  // Complete booking
+  completeBooking: async (bookingId) => {
+    return authFetch(`/bookings/${bookingId}/complete`, {
+      method: 'PUT',
+    });
+  },
+
+  // Get provider profile
+  getProfile: async () => {
+    return authFetch('/users/profile');
+  },
+
+  // Update provider profile
+  updateProfile: async (profileData) => {
+    return authFetch('/users/profile', {
+      method: 'PUT',
+      body: JSON.stringify(profileData),
+    });
+  },
+
+  // Get provider reviews
+  getReviews: async () => {
+    return authFetch('/reviews/my-reviews');
+  },
+
+  // Get provider services
+  getServices: async () => {
+    return authFetch('/services/my-services');
+  },
 };
 
 export default {
@@ -202,5 +338,7 @@ export default {
   user: userAPI,
   bookings: bookingsAPI,
   reviews: reviewsAPI,
+  services: servicesAPI,
+  provider: providerAPI,
 };
 

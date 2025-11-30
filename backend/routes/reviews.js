@@ -147,5 +147,70 @@ router.get('/provider/:providerId', async (req, res) => {
   }
 });
 
+// @route   GET /api/reviews/my-reviews
+// @desc    Get all reviews for the currently logged-in provider
+// @access  Private (Provider only)
+router.get('/my-reviews', protect, async (req, res) => {
+  try {
+    const reviews = await Review.find({ provider: req.user._id })
+      .populate('customer', 'fullName')
+      .sort({ createdAt: -1 })
+      .lean();
+
+    const avgRating = reviews.length > 0
+      ? reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length
+      : 0;
+
+    // Calculate positive reviews (4 stars and above)
+    const positiveReviews = reviews.filter(r => r.rating >= 4).length;
+    const positivePercent = reviews.length > 0 
+      ? Math.round((positiveReviews / reviews.length) * 100) 
+      : 0;
+
+    // Format date for display
+    const formatDate = (date) => {
+      const now = new Date();
+      const reviewDate = new Date(date);
+      const diffTime = Math.abs(now - reviewDate);
+      const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+      
+      if (diffDays === 0) return 'Today';
+      if (diffDays === 1) return 'Yesterday';
+      if (diffDays < 7) return `${diffDays} days ago`;
+      if (diffDays < 30) return `${Math.floor(diffDays / 7)} week${Math.floor(diffDays / 7) > 1 ? 's' : ''} ago`;
+      if (diffDays < 365) return `${Math.floor(diffDays / 30)} month${Math.floor(diffDays / 30) > 1 ? 's' : ''} ago`;
+      return `${Math.floor(diffDays / 365)} year${Math.floor(diffDays / 365) > 1 ? 's' : ''} ago`;
+    };
+
+    res.status(200).json({
+      success: true,
+      count: reviews.length,
+      avgRating: Math.round(avgRating * 10) / 10,
+      positivePercent,
+      data: reviews.map(review => {
+        const customerName = review.customer?.fullName || 'Anonymous';
+        const initials = customerName.split(' ').map(n => n[0]).join('').toUpperCase();
+        
+        return {
+          id: review._id,
+          customer: customerName,
+          initials,
+          service: review.serviceName,
+          rating: review.rating,
+          comment: review.comment,
+          date: formatDate(review.createdAt),
+          createdAt: review.createdAt
+        };
+      })
+    });
+  } catch (error) {
+    console.error('Get my reviews error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error'
+    });
+  }
+});
+
 module.exports = router;
 
