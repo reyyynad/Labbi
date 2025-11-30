@@ -3,20 +3,62 @@ const express = require("express");
 const cors = require("cors");
 const connectDB = require("./config/db");
 
+// Import routes
+const authRoutes = require('./routes/auth');
+const userRoutes = require('./routes/users');
+const bookingRoutes = require('./routes/bookings');
+const reviewRoutes = require('./routes/reviews');
+const serviceRoutes = require('./routes/services');
+
 const app = express();
 
 // Middleware
-app.use(cors());
+app.use(cors({
+  origin: ['http://localhost:5173', 'http://localhost:3000'],
+  credentials: true
+}));
 app.use(express.json());
 
 // Connect Database
 connectDB();
 
+// Mount routes
+app.use('/api/auth', authRoutes);
+app.use('/api/users', userRoutes);
+app.use('/api/bookings', bookingRoutes);
+app.use('/api/reviews', reviewRoutes);
+app.use('/api/services', serviceRoutes);
+
 // Test route
 app.get('/', (req, res) => {
-    res.send('API is running successfully!');
+  res.json({ 
+    message: 'Labbi API is running successfully!',
+    endpoints: {
+      auth: '/api/auth',
+      users: '/api/users',
+      bookings: '/api/bookings',
+      reviews: '/api/reviews',
+      services: '/api/services'
+    }
   });
-  
+});
+
+// Error handling middleware
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(500).json({
+    success: false,
+    message: 'Something went wrong!'
+  });
+});
+
+// Handle 404
+app.use((req, res) => {
+  res.status(404).json({
+    success: false,
+    message: 'Route not found'
+  });
+});
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {

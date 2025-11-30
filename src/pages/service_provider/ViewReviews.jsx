@@ -1,91 +1,54 @@
-import React, { useState } from 'react';
-import { Star } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Star, Loader2 } from 'lucide-react';
 import ProviderHeader from '../../components/header/ProviderHeader';
-
-const mockReviews = [
-  {
-    id: 1,
-    customer: 'Renad Elsafi',
-    initials: 'RE',
-    rating: 5,
-    comment: 'Excellent service! Very professional and delivered exactly what I needed. Would definitely recommend! The attention to detail was outstanding.',
-    service: 'Professional House Cleaning',
-    date: '2 days ago'
-  },
-  {
-    id: 2,
-    customer: 'Shatha Alharbi',
-    initials: 'SA',
-    rating: 5,
-    comment: 'Excellent service. Very professional and delivered exactly what I needed. Would definitely recommend!',
-    service: 'Deep Cleaning Service',
-    date: '1 week ago'
-  },
-  {
-    id: 3,
-    customer: 'Arwa Aldawoud',
-    initials: 'AA',
-    rating: 5,
-    comment: 'Super organized and friendly team. They handled everything effortlessly.',
-    service: 'Professional House Cleaning',
-    date: '2 weeks ago'
-  },
-  {
-    id: 4,
-    customer: 'Adel Hassan',
-    initials: 'AH',
-    rating: 5,
-    comment: 'Outstanding work! The provider was punctual, thorough, and my house has never looked better.',
-    service: 'Move-In/Out Cleaning',
-    date: '3 weeks ago'
-  },
-  {
-    id: 5,
-    customer: 'Mohammed Ali',
-    initials: 'MA',
-    rating: 4,
-    comment: 'Great service overall. The cleaning was thorough and communication was clear.',
-    service: 'Professional House Cleaning',
-    date: '1 month ago'
-  },
-  {
-    id: 6,
-    customer: 'Renad Elsafi',
-    initials: 'RE',
-    rating: 5,
-    comment: 'Best cleaning service I\'ve ever used. Amazing results that speak for themselves!',
-    service: 'Deep Cleaning Service',
-    date: '1 month ago'
-  },
-  {
-    id: 7,
-    customer: 'Shatha Alharbi',
-    initials: 'SA',
-    rating: 4,
-    comment: 'Very good service. Professional and efficient. My home looks great!',
-    service: 'Professional House Cleaning',
-    date: '1 month ago'
-  },
-  {
-    id: 8,
-    customer: 'Arwa Aldawoud',
-    initials: 'AA',
-    rating: 5,
-    comment: 'Exceptional service! The team went above and beyond. Highly professional and thorough.',
-    service: 'Office Cleaning',
-    date: '2 months ago'
-  }
-];
+import { providerAPI } from '../../services/api';
 
 const ViewReviews = ({ onNavigate }) => {
-  const [reviews] = useState(mockReviews);
+  const [reviews, setReviews] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [stats, setStats] = useState({
+    avgRating: 0,
+    totalReviews: 0,
+    positivePercent: 0
+  });
   const reviewsPerPage = 8;
 
-  const stats = {
-    avgRating: 4.8,
-    totalReviews: 127,
-    positivePercent: 98
+  useEffect(() => {
+    fetchReviews();
+  }, []);
+
+  const fetchReviews = async () => {
+    try {
+      setLoading(true);
+      setError('');
+      
+      const response = await providerAPI.getReviews();
+      
+      if (response.success) {
+        setReviews(response.data.map(r => ({
+          id: r.id,
+          customer: r.customer,
+          initials: r.initials,
+          rating: r.rating,
+          comment: r.comment,
+          service: r.service,
+          date: r.date
+        })));
+        
+        setStats({
+          avgRating: response.avgRating || 0,
+          totalReviews: response.count || 0,
+          positivePercent: response.positivePercent || 0
+        });
+      }
+    } catch (err) {
+      console.error('Fetch reviews error:', err);
+      setError('Failed to load reviews');
+    } finally {
+      setLoading(false);
+    }
   };
 
   // Calculate pagination
@@ -148,6 +111,22 @@ const ViewReviews = ({ onNavigate }) => {
           <p className="text-gray-600 text-sm">View all reviews from your customers</p>
         </div>
 
+        {loading && (
+          <div className="flex items-center justify-center py-12">
+            <Loader2 className="w-8 h-8 animate-spin text-gray-400" />
+            <span className="ml-2 text-gray-600">Loading reviews...</span>
+          </div>
+        )}
+
+        {error && (
+          <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+            <p className="text-sm text-red-600">{error}</p>
+            <button onClick={fetchReviews} className="mt-2 text-sm text-red-700 underline">Try again</button>
+          </div>
+        )}
+
+        {!loading && !error && (
+        <>
         {/* Stats Cards */}
         <div className="rounded-lg border border-gray-200 p-8 mb-6" style={{ backgroundColor: '#f0fdf4' }}>
           <div className="grid grid-cols-3 gap-8">
@@ -217,6 +196,8 @@ const ViewReviews = ({ onNavigate }) => {
             </button>
           </div>
         </div>
+        </>
+        )}
       </main>
     </div>
   );

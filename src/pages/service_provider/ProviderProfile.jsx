@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
-import { Camera, CheckCircle, Edit2, Phone, Mail, MapPin, Briefcase, X, TrendingUp, Calendar, DollarSign, Download } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Camera, CheckCircle, Edit2, Phone, Mail, MapPin, Briefcase, X, TrendingUp, Calendar, DollarSign, Download, Loader2 } from 'lucide-react';
 import ProviderHeader from '../../components/header/ProviderHeader';
+import { providerAPI } from '../../services/api';
 
 // ========== EARNINGS DETAILS MODAL COMPONENT ==========
 const EarningsDetailsModal = ({ isOpen, onClose, earningsData }) => {
@@ -295,49 +296,86 @@ const EarningsDetailsModal = ({ isOpen, onClose, earningsData }) => {
 
 const ProviderProfile = ({ onNavigate }) => {
   const [profileData, setProfileData] = useState({
-    fullName: 'Arwa Aldawoud',
-    title: 'Professional Cleaning Specialist',
-    email: 'arwa.a@example.com',
-    phone: '+966 55 234 5678',
-    location: 'Jeddah, Saudi Arabia',
-    experience: '8 Years Experience',
-    bio: 'Professional cleaner with 8 years of experience providing top-quality cleaning services. I specialize in residential and commercial cleaning using eco-friendly products. Committed to delivering exceptional results and ensuring customer satisfaction in every project.',
-    memberSince: 'Sep 2024',
-    totalServices: 4,
-    totalBookings: 127,
-    totalReviews: 98,
-    rating: 4.89,
-    thisMonthEarnings: 3240,
-    totalEarnings: 12450
+    fullName: '',
+    title: '',
+    email: '',
+    phone: '',
+    location: '',
+    experience: '',
+    bio: '',
+    memberSince: '',
+    totalServices: 0,
+    totalBookings: 0,
+    totalReviews: 0,
+    rating: 0,
+    thisMonthEarnings: 0,
+    totalEarnings: 0,
+    isEmailVerified: false,
+    isPhoneVerified: false,
+    isIdentityVerified: false,
+    isBackgroundChecked: false
   });
 
   const [isEditing, setIsEditing] = useState(false);
   const [originalData, setOriginalData] = useState(null);
   const [isEarningsModalOpen, setIsEarningsModalOpen] = useState(false);
+  const [recentBookings, setRecentBookings] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [saving, setSaving] = useState(false);
 
-  const recentBookings = [
-    { 
-      id: 1,
-      service: 'Professional House Cleaning', 
-      customer: 'Renad Elsafi',
-      date: 'Nov 15, 2024',
-      price: 120 
-    },
-    { 
-      id: 2,
-      service: 'Deep Cleaning Service', 
-      customer: 'Shatha Alharbi',
-      date: 'Nov 12, 2024',
-      price: 240 
-    },
-    { 
-      id: 3,
-      service: 'Move-In/Out Cleaning', 
-      customer: 'Mohammed Ali',
-      date: 'Nov 8, 2024',
-      price: 150 
+  useEffect(() => {
+    fetchProfile();
+  }, []);
+
+  const fetchProfile = async () => {
+    try {
+      setLoading(true);
+      setError('');
+      
+      const response = await providerAPI.getProfile();
+      
+      if (response.success) {
+        const { profile, stats, recentBookings: bookings } = response.data;
+        
+        setProfileData({
+          fullName: profile.fullName || '',
+          title: profile.providerProfile?.title || 'Service Provider',
+          email: profile.email || '',
+          phone: profile.phone || '',
+          location: profile.location || '',
+          experience: profile.providerProfile?.experience || '',
+          bio: profile.providerProfile?.bio || '',
+          memberSince: profile.memberSince || '',
+          totalServices: stats?.totalServices || 0,
+          totalBookings: stats?.totalBookings || 0,
+          totalReviews: stats?.totalReviews || 0,
+          rating: stats?.rating || 0,
+          thisMonthEarnings: stats?.thisMonthEarnings || 0,
+          totalEarnings: stats?.totalEarnings || 0,
+          isEmailVerified: profile.isEmailVerified || false,
+          isPhoneVerified: profile.isPhoneVerified || false,
+          isIdentityVerified: profile.providerProfile?.isIdentityVerified || false,
+          isBackgroundChecked: profile.providerProfile?.isBackgroundChecked || false
+        });
+        
+        if (bookings) {
+          setRecentBookings(bookings.map(b => ({
+            id: b.id,
+            service: b.service,
+            customer: b.customer,
+            date: b.date,
+            price: b.price
+          })));
+        }
+      }
+    } catch (err) {
+      console.error('Fetch profile error:', err);
+      setError('Failed to load profile');
+    } finally {
+      setLoading(false);
     }
-  ];
+  };
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -349,11 +387,29 @@ const ProviderProfile = ({ onNavigate }) => {
     setIsEditing(true);
   };
 
-  const handleSave = () => {
-    console.log('Profile updated:', profileData);
-    alert('Profile updated successfully!');
-    setIsEditing(false);
-    setOriginalData(null);
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+      const response = await providerAPI.updateProfile({
+        fullName: profileData.fullName,
+        email: profileData.email,
+        phone: profileData.phone,
+        location: profileData.location,
+        bio: profileData.bio,
+        title: profileData.title,
+        experience: profileData.experience
+      });
+      
+      if (response.success) {
+        alert('Profile updated successfully!');
+        setIsEditing(false);
+        setOriginalData(null);
+      }
+    } catch (err) {
+      alert(err.message || 'Failed to update profile');
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handleCancel = () => {
@@ -388,6 +444,22 @@ const ProviderProfile = ({ onNavigate }) => {
           <p className="text-gray-600 text-sm">Manage your professional information and settings</p>
         </div>
 
+        {loading && (
+          <div className="flex items-center justify-center py-12">
+            <Loader2 className="w-8 h-8 animate-spin text-gray-400" />
+            <span className="ml-2 text-gray-600">Loading profile...</span>
+          </div>
+        )}
+
+        {error && (
+          <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+            <p className="text-sm text-red-600">{error}</p>
+            <button onClick={fetchProfile} className="mt-2 text-sm text-red-700 underline">Try again</button>
+          </div>
+        )}
+
+        {!loading && !error && (
+        <>
         {/* Profile Header Card */}
         <div className="rounded-lg border border-gray-200 p-6 mb-6" style={{ backgroundColor: '#f0fdf4' }}>
           <div className="flex items-start justify-between">
@@ -518,11 +590,21 @@ const ProviderProfile = ({ onNavigate }) => {
                 </button>
                 <button 
                   onClick={handleSave}
-                  className="flex items-center gap-2 px-5 py-2.5 text-white rounded-lg font-medium hover:opacity-90 transition-colors"
+                  disabled={saving}
+                  className="flex items-center gap-2 px-5 py-2.5 text-white rounded-lg font-medium hover:opacity-90 transition-colors disabled:opacity-50"
                   style={{ backgroundColor: '#065f46' }}
                 >
-                  <CheckCircle className="w-4 h-4" />
-                  Save Changes
+                  {saving ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      Saving...
+                    </>
+                  ) : (
+                    <>
+                      <CheckCircle className="w-4 h-4" />
+                      Save Changes
+                    </>
+                  )}
                 </button>
               </div>
             )}
@@ -715,6 +797,8 @@ const ProviderProfile = ({ onNavigate }) => {
             </div>
           </div>
         </div>
+        </>
+        )}
       </main>
 
       {/* Earnings Details Modal */}

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { validateEmail, validatePassword } from '../../utils/validation'
 import { setAuthData } from '../../utils/auth'
+import { authAPI } from '../../services/api'
 import Header from '../../components/header/Header'
 import { Mail, Lock } from 'lucide-react'
 
@@ -14,6 +15,7 @@ function Login() {
   })
   const [errors, setErrors] = useState({})
   const [loading, setLoading] = useState(false)
+  const [apiError, setApiError] = useState('')
 
   useEffect(() => {
     const savedEmail = localStorage.getItem('rememberedEmail')
@@ -30,6 +32,9 @@ function Login() {
     }))
     if (errors[name]) {
       setErrors(prev => ({ ...prev, [name]: '' }))
+    }
+    if (apiError) {
+      setApiError('')
     }
   }
 
@@ -50,22 +55,45 @@ function Login() {
     }
 
     setLoading(true)
+    setApiError('')
 
-    setTimeout(() => {
-      const mockToken = 'mock_token_' + Date.now()
-      const isAdmin = formData.email.trim().toLowerCase() === 'admin123@gmail.com'
-      const userType = isAdmin ? 'admin' : 'customer'
-      const userName = isAdmin ? 'Admin' : formData.email.split('@')[0] || 'Customer'
+    try {
+      const response = await authAPI.login(formData.email, formData.password)
       
-      setAuthData(mockToken, formData.email, userType, userName, formData.remember)
-      
+      if (response.success) {
+        const { token, user } = response.data
+        
+        setAuthData(
+          token, 
+          user.email, 
+          user.userType, 
+          user.fullName, 
+          formData.remember,
+          user.id
+        )
+        
+        // Redirect based on user type
+        switch (user.userType) {
+          case 'admin':
+            navigate('/admin-panel')
+            break
+          case 'provider':
+            navigate('/provider')
+            break
+          default:
+            navigate('/customer')
+        }
+      }
+    } catch (error) {
+      setApiError(error.message || 'Login failed. Please check your credentials.')
+    } finally {
       setLoading(false)
-      navigate(isAdmin ? '/admin-panel' : '/customer')
-    }, 1500)
+    }
   }
 
   const handleGoogleSignIn = () => {
     console.log('Google sign-in clicked')
+    // TODO: Implement Google OAuth
   }
 
   return (
@@ -83,7 +111,13 @@ function Login() {
         <div className="relative z-10 max-w-md mx-auto">
           <div className="bg-white/10 backdrop-blur-md rounded-2xl shadow-2xl p-8 border border-white/20">
             <h1 className="text-3xl font-bold mb-2 text-center">Welcome back</h1>
-            <p className="text-gray-100 text-center mb-8">Log in to your Labbi - لبِّ account</p>
+            <p className="text-gray-100 text-center mb-8">Log in to your Labbi - لبِّ account</p>
+            
+            {apiError && (
+              <div className="mb-6 p-4 bg-red-500/20 border border-red-300/30 rounded-lg">
+                <p className="text-sm text-red-100">{apiError}</p>
+              </div>
+            )}
             
             <form onSubmit={handleSubmit} className="space-y-6">
               <div>
@@ -209,4 +243,3 @@ function Login() {
 }
 
 export default Login
-

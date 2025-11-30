@@ -1,6 +1,8 @@
 import React, { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { validateEmail, validatePassword, validateForm } from '../../utils/validation'
+import { setAuthData } from '../../utils/auth'
+import { authAPI } from '../../services/api'
 import Header from '../../components/header/Header'
 import { User, Mail, Lock, ArrowLeft } from 'lucide-react'
 
@@ -15,6 +17,7 @@ function SignupCustomer() {
   })
   const [errors, setErrors] = useState({})
   const [loading, setLoading] = useState(false)
+  const [apiError, setApiError] = useState('')
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target
@@ -24,6 +27,9 @@ function SignupCustomer() {
     }))
     if (errors[name]) {
       setErrors(prev => ({ ...prev, [name]: '' }))
+    }
+    if (apiError) {
+      setApiError('')
     }
   }
 
@@ -49,13 +55,42 @@ function SignupCustomer() {
     }
 
     setLoading(true)
+    setApiError('')
 
-    setTimeout(() => {
-      // Store the name for later use
-      localStorage.setItem('signupName', formData.fullName)
+    try {
+      const response = await authAPI.register({
+        fullName: formData.fullName,
+        email: formData.email,
+        password: formData.password,
+        userType: 'customer'
+      })
+
+      if (response.success) {
+        const { token, user } = response.data
+        
+        // Store auth data
+        setAuthData(
+          token,
+          user.email,
+          user.userType,
+          user.fullName,
+          true, // Remember by default after registration
+          user.id
+        )
+
+        // Navigate to verification page (or directly to customer interface)
+        navigate('/verify-email', { 
+          state: { 
+            email: formData.email, 
+            name: formData.fullName 
+          } 
+        })
+      }
+    } catch (error) {
+      setApiError(error.message || 'Registration failed. Please try again.')
+    } finally {
       setLoading(false)
-      navigate('/verify-email', { state: { email: formData.email, name: formData.fullName } })
-    }, 1500)
+    }
   }
 
   return (
@@ -83,6 +118,12 @@ function SignupCustomer() {
             <h1 className="text-3xl font-bold mb-2 text-center">Create your customer account</h1>
             <p className="text-gray-100 text-center mb-8">Start finding services that match your needs</p>
             
+            {apiError && (
+              <div className="mb-6 p-4 bg-red-500/20 border border-red-300/30 rounded-lg">
+                <p className="text-sm text-red-100">{apiError}</p>
+              </div>
+            )}
+            
             <form onSubmit={handleSubmit} className="space-y-6">
               <div>
                 <label htmlFor="fullName" className="block text-sm font-medium text-white mb-2">
@@ -97,7 +138,7 @@ function SignupCustomer() {
                     id="fullName"
                     name="fullName"
                     className={`block w-full pl-10 pr-3 py-3 border rounded-lg bg-white/10 backdrop-blur-sm text-white placeholder-white/60 border-white/30 focus:outline-none focus:ring-2 focus:ring-white/50 focus:border-transparent ${errors.fullName ? 'border-red-300' : ''}`}
-                    placeholder="Renad Alxxx"
+                    placeholder="Enter your full name"
                     value={formData.fullName}
                     onChange={handleChange}
                     required
@@ -230,4 +271,3 @@ function SignupCustomer() {
 }
 
 export default SignupCustomer
-

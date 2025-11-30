@@ -1,16 +1,13 @@
 {
-
-  
-  "name": "backend",
+  "name": "labbi-backend",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "description": "Labbi Service Booking Platform Backend API",
+  "main": "server.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node server.js",
     "dev": "nodemon server.js"
   },
-  "keywords": [],
+  "keywords": ["labbi", "booking", "services", "api"],
   "author": "",
   "license": "ISC",
   "type": "commonjs",
@@ -21,5 +18,8 @@
     "express": "^5.1.0",
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^9.0.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.0"
   }
 }

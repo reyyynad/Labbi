@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
-import { Calendar, Clock, DollarSign, MapPin, User, Star, X } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Calendar, Clock, DollarSign, MapPin, User, Star, X, Loader2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import Header from '../../components/header/Header';
+import { bookingsAPI, reviewsAPI } from '../../services/api';
 
 // ========== BUTTON COMPONENT ==========
 const Button = ({ 
@@ -46,23 +47,26 @@ const ReviewModal = ({ isOpen, onClose, booking, onSubmit }) => {
   const [hoveredRating, setHoveredRating] = useState(0);
   const [reviewText, setReviewText] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState('');
 
-  if (!isOpen) return null;
+  if (!isOpen || !booking) return null;
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (rating === 0) {
-      alert('Please select a rating');
+      setError('Please select a rating');
       return;
     }
     if (reviewText.trim().length < 10) {
-      alert('Please write at least 10 characters in your review');
+      setError('Please write at least 10 characters in your review');
       return;
     }
 
     setIsSubmitting(true);
-    // Simulate API call
-    setTimeout(() => {
+    setError('');
+    
+    try {
+      await reviewsAPI.create(booking.id, rating, reviewText);
       onSubmit({
         bookingId: booking.id,
         rating,
@@ -72,15 +76,19 @@ const ReviewModal = ({ isOpen, onClose, booking, onSubmit }) => {
       });
       setRating(0);
       setReviewText('');
-      setIsSubmitting(false);
       onClose();
-    }, 1000);
+    } catch (err) {
+      setError(err.message || 'Failed to submit review');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleClose = () => {
     setRating(0);
     setReviewText('');
     setHoveredRating(0);
+    setError('');
     onClose();
   };
 
@@ -103,6 +111,12 @@ const ReviewModal = ({ isOpen, onClose, booking, onSubmit }) => {
 
         {/* Content */}
         <form onSubmit={handleSubmit} className="p-6">
+          {error && (
+            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+              <p className="text-sm text-red-600">{error}</p>
+            </div>
+          )}
+          
           <div className="mb-6">
             <h3 className="text-lg font-semibold text-[#374151] mb-2">{booking.service}</h3>
             <p className="text-sm text-gray-600">Provider: {booking.provider}</p>
@@ -191,18 +205,19 @@ const StatusBadge = ({ status }) => {
     Upcoming: 'bg-blue-100 text-blue-800 border border-blue-300',
     Confirmed: 'bg-green-100 text-green-800 border border-green-300',
     Completed: 'bg-gray-100 text-gray-800 border border-gray-300',
-    Cancelled: 'bg-red-100 text-red-800 border border-red-300'
+    Cancelled: 'bg-red-100 text-red-800 border border-red-300',
+    Pending: 'bg-yellow-100 text-yellow-800 border border-yellow-300'
   };
 
   return (
-    <span className={`px-3 py-1 rounded text-xs font-medium ${styles[status]}`}>
+    <span className={`px-3 py-1 rounded text-xs font-medium ${styles[status] || styles.Pending}`}>
       {status}
     </span>
   );
 };
 
 // ========== BOOKING CARD COMPONENT ==========
-const BookingCard = ({ booking }) => {
+const BookingCard = ({ booking, onCancel }) => {
   return (
     <div className="bg-[#f0fdf4] border border-[#047857] rounded-lg p-6 mb-4">
       <div className="flex items-start justify-between mb-4">
@@ -259,51 +274,32 @@ const CustomerBookings = () => {
   const [activeTab, setActiveTab] = useState('All Bookings');
   const [selectedBookingForReview, setSelectedBookingForReview] = useState(null);
   const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
+  const [bookingsData, setBookingsData] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
   const tabs = ['All Bookings', 'Upcoming', 'Confirmed', 'Completed', 'Cancelled'];
 
-  const bookingsData = [
-    {
-      id: '1000',
-      status: 'Upcoming',
-      service: 'Professional House Cleaning',
-      provider: 'Renad Elsafi',
-      date: 'Nov 15, 2024',
-      time: '10:00 AM - 12:00 PM',
-      location: 'King Saud Rd, Dhahran, Saudi Arabia',
-      price: '120'
-    },
-    {
-      id: '1001',
-      status: 'Confirmed',
-      service: 'Personal Training Session',
-      provider: 'Shatha Alharbi',
-      date: 'Nov 12, 2024',
-      time: '6:00 PM - 7:00 PM',
-      location: 'Al Olaya District, Riyadh, Saudi Arabia',
-      price: '50'
-    },
-    {
-      id: '1002',
-      status: 'Completed',
-      service: 'Plumbing Repair',
-      provider: 'Arwa Aldawoud',
-      date: 'Nov 8, 2024',
-      time: '2:00 PM - 3:30 PM',
-      location: 'King Saud Rd, Dhahran, Saudi Arabia',
-      price: '85'
-    },
-    {
-      id: '1003',
-      status: 'Completed',
-      service: 'Web Development Consultation',
-      provider: 'Adel Hassan',
-      date: 'Nov 5, 2024',
-      time: '3:00 PM - 4:00 PM',
-      location: 'Online Meeting',
-      price: '80'
+  // Fetch bookings on mount and tab change
+  useEffect(() => {
+    fetchBookings();
+  }, [activeTab]);
+
+  const fetchBookings = async () => {
+    try {
+      setLoading(true);
+      setError('');
+      const response = await bookingsAPI.getAll(activeTab);
+      
+      if (response.success) {
+        setBookingsData(response.data);
+      }
+    } catch (error) {
+      setError(error.message || 'Failed to load bookings');
+    } finally {
+      setLoading(false);
     }
-  ];
+  };
 
   const handleLeaveReview = (booking) => {
     setSelectedBookingForReview(booking);
@@ -311,9 +307,28 @@ const CustomerBookings = () => {
   };
 
   const handleReviewSubmit = (reviewData) => {
-    console.log('Review submitted:', reviewData);
-    alert(`Thank you! Your review for "${reviewData.service}" has been submitted.`);
-    // Here you would typically send the review to your backend API
+    // Update booking to show it has been reviewed
+    setBookingsData(prev => 
+      prev.map(b => 
+        b.id === reviewData.bookingId 
+          ? { ...b, hasReview: true, canReview: false }
+          : b
+      )
+    );
+  };
+
+  const handleCancelBooking = async (bookingId) => {
+    if (!window.confirm('Are you sure you want to cancel this booking?')) {
+      return;
+    }
+
+    try {
+      await bookingsAPI.cancel(bookingId);
+      // Refresh bookings
+      fetchBookings();
+    } catch (error) {
+      alert(error.message || 'Failed to cancel booking');
+    }
   };
 
   const bookings = bookingsData.map((booking) => {
@@ -325,7 +340,7 @@ const CustomerBookings = () => {
       }
     ];
 
-    if (booking.status === 'Completed') {
+    if (booking.canReview) {
       return {
         ...booking,
         actions: [
@@ -344,34 +359,51 @@ const CustomerBookings = () => {
       };
     }
 
+    if (booking.status === 'Completed') {
+      return {
+        ...booking,
+        actions: [
+          {
+            label: 'Book Again',
+            variant: 'primary',
+            onClick: () => navigate(`/services/${booking.id}`)
+          },
+          ...standardActions
+        ]
+      };
+    }
+
+    if (booking.canReschedule) {
+      return {
+        ...booking,
+        actions: [
+          ...standardActions,
+          {
+            label: 'Reschedule',
+            variant: 'outline',
+            onClick: () => navigate(`/customer/booking/datetime/${booking.id}`, { 
+              state: { 
+                isReschedule: true, 
+                bookingId: booking.id,
+                currentDate: booking.date,
+                currentTime: booking.time
+              } 
+            })
+          },
+          {
+            label: 'Cancel',
+            variant: 'danger',
+            onClick: () => handleCancelBooking(booking.id)
+          }
+        ]
+      };
+    }
+
     return {
       ...booking,
-      actions: [
-        ...standardActions,
-        {
-          label: 'Reschedule',
-          variant: 'outline',
-          onClick: () => navigate(`/customer/booking/datetime/${booking.id}`, { 
-            state: { 
-              isReschedule: true, 
-              bookingId: booking.id,
-              currentDate: booking.date,
-              currentTime: booking.time
-            } 
-          })
-        },
-        {
-          label: 'Cancel',
-          variant: 'danger',
-          onClick: () => navigate('/bookings')
-        }
-      ]
+      actions: standardActions
     };
   });
-
-  const filteredBookings = activeTab === 'All Bookings' 
-    ? bookings 
-    : bookings.filter(b => b.status === activeTab);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -402,11 +434,25 @@ const CustomerBookings = () => {
           </div>
         </div>
 
+        {error && (
+          <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+            <p className="text-sm text-red-600">{error}</p>
+          </div>
+        )}
+
         {/* Bookings List */}
         <div>
-          {filteredBookings.length > 0 ? (
-            filteredBookings.map((booking) => (
-              <BookingCard key={booking.id} booking={booking} />
+          {loading ? (
+            <div className="flex items-center justify-center py-12">
+              <Loader2 className="w-8 h-8 animate-spin text-[#047857]" />
+            </div>
+          ) : bookings.length > 0 ? (
+            bookings.map((booking) => (
+              <BookingCard 
+                key={booking.id} 
+                booking={booking}
+                onCancel={handleCancelBooking}
+              />
             ))
           ) : (
             <div className="bg-white rounded-lg border border-gray-200 p-12 text-center">

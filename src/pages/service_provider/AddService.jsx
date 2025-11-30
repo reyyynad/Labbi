@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { ArrowLeft, Upload, AlertCircle } from 'lucide-react';
+import { ArrowLeft, Upload, AlertCircle, Loader2 } from 'lucide-react';
 import ProviderHeader from '../../components/header/ProviderHeader';
+import { servicesAPI } from '../../services/api';
 
 const AddService = ({ onNavigate }) => {
   const [formData, setFormData] = useState({
@@ -15,6 +16,8 @@ const AddService = ({ onNavigate }) => {
   });
 
   const [errors, setErrors] = useState({});
+  const [loading, setLoading] = useState(false);
+  const [apiError, setApiError] = useState('');
 
   const categories = [
     { value: 'technology', label: 'Technology' },
@@ -76,14 +79,34 @@ const AddService = ({ onNavigate }) => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     
     if (validateForm()) {
-      // In real implementation, send to backend
-      console.log('Form submitted:', formData);
-      alert('Service submitted for review! You will receive a confirmation email once approved.');
-      onNavigate('services');
+      setLoading(true);
+      setApiError('');
+      
+      try {
+        const response = await servicesAPI.create({
+          title: formData.title,
+          description: formData.description,
+          category: formData.category,
+          subcategory: formData.subcategory,
+          pricingType: formData.pricingType,
+          price: parseFloat(formData.price),
+          sessionDuration: parseFloat(formData.sessionDuration) || 1,
+          images: [] // In real implementation, upload images first
+        });
+        
+        if (response.success) {
+          alert('Service submitted for review! You will receive a confirmation email once approved.');
+          onNavigate('services');
+        }
+      } catch (err) {
+        setApiError(err.message || 'Failed to create service');
+      } finally {
+        setLoading(false);
+      }
     }
   };
 
@@ -113,6 +136,12 @@ const AddService = ({ onNavigate }) => {
         </div>
 
         <div className="rounded-lg border border-gray-200 p-8" style={{ backgroundColor: '#f0fdf4' }}>
+          {apiError && (
+            <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+              <p className="text-sm text-red-600">{apiError}</p>
+            </div>
+          )}
+
           <form onSubmit={handleSubmit}>
             {/* Basic Information Section */}
             <div className="mb-8">
@@ -344,10 +373,18 @@ const AddService = ({ onNavigate }) => {
             <div className="flex gap-4">
               <button
                 type="submit"
-                className="flex-1 py-3 text-white rounded-lg font-medium hover:opacity-90 transition-colors"
+                disabled={loading}
+                className="flex-1 py-3 text-white rounded-lg font-medium hover:opacity-90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                 style={{ backgroundColor: '#065f46' }}
               >
-                Submit for Review
+                {loading ? (
+                  <>
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                    Submitting...
+                  </>
+                ) : (
+                  'Submit for Review'
+                )}
               </button>
               <button
                 type="button"
