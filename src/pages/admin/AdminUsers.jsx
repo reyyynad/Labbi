@@ -1,5 +1,6 @@
-import React, { useMemo, useState } from 'react'
+import React, { useMemo, useState, useEffect } from 'react'
 import AdminHeader from '../../components/admin/AdminHeader'
+import { adminAPI } from '../../services/api'
 import { Search, Filter, Download, X, User, Mail, Phone, Calendar, Activity, Shield, Ban, CheckCircle, AlertTriangle } from 'lucide-react'
 
 // ========== USER MANAGEMENT MODAL COMPONENT ==========
@@ -9,16 +10,16 @@ const UserManagementModal = ({ isOpen, onClose, user, onStatusChange }) => {
   const [selectedStatus, setSelectedStatus] = useState(user.status);
   const [isSaving, setIsSaving] = useState(false);
 
-  // Mock additional user data
+  // Get real user data from props
   const userDetails = {
-    phone: '+966 50 123 4567',
-    location: 'Riyadh, Saudi Arabia',
-    lastActive: '2 hours ago',
-    totalSpent: user.type === 'Client' ? 'SR 1,240' : null,
-    totalEarned: user.type === 'Provider' ? 'SR 5,680' : null,
-    services: user.type === 'Provider' ? 3 : null,
-    reviews: user.type === 'Provider' ? 4.8 : null,
-    verificationStatus: 'Verified'
+    phone: user.phone || 'Not provided',
+    location: user.location || 'Not provided',
+    lastActive: 'Recently',
+    totalSpent: user.type === 'Client' ? null : null, // TODO: Calculate from bookings
+    totalEarned: user.type === 'Provider' ? null : null, // TODO: Calculate from bookings
+    services: user.type === 'Provider' ? null : null, // TODO: Get from services
+    reviews: user.type === 'Provider' ? null : null, // TODO: Get from reviews
+    verificationStatus: user.isEmailVerified ? 'Verified' : 'Unverified'
   };
 
   const handleStatusChange = async () => {
@@ -256,13 +257,33 @@ function AdminUsers() {
   const [statusFilter, setStatusFilter] = useState('')
   const [selectedUser, setSelectedUser] = useState(null)
   const [isManageModalOpen, setIsManageModalOpen] = useState(false)
-  const [allUsers, setAllUsers] = useState([
-    { name: 'Renad Elsafi', email: 'renad@example.com', type: 'Client', status: 'Active', joinDate: 'Sep 15, 2025', activity: '12 bookings', avatar: 'R' },
-    { name: 'Shatha Alharbi', email: 'shatha@example.com', type: 'Provider', status: 'Active', joinDate: 'Aug 22, 2025', activity: '89 bookings', avatar: 'S' },
-    { name: 'Arwa Aldawoud', email: 'arwa@example.com', type: 'Provider', status: 'Pending', joinDate: 'Oct 10, 2025', activity: '0 bookings', avatar: 'A' },
-    { name: 'Adel Hassan', email: 'adel@example.com', type: 'Client', status: 'Suspended', joinDate: 'Jul 05, 2025', activity: '3 bookings', avatar: 'A' },
-    { name: 'Mohammed Ali', email: 'm.ali@example.com', type: 'Provider', status: 'Active', joinDate: 'Jun 12, 2025', activity: '54 bookings', avatar: 'M' }
-  ])
+  const [allUsers, setAllUsers] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
+
+  // Fetch users from API
+  useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        setLoading(true);
+        const userType = userTypeFilter && userTypeFilter !== 'all' 
+          ? (userTypeFilter === 'Client' ? 'customer' : 'provider')
+          : null;
+        const response = await adminAPI.getUsers(userType, searchTerm, 1, 100);
+        
+        if (response.success) {
+          setAllUsers(response.data.users || []);
+        }
+      } catch (err) {
+        console.error('Error fetching users:', err);
+        setError(err.message || 'Failed to load users');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchUsers();
+  }, [userTypeFilter, searchTerm]);
 
   const filteredUsers = useMemo(() => {
     return allUsers.filter((user) => {
@@ -292,15 +313,37 @@ function AdminUsers() {
     setIsManageModalOpen(true)
   }
 
-  const handleStatusChange = (userEmail, newStatus) => {
-    setAllUsers(prevUsers => 
-      prevUsers.map(user => 
-        user.email === userEmail 
-          ? { ...user, status: newStatus }
-          : user
-      )
-    )
-    alert(`User status updated to ${newStatus}`)
+  const handleStatusChange = async (userEmail, newStatus) => {
+    try {
+      const user = allUsers.find(u => u.email === userEmail);
+      if (!user) return;
+
+      // Send status as string to backend
+      await adminAPI.updateUserStatus(user.id, newStatus);
+      
+      // Update local state
+      setAllUsers(prevUsers => 
+        prevUsers.map(u => 
+          u.email === userEmail 
+            ? { ...u, status: newStatus }
+            : u
+        )
+      );
+      
+      // Refresh the users list to get updated data from database
+      const userType = userTypeFilter && userTypeFilter !== 'all' 
+        ? (userTypeFilter === 'Client' ? 'customer' : 'provider')
+        : null;
+      const response = await adminAPI.getUsers(userType, searchTerm, 1, 100);
+      if (response.success) {
+        setAllUsers(response.data.users || []);
+      }
+      
+      alert(`User status updated to ${newStatus}`);
+    } catch (err) {
+      console.error('Error updating user status:', err);
+      alert('Failed to update user status. Please try again.');
+    }
   }
 
   const handleExportList = () => {
@@ -389,6 +432,19 @@ function AdminUsers() {
           </div>
         </section>
 
+        {loading && (
+          <div className="text-center py-12">
+            <p className="text-[#6b7280]">Loading users...</p>
+          </div>
+        )}
+
+        {error && (
+          <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
+            <p className="text-red-800">Error: {error}</p>
+          </div>
+        )}
+
+        {!loading && !error && (
         <section className="bg-white border border-gray-100 rounded-2xl shadow-sm overflow-hidden">
           <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
             <div>
@@ -466,6 +522,7 @@ function AdminUsers() {
             </table>
           </div>
         </section>
+        )}
       </main>
 
       {/* User Management Modal */}

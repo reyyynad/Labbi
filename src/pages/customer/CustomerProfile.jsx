@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Camera, Settings, CheckCircle, Edit2, Loader2 } from 'lucide-react';
+import { Settings, CheckCircle, Edit2, Loader2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import Header from '../../components/header/Header';
 import { userAPI } from '../../services/api';
@@ -123,8 +123,13 @@ const CustomerProfile = () => {
       if (response.success) {
         setProfileData(prev => ({
           ...prev,
+          fullName: response.data.fullName,
+          email: response.data.email,
+          phone: response.data.phone,
+          location: response.data.location,
           initials: response.data.initials
         }));
+        
         setSuccessMessage('Profile updated successfully!');
         setIsEditing(false);
         
@@ -192,9 +197,6 @@ const CustomerProfile = () => {
                 <div className="w-32 h-32 bg-[#047857] rounded-full flex items-center justify-center text-4xl font-bold text-white">
                   {profileData.initials}
                 </div>
-                <button className="absolute bottom-0 right-0 w-10 h-10 bg-white border-2 border-[#047857] rounded-full flex items-center justify-center hover:bg-[#f0fdf4]">
-                  <Camera className="w-5 h-5 text-[#047857]" />
-                </button>
               </div>
               <h2 className="text-xl font-bold text-[#374151] mb-2">{profileData.fullName}</h2>
               <p className="text-sm text-gray-600">Customer</p>

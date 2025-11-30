@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Camera, CheckCircle, Edit2, Shield, Users, ClipboardList, BarChart3 } from 'lucide-react';
+import { CheckCircle, Edit2, Shield, Users, ClipboardList, BarChart3 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import AdminHeader from '../../components/admin/AdminHeader';
 import { getUserName, getUserEmail } from '../../utils/auth';
+import { userAPI, adminAPI } from '../../services/api';
 
 // ========== BUTTON COMPONENT ==========
 const Button = ({ 
@@ -61,30 +62,60 @@ const AdminProfile = () => {
     initials: getInitials(savedUserName),
     fullName: savedUserName,
     email: savedUserEmail,
-    phone: '+966 50 123 4567',
-    location: 'Riyadh, Saudi Arabia',
-    memberSince: new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
+    phone: '',
+    location: '',
+    memberSince: ''
   });
 
-  const [stats] = useState({
-    totalUsers: 12487,
-    activeServices: 3842,
-    totalBookings: 24891,
-    revenue: 148000
+  const [stats, setStats] = useState({
+    totalUsers: 0,
+    activeServices: 0,
+    totalBookings: 0,
+    revenue: 0
   });
 
-  // Update profile data when component mounts
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  // Fetch profile data and stats from API
   useEffect(() => {
-    const currentUserName = getUserName();
-    const currentUserEmail = getUserEmail();
-    if (currentUserName || currentUserEmail) {
-      setProfileData(prev => ({
-        ...prev,
-        fullName: currentUserName || prev.fullName,
-        email: currentUserEmail || prev.email,
-        initials: getInitials(currentUserName || prev.fullName)
-      }));
-    }
+    const fetchProfileData = async () => {
+      try {
+        setLoading(true);
+        
+        // Fetch user profile (includes stats for admin)
+        const profileResponse = await userAPI.getProfile();
+        if (profileResponse.success && profileResponse.data.profile) {
+          const profile = profileResponse.data.profile;
+          setProfileData(prev => ({
+            ...prev,
+            fullName: profile.fullName || prev.fullName,
+            email: profile.email || prev.email,
+            phone: profile.phone || '',
+            location: profile.location || '',
+            memberSince: profile.memberSince || new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' }),
+            initials: profile.initials || getInitials(profile.fullName || prev.fullName)
+          }));
+
+          // Set stats from profile response (for admin users)
+          if (profileResponse.data.stats) {
+            setStats({
+              totalUsers: profileResponse.data.stats.totalUsers || 0,
+              activeServices: profileResponse.data.stats.activeServices || 0,
+              totalBookings: profileResponse.data.stats.totalBookings || 0,
+              revenue: profileResponse.data.stats.revenue || 0
+            });
+          }
+        }
+      } catch (err) {
+        console.error('Error fetching profile data:', err);
+        setError(err.message || 'Failed to load profile data');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProfileData();
   }, []);
 
   const handleInputChange = (e) => {
@@ -92,10 +123,35 @@ const AdminProfile = () => {
     setProfileData(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleSave = () => {
-    console.log('Profile updated:', profileData);
-    alert('Profile updated successfully!');
-    setIsEditing(false);
+  const handleSave = async () => {
+    try {
+      const updateData = {
+        fullName: profileData.fullName,
+        phone: profileData.phone,
+        location: profileData.location
+      };
+      
+      const response = await userAPI.updateProfile(updateData);
+      if (response.success) {
+        alert('Profile updated successfully!');
+        setIsEditing(false);
+        // Refresh profile data
+        const profileResponse = await userAPI.getProfile();
+        if (profileResponse.success && profileResponse.data.profile) {
+          const profile = profileResponse.data.profile;
+          setProfileData(prev => ({
+            ...prev,
+            fullName: profile.fullName || prev.fullName,
+            phone: profile.phone || prev.phone,
+            location: profile.location || prev.location,
+            initials: profile.initials || getInitials(profile.fullName || prev.fullName)
+          }));
+        }
+      }
+    } catch (err) {
+      console.error('Error updating profile:', err);
+      alert('Failed to update profile. Please try again.');
+    }
   };
 
   return (
@@ -108,6 +164,19 @@ const AdminProfile = () => {
           <p className="text-gray-600">Manage your personal information and admin settings</p>
         </div>
 
+        {loading && (
+          <div className="text-center py-12">
+            <p className="text-[#6b7280]">Loading profile data...</p>
+          </div>
+        )}
+
+        {error && (
+          <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
+            <p className="text-red-800">Error: {error}</p>
+          </div>
+        )}
+
+        {!loading && !error && (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Left Column - Profile Card */}
           <div className="bg-white border-2 border-[#1e3a8a] rounded-lg p-6">
@@ -116,9 +185,6 @@ const AdminProfile = () => {
                 <div className="w-32 h-32 bg-[#1e3a8a] rounded-full flex items-center justify-center text-4xl font-bold text-white">
                   {profileData.initials}
                 </div>
-                <button className="absolute bottom-0 right-0 w-10 h-10 bg-white border-2 border-[#1e3a8a] rounded-full flex items-center justify-center hover:bg-blue-50">
-                  <Camera className="w-5 h-5 text-[#1e3a8a]" />
-                </button>
               </div>
               <h2 className="text-xl font-bold text-[#374151] mb-2">{profileData.fullName}</h2>
               <div className="flex items-center justify-center gap-2">
@@ -292,6 +358,7 @@ const AdminProfile = () => {
             </div>
           </div>
         </div>
+        )}
       </main>
     </div>
   );

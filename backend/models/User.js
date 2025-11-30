@@ -39,6 +39,11 @@ const userSchema = new mongoose.Schema({
     enum: ['customer', 'provider', 'admin'],
     default: 'customer'
   },
+  status: {
+    type: String,
+    enum: ['Active', 'Pending', 'Suspended'],
+    default: 'Active'
+  },
   isEmailVerified: {
     type: Boolean,
     default: false

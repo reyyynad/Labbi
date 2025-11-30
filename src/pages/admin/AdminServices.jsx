@@ -1,6 +1,7 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import AdminHeader from '../../components/admin/AdminHeader'
+import { adminAPI } from '../../services/api'
 import { Layers, ShieldCheck, Eye, Plus, AlertCircle, CheckCircle2, X, User, Mail, Phone, MapPin, FileText, Clock, Star, TrendingUp, Edit, Trash2 } from 'lucide-react'
 
 // ========== REVIEW MODAL COMPONENT ==========
@@ -401,66 +402,112 @@ function AdminServices() {
   const [selectedService, setSelectedService] = useState(null)
   const [isReviewModalOpen, setIsReviewModalOpen] = useState(false)
   const [isManageModalOpen, setIsManageModalOpen] = useState(false)
-  const [pendingServices, setPendingServices] = useState([
-    {
-      id: 101,
-      title: 'Luxury Event Planning',
-      provider: 'Renad Elsafi',
-      submitted: '2 hours ago',
-      category: 'Events',
-      risk: 'Low'
-    },
-    {
-      id: 102,
-      title: 'Executive Coaching',
-      provider: 'Adel Hassan',
-      submitted: '6 hours ago',
-      category: 'Consulting',
-      risk: 'Medium'
-    },
-    {
-      id: 103,
-      title: 'Premium Home Cleaning',
-      provider: 'Shatha Alharbi',
-      submitted: '8 hours ago',
-      category: 'Home Services',
-      risk: 'Low'
-    }
-  ])
-  const [activeServices, setActiveServices] = useState([
-    { id: 'SRV-2101', title: 'Business Consulting', provider: 'Mohammed Ali', category: 'Consulting', rating: 4.9, bookings: 212, status: 'Active' },
-    { id: 'SRV-2087', title: 'Corporate Photography', provider: 'Arwa Aldawoud', category: 'Creative', rating: 4.8, bookings: 143, status: 'Featured' },
-    { id: 'SRV-1999', title: 'Fitness Coaching', provider: 'Renad Elsafi', category: 'Health', rating: 4.7, bookings: 188, status: 'Active' },
-    { id: 'SRV-1881', title: 'Custom Web Apps', provider: 'Adel Hassan', category: 'Technology', rating: 5.0, bookings: 265, status: 'Active' }
-  ])
+  const [pendingServices, setPendingServices] = useState([])
+  const [activeServices, setActiveServices] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
   
   const summaryCards = [
-    { label: 'Total Services', value: 3842, change: '+92 this month', icon: Layers },
-    { label: 'Pending Reviews', value: 27, change: 'Avg 6 hrs review time', icon: AlertCircle },
-    { label: 'Flagged Listings', value: 8, change: 'Needs manual review', icon: ShieldCheck },
-    { label: 'Categories', value: 18, change: '3 new this quarter', icon: Plus }
+    { label: 'Total Services', value: activeServices.length + pendingServices.length, change: 'All services', icon: Layers },
+    { label: 'Pending Reviews', value: pendingServices.length, change: 'Awaiting approval', icon: AlertCircle },
+    { label: 'Active Listings', value: activeServices.length, change: 'Currently live', icon: ShieldCheck },
+    { label: 'Categories', value: new Set([...activeServices, ...pendingServices].map(s => s.category)).size, change: 'Unique categories', icon: Plus }
   ]
 
-  const categories = [
-    { name: 'Consulting', services: 620, growth: '+12%', highlight: 'bg-[#eef2ff] text-[#3730a3]' },
-    { name: 'Home Services', services: 540, growth: '+8%', highlight: 'bg-[#ecfccb] text-[#3f6212]' },
-    { name: 'Creative', services: 410, growth: '+5%', highlight: 'bg-[#ede9fe] text-[#5b21b6]' },
-    { name: 'Technology', services: 380, growth: '+15%', highlight: 'bg-[#cffafe] text-[#155e75]' }
-  ]
+  // Dynamically generate categories from actual services
+  const categoryColors = {
+    'Consulting': 'bg-[#eef2ff] text-[#3730a3]',
+    'Home Services': 'bg-[#ecfccb] text-[#3f6212]',
+    'Creative': 'bg-[#ede9fe] text-[#5b21b6]',
+    'Technology': 'bg-[#cffafe] text-[#155e75]',
+    'technology': 'bg-[#cffafe] text-[#155e75]',
+    'design': 'bg-[#fce7f3] text-[#9d174d]',
+    'language': 'bg-[#fef3c7] text-[#92400e]',
+    'tutoring': 'bg-[#d1fae5] text-[#065f46]',
+    'home': 'bg-[#ecfccb] text-[#3f6212]',
+    'beauty': 'bg-[#fce7f3] text-[#9d174d]',
+    'education': 'bg-[#e0e7ff] text-[#1e3a8a]',
+    'tech': 'bg-[#cffafe] text-[#155e75]',
+    'events': 'bg-[#fef3c7] text-[#92400e]',
+    'health': 'bg-[#d1fae5] text-[#065f46]',
+    'business': 'bg-[#eef2ff] text-[#3730a3]',
+    'other': 'bg-[#f3f4f6] text-[#374151]'
+  };
+
+  // Get unique categories from actual services
+  const allServices = [...activeServices, ...pendingServices];
+  const uniqueCategories = [...new Set(allServices.map(s => s.category).filter(Boolean))];
+  
+  // Create categories array with actual data
+  const categories = uniqueCategories.map(category => {
+    const categoryName = category.charAt(0).toUpperCase() + category.slice(1).replace(/([A-Z])/g, ' $1').trim();
+    const serviceCount = allServices.filter(s => s.category === category).length;
+    return {
+      name: categoryName,
+      services: serviceCount,
+      growth: '+0%', // TODO: Calculate actual growth
+      highlight: categoryColors[category] || categoryColors['other']
+    };
+  }).sort((a, b) => b.services - a.services); // Sort by service count descending
+
+  // Fetch services from API
+  useEffect(() => {
+    const fetchServices = async () => {
+      try {
+        setLoading(true);
+        
+        // Fetch pending services
+        const pendingResponse = await adminAPI.getServices('pending', '', 1, 100);
+        if (pendingResponse.success) {
+          setPendingServices(pendingResponse.data.services || []);
+        }
+        
+        // Fetch active services
+        const activeResponse = await adminAPI.getServices('Active', '', 1, 100);
+        if (activeResponse.success) {
+          setActiveServices(activeResponse.data.services || []);
+        }
+      } catch (err) {
+        console.error('Error fetching services:', err);
+        setError(err.message || 'Failed to load services');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchServices();
+  }, []);
 
   const handleReview = (service) => {
     setSelectedService(service)
     setIsReviewModalOpen(true)
   }
 
-  const handleApprove = (id) => {
-    setPendingServices(pendingServices.filter(service => service.id !== id))
-    alert(`Service "${pendingServices.find(s => s.id === id)?.title}" has been approved!`)
+  const handleApprove = async (id) => {
+    try {
+      await adminAPI.approveService(id);
+      setPendingServices(pendingServices.filter(service => service.id !== id));
+      alert(`Service has been approved!`);
+      // Refresh services
+      const response = await adminAPI.getServices('Active', '', 1, 100);
+      if (response.success) {
+        setActiveServices(response.data.services || []);
+      }
+    } catch (err) {
+      console.error('Error approving service:', err);
+      alert('Failed to approve service. Please try again.');
+    }
   }
 
-  const handleReject = (id) => {
-    setPendingServices(pendingServices.filter(service => service.id !== id))
-    alert(`Service "${pendingServices.find(s => s.id === id)?.title}" has been rejected.`)
+  const handleReject = async (id) => {
+    try {
+      await adminAPI.rejectService(id, 'Rejected by admin');
+      setPendingServices(pendingServices.filter(service => service.id !== id));
+      alert(`Service has been rejected.`);
+    } catch (err) {
+      console.error('Error rejecting service:', err);
+      alert('Failed to reject service. Please try again.');
+    }
   }
 
   const handleManageListings = () => {
@@ -503,6 +550,20 @@ function AdminServices() {
           </button>
         </div>
 
+        {loading && (
+          <div className="text-center py-12">
+            <p className="text-[#6b7280]">Loading services...</p>
+          </div>
+        )}
+
+        {error && (
+          <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
+            <p className="text-red-800">Error: {error}</p>
+          </div>
+        )}
+
+        {!loading && !error && (
+          <>
         <section className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-5 mb-8">
           {summaryCards.map(({ label, value, change, icon: Icon }) => (
             <div key={label} className="bg-white border border-gray-100 rounded-2xl p-5 shadow-sm hover:shadow-lg transition-shadow">
@@ -648,6 +709,8 @@ function AdminServices() {
             </table>
           </div>
         </section>
+          </>
+        )}
       </main>
 
       {/* Review Modal */}

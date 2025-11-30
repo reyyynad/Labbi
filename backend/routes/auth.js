@@ -117,10 +117,14 @@ router.post('/login', async (req, res) => {
       });
     }
 
+    // Normalize email
+    const normalizedEmail = email.toLowerCase().trim();
+    
     // Find user and include password for comparison
-    const user = await User.findOne({ email: email.toLowerCase() }).select('+password');
+    const user = await User.findOne({ email: normalizedEmail }).select('+password');
 
     if (!user) {
+      console.log(`Login failed: User not found for email ${normalizedEmail}`);
       return res.status(401).json({
         success: false,
         message: 'Invalid credentials'
@@ -130,11 +134,14 @@ router.post('/login', async (req, res) => {
     // Check password
     const isMatch = await user.comparePassword(password);
     if (!isMatch) {
+      console.log(`Login failed: Invalid password for email ${normalizedEmail}`);
       return res.status(401).json({
         success: false,
         message: 'Invalid credentials'
       });
     }
+
+    console.log(`Login successful: ${normalizedEmail} (${user.userType})`);
 
     // Generate token
     const token = generateToken(user._id);
@@ -142,8 +149,10 @@ router.post('/login', async (req, res) => {
     // Build response data
     const responseData = {
       id: user._id,
+      name: user.fullName, // For compatibility with frontend
       fullName: user.fullName,
       email: user.email,
+      role: user.userType, // For compatibility with frontend (admin/customer/provider)
       userType: user.userType,
       phone: user.phone,
       location: user.location,

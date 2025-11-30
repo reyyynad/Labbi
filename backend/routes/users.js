@@ -14,6 +14,46 @@ router.get('/profile', protect, async (req, res) => {
   try {
     const user = await User.findById(req.user._id);
 
+    // Check if user is an admin
+    if (user.userType === 'admin') {
+      // Get admin-specific stats from dashboard
+      // Total users excludes admins (only count customers and providers)
+      const totalUsers = await User.countDocuments({ userType: { $in: ['customer', 'provider'] } });
+      const totalCustomers = await User.countDocuments({ userType: 'customer' });
+      const totalProviders = await User.countDocuments({ userType: 'provider' });
+      const totalServices = await Service.countDocuments({ status: 'Active' });
+      const totalBookings = await Booking.countDocuments();
+      const completedBookings = await Booking.find({ status: 'Completed' });
+      const totalRevenue = completedBookings.reduce((sum, booking) => sum + (booking.pricing?.total || 0), 0);
+
+      return res.status(200).json({
+        success: true,
+        data: {
+          profile: {
+            id: user._id,
+            fullName: user.fullName,
+            email: user.email,
+            phone: user.phone,
+            location: user.location,
+            profileImage: user.profileImage || '',
+            initials: user.getInitials(),
+            memberSince: user.getMemberSince(),
+            isEmailVerified: user.isEmailVerified,
+            isPhoneVerified: user.isPhoneVerified,
+            userType: user.userType
+          },
+          stats: {
+            totalUsers,
+            totalCustomers,
+            totalProviders,
+            activeServices: totalServices,
+            totalBookings,
+            revenue: Math.round(totalRevenue)
+          }
+        }
+      });
+    }
+
     // Check if user is a provider
     if (user.userType === 'provider') {
       // Get provider-specific stats
@@ -50,6 +90,7 @@ router.get('/profile', protect, async (req, res) => {
             email: user.email,
             phone: user.phone,
             location: user.location,
+            profileImage: user.profileImage || '',
             initials: user.getInitials(),
             memberSince: user.getMemberSince(),
             isEmailVerified: user.isEmailVerified,
@@ -97,6 +138,7 @@ router.get('/profile', protect, async (req, res) => {
           email: user.email,
           phone: user.phone,
           location: user.location,
+          profileImage: user.profileImage || '',
           initials: user.getInitials(),
           memberSince: user.getMemberSince(),
           isEmailVerified: user.isEmailVerified,
@@ -132,7 +174,7 @@ router.get('/profile', protect, async (req, res) => {
 // @access  Private
 router.put('/profile', protect, async (req, res) => {
   try {
-    const { fullName, email, phone, location, bio, title, experience, category } = req.body;
+    const { fullName, email, phone, location, bio, title, experience, category, profileImage } = req.body;
 
     // Check if email is being changed and already exists
     if (email && email !== req.user.email) {
@@ -150,6 +192,7 @@ router.put('/profile', protect, async (req, res) => {
     if (email) updatedFields.email = email.toLowerCase();
     if (phone !== undefined) updatedFields.phone = phone;
     if (location !== undefined) updatedFields.location = location;
+    if (profileImage !== undefined) updatedFields.profileImage = profileImage;
 
     // Handle provider-specific fields
     const user = await User.findById(req.user._id);
@@ -172,6 +215,7 @@ router.put('/profile', protect, async (req, res) => {
       email: updatedUser.email,
       phone: updatedUser.phone,
       location: updatedUser.location,
+      profileImage: updatedUser.profileImage || '',
       initials: updatedUser.getInitials()
     };
 

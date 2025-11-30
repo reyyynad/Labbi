@@ -333,6 +333,82 @@ export const providerAPI = {
   },
 };
 
+// ============ ADMIN API ============
+
+export const adminAPI = {
+  // Get admin dashboard
+  getDashboard: async () => {
+    return authFetch('/admin/dashboard');
+  },
+
+  // Get all users
+  getUsers: async (userType = null, search = '', page = 1, limit = 10) => {
+    const params = new URLSearchParams();
+    if (userType) params.append('userType', userType);
+    if (search) params.append('search', search);
+    params.append('page', page);
+    params.append('limit', limit);
+    return authFetch(`/admin/users?${params.toString()}`);
+  },
+
+  // Get user by ID
+  getUserById: async (id) => {
+    return authFetch(`/admin/users/${id}`);
+  },
+
+  // Update user status
+  updateUserStatus: async (id, status) => {
+    return authFetch(`/admin/users/${id}/status`, {
+      method: 'PUT',
+      body: JSON.stringify({ status }),
+    });
+  },
+
+  // Get all services
+  getServices: async (status = null, search = '', page = 1, limit = 10) => {
+    const params = new URLSearchParams();
+    if (status) params.append('status', status);
+    if (search) params.append('search', search);
+    params.append('page', page);
+    params.append('limit', limit);
+    return authFetch(`/admin/services?${params.toString()}`);
+  },
+
+  // Get service by ID
+  getServiceById: async (id) => {
+    return authFetch(`/services/${id}`);
+  },
+
+  // Approve service
+  approveService: async (id) => {
+    return authFetch(`/admin/services/${id}/approve`, {
+      method: 'PUT',
+    });
+  },
+
+  // Reject service
+  rejectService: async (id, reason = '') => {
+    return authFetch(`/admin/services/${id}/reject`, {
+      method: 'PUT',
+      body: JSON.stringify({ reason }),
+    });
+  },
+
+  // Get all bookings
+  getBookings: async (status = null, page = 1, limit = 10) => {
+    const params = new URLSearchParams();
+    if (status) params.append('status', status);
+    params.append('page', page);
+    params.append('limit', limit);
+    return authFetch(`/admin/bookings?${params.toString()}`);
+  },
+
+  // Get analytics
+  getAnalytics: async (period = '30') => {
+    return authFetch(`/admin/analytics?period=${period}`);
+  },
+};
+
 export default {
   auth: authAPI,
   user: userAPI,
@@ -340,5 +416,6 @@ export default {
   reviews: reviewsAPI,
   services: servicesAPI,
   provider: providerAPI,
+  admin: adminAPI,
 };
 

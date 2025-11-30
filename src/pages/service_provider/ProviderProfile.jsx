@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Camera, CheckCircle, Edit2, Phone, Mail, MapPin, Briefcase, X, TrendingUp, Calendar, DollarSign, Download, Loader2 } from 'lucide-react';
+import { CheckCircle, Edit2, Phone, Mail, MapPin, Briefcase, X, TrendingUp, Calendar, DollarSign, Download, Loader2 } from 'lucide-react';
 import ProviderHeader from '../../components/header/ProviderHeader';
 import { providerAPI } from '../../services/api';
 
@@ -313,8 +313,12 @@ const ProviderProfile = ({ onNavigate }) => {
     isEmailVerified: false,
     isPhoneVerified: false,
     isIdentityVerified: false,
-    isBackgroundChecked: false
+    isBackgroundChecked: false,
+    profileImage: '',
+    initials: ''
   });
+  const [profileImageFile, setProfileImageFile] = useState(null);
+  const [profileImagePreview, setProfileImagePreview] = useState('');
 
   const [isEditing, setIsEditing] = useState(false);
   const [originalData, setOriginalData] = useState(null);
@@ -356,8 +360,11 @@ const ProviderProfile = ({ onNavigate }) => {
           isEmailVerified: profile.isEmailVerified || false,
           isPhoneVerified: profile.isPhoneVerified || false,
           isIdentityVerified: profile.providerProfile?.isIdentityVerified || false,
-          isBackgroundChecked: profile.providerProfile?.isBackgroundChecked || false
+          isBackgroundChecked: profile.providerProfile?.isBackgroundChecked || false,
+          profileImage: profile.profileImage || '',
+          initials: profile.initials || ''
         });
+        setProfileImagePreview(profile.profileImage || '');
         
         if (bookings) {
           setRecentBookings(bookings.map(b => ({
@@ -382,6 +389,38 @@ const ProviderProfile = ({ onNavigate }) => {
     setProfileData(prev => ({ ...prev, [name]: value }));
   };
 
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      // Validate file type
+      if (!file.type.startsWith('image/')) {
+        setError('Please select a valid image file');
+        return;
+      }
+      
+      // Validate file size (max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        setError('Image size must be less than 5MB');
+        return;
+      }
+
+      // Create preview URL
+      const previewURL = URL.createObjectURL(file);
+      setProfileImagePreview(previewURL);
+      setProfileImageFile(file);
+      setError('');
+    }
+  };
+
+  const convertImageToBase64 = (file) => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  };
+
   const handleEditProfile = () => {
     setOriginalData({ ...profileData });
     setIsEditing(true);
@@ -390,6 +429,13 @@ const ProviderProfile = ({ onNavigate }) => {
   const handleSave = async () => {
     setSaving(true);
     try {
+      let profileImageBase64 = profileData.profileImage;
+      
+      // Convert new image to base64 if uploaded
+      if (profileImageFile) {
+        profileImageBase64 = await convertImageToBase64(profileImageFile);
+      }
+      
       const response = await providerAPI.updateProfile({
         fullName: profileData.fullName,
         email: profileData.email,
@@ -397,13 +443,16 @@ const ProviderProfile = ({ onNavigate }) => {
         location: profileData.location,
         bio: profileData.bio,
         title: profileData.title,
-        experience: profileData.experience
+        experience: profileData.experience,
+        profileImage: profileImageBase64
       });
       
       if (response.success) {
+        setProfileImageFile(null);
         alert('Profile updated successfully!');
         setIsEditing(false);
         setOriginalData(null);
+        fetchProfile(); // Refresh profile data (this will reload the image)
       }
     } catch (err) {
       alert(err.message || 'Failed to update profile');
@@ -415,7 +464,10 @@ const ProviderProfile = ({ onNavigate }) => {
   const handleCancel = () => {
     if (originalData) {
       setProfileData(originalData);
+      // Restore the original profile image preview
+      setProfileImagePreview(originalData.profileImage || '');
     }
+    setProfileImageFile(null);
     setIsEditing(false);
     setOriginalData(null);
   };
@@ -466,9 +518,26 @@ const ProviderProfile = ({ onNavigate }) => {
             <div className="flex items-start gap-6">
               {/* Profile Picture */}
               <div className="relative">
-                <div className="w-24 h-24 rounded-full flex items-center justify-center text-3xl font-bold text-white" style={{ backgroundColor: '#065f46' }}>
-                  {initials}
-                </div>
+                {profileImagePreview ? (
+                  <img 
+                    src={profileImagePreview} 
+                    alt="Profile" 
+                    className="w-24 h-24 rounded-full object-cover border-2 border-[#065f46]"
+                  />
+                ) : (
+                  <div className="w-24 h-24 rounded-full flex items-center justify-center text-3xl font-bold text-white" style={{ backgroundColor: '#065f46' }}>
+                    {initials}
+                  </div>
+                )}
+                <label className="absolute bottom-0 right-0 w-8 h-8 bg-white border-2 border-[#065f46] rounded-full flex items-center justify-center hover:bg-[#f0fdf4] cursor-pointer">
+                  <Camera className="w-4 h-4 text-[#065f46]" />
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageChange}
+                    className="hidden"
+                  />
+                </label>
               </div>
 
               {/* Profile Info */}

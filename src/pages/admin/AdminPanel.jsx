@@ -1,5 +1,6 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import AdminHeader from '../../components/admin/AdminHeader'
+import { adminAPI } from '../../services/api'
 import {
   Users,
   ClipboardList,
@@ -19,26 +20,62 @@ import {
 
 // ========== REVIEW MODAL COMPONENT ==========
 const ReviewModal = ({ isOpen, onClose, approval, onApprove, onReject }) => {
+  const [serviceDetails, setServiceDetails] = useState(null);
+  const [loadingDetails, setLoadingDetails] = useState(false);
+
+  useEffect(() => {
+    if (isOpen && approval?.id) {
+      const fetchServiceDetails = async () => {
+        try {
+          setLoadingDetails(true);
+          const response = await adminAPI.getServiceById(approval.id);
+          if (response.success && response.data) {
+            const service = response.data;
+            setServiceDetails({
+              description: service.description || 'No description provided',
+              price: service.price || 0,
+              location: service.location || service.provider?.location || 'Not specified',
+              duration: service.sessionDuration ? `${service.sessionDuration} hour(s)` : 'Not specified',
+              pricingType: service.pricingType || 'hourly',
+              providerEmail: service.provider?.email || 'Not provided',
+              providerPhone: service.provider?.phone || 'Not provided',
+              bio: service.provider?.bio || 'No bio provided',
+              experience: service.provider?.experience || 'Not specified'
+            });
+          }
+        } catch (err) {
+          console.error('Error fetching service details:', err);
+          // Use default values if fetch fails
+          setServiceDetails({
+            description: 'Unable to load service details',
+            price: 0,
+            location: 'Not specified',
+            duration: 'Not specified',
+            pricingType: 'hourly',
+            providerEmail: 'Not provided',
+            providerPhone: 'Not provided',
+            bio: 'No bio provided',
+            experience: 'Not specified'
+          });
+        } finally {
+          setLoadingDetails(false);
+        }
+      };
+      fetchServiceDetails();
+    }
+  }, [isOpen, approval]);
+
   if (!isOpen || !approval) return null;
 
-  // Mock service details - in a real app, this would come from the approval data
-  const serviceDetails = {
-    description: 'Professional web development services using modern technologies including React, Node.js, and PostgreSQL. With over 5 years of experience, I can help you build scalable web applications.',
-    price: 80,
-    location: 'Riyadh, Saudi Arabia',
-    duration: '2 hours',
-    features: [
-      'Full-stack development',
-      'Responsive design',
-      'Database integration',
-      'API development',
-      'Deployment support'
-    ],
-    providerEmail: 'renad@example.com',
-    providerPhone: '+966 50 123 4567',
-    bio: 'Experienced full-stack developer with expertise in modern web technologies.',
-    experience: '5+ years'
-  };
+  if (!serviceDetails) {
+    return (
+      <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={onClose}>
+        <div className="bg-white rounded-lg shadow-xl p-8">
+          <p className="text-[#6b7280]">Loading service details...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={onClose}>
@@ -106,15 +143,17 @@ const ReviewModal = ({ isOpen, onClose, approval, onApprove, onReject }) => {
               </div>
 
               <div>
-                <h4 className="text-sm font-semibold text-[#111827] mb-3">Service Features</h4>
-                <ul className="space-y-2">
-                  {serviceDetails.features.map((feature, index) => (
-                    <li key={index} className="flex items-center gap-2 text-sm text-[#6b7280]">
-                      <CheckCircle size={16} className="text-[#047857]" />
-                      {feature}
-                    </li>
-                  ))}
-                </ul>
+                <h4 className="text-sm font-semibold text-[#111827] mb-3">Service Information</h4>
+                <div className="bg-white border border-gray-200 rounded-lg p-4 space-y-2">
+                  <div className="flex items-center gap-2 text-sm text-[#6b7280]">
+                    <CheckCircle size={16} className="text-[#047857]" />
+                    <span>Category: {approval.category}</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-sm text-[#6b7280]">
+                    <CheckCircle size={16} className="text-[#047857]" />
+                    <span>Status: {approval.status}</span>
+                  </div>
+                </div>
               </div>
             </div>
 
@@ -125,7 +164,10 @@ const ReviewModal = ({ isOpen, onClose, approval, onApprove, onReject }) => {
                 <div className="bg-white border border-gray-200 rounded-lg p-4 space-y-3">
                   <div className="flex justify-between text-sm">
                     <span className="text-[#6b7280]">Price:</span>
-                    <span className="font-semibold text-[#111827]">SR{serviceDetails.price}/hr</span>
+                    <span className="font-semibold text-[#111827]">
+                      SR{serviceDetails.price}
+                      {serviceDetails.pricingType === 'hourly' ? '/hr' : serviceDetails.pricingType === 'session' ? '/session' : ''}
+                    </span>
                   </div>
                   <div className="flex justify-between text-sm">
                     <span className="text-[#6b7280]">Duration:</span>
@@ -203,116 +245,119 @@ const ReviewModal = ({ isOpen, onClose, approval, onApprove, onReject }) => {
 function AdminPanel() {
   const [selectedApproval, setSelectedApproval] = useState(null);
   const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
-  const [pendingApprovals, setPendingApprovals] = useState([
-    {
-      id: 1,
-      title: 'Advanced Web Development',
-      owner: 'Renad Elsafi',
-      category: 'Web Development',
-      submitted: 'Oct 10, 2025',
-      status: 'High Priority'
-    },
-    {
-      id: 2,
-      title: 'Brand Strategy Consulting',
-      owner: 'Adel Hassan',
-      category: 'Consulting',
-      submitted: 'Oct 11, 2025',
-      status: 'Normal'
-    },
-    {
-      id: 3,
-      title: 'Corporate Photography',
-      owner: 'Shatha Alharbi',
-      category: 'Creative',
-      submitted: 'Oct 12, 2025',
-      status: 'Normal'
-    }
-  ]);
+  const [pendingApprovals, setPendingApprovals] = useState([]);
+  const [stats, setStats] = useState([]);
+  const [activityFeed, setActivityFeed] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  const stats = [
-    {
-      label: 'Total Users',
-      value: '12,487',
-      detail: '8,234 clients | 4,253 providers',
-      trend: '+24 today',
-      icon: Users,
-      accent: 'bg-[#d1fae5] text-[#065f46]'
-    },
-    {
-      label: 'Active Services',
-      value: '3,842',
-      detail: '15 pending approval',
-      trend: '+15 pending',
-      icon: ClipboardList,
-      accent: 'bg-[#e0e7ff] text-[#1e3a8a]'
-    },
-    {
-      label: 'Total Bookings',
-      value: '24,891',
-      detail: 'This month',
-      trend: '+18%',
-      icon: Activity,
-      accent: 'bg-[#fef3c7] text-[#92400e]'
-    },
-    {
-      label: 'Revenue',
-      value: '148K SR',
-      detail: 'This month',
-      trend: '+22%',
-      icon: DollarSign,
-      accent: 'bg-[#fce7f3] text-[#9d174d]'
+  // Fetch dashboard data from API
+  const fetchDashboardData = async () => {
+    try {
+      setLoading(true);
+      const response = await adminAPI.getDashboard();
+      
+      if (response.success) {
+        // Set stats from API
+        setStats(response.data.stats || []);
+        
+          // Set pending approvals from API
+          setPendingApprovals(response.data.pendingApprovals || []);
+          
+          // Set activity feed from API
+          setActivityFeed(response.data.activityFeed || []);
+      }
+    } catch (err) {
+      console.error('Error fetching dashboard data:', err);
+      setError(err.message || 'Failed to load dashboard data');
+      // Set default empty stats if API fails
+      setStats([
+        {
+          label: 'Total Users',
+          value: '0',
+          detail: '0 clients | 0 providers',
+          trend: '0 today',
+          icon: Users,
+          accent: 'bg-[#d1fae5] text-[#065f46]'
+        },
+        {
+          label: 'Active Services',
+          value: '0',
+          detail: '0 pending approval',
+          trend: '0 pending',
+          icon: ClipboardList,
+          accent: 'bg-[#e0e7ff] text-[#1e3a8a]'
+        },
+        {
+          label: 'Total Bookings',
+          value: '0',
+          detail: 'This month',
+          trend: '0%',
+          icon: Activity,
+          accent: 'bg-[#fef3c7] text-[#92400e]'
+        },
+        {
+          label: 'Revenue',
+          value: '0 SR',
+          detail: 'This month',
+          trend: '0%',
+          icon: DollarSign,
+          accent: 'bg-[#fce7f3] text-[#9d174d]'
+        }
+      ]);
+    } finally {
+      setLoading(false);
     }
-  ]
+  };
 
-  const activityFeed = [
-    {
-      id: 1,
-      user: 'Renad Elsafi',
-      action: 'New client registration',
-      time: '5 minutes ago',
-      badge: 'customer',
-      color: 'bg-[#d1fae5] text-[#065f46]'
-    },
-    {
-      id: 2,
-      user: 'Adel Hassan',
-      action: 'Service booking completed',
-      time: '12 minutes ago',
-      badge: 'booking',
-      color: 'bg-[#e0e7ff] text-[#1e3a8a]'
-    },
-    {
-      id: 3,
-      user: 'Shatha Alharbi',
-      action: 'New provider application',
-      time: '23 minutes ago',
-      badge: 'provider',
-      color: 'bg-[#fef3c7] text-[#92400e]'
-    },
-    {
-      id: 4,
-      user: 'Mohammed Ali',
-      action: 'Service review posted',
-      time: '1 hour ago',
-      badge: 'review',
-      color: 'bg-[#fce7f3] text-[#9d174d]'
-    }
-  ]
+  useEffect(() => {
+    fetchDashboardData();
+    
+    // Refresh dashboard data every 30 seconds to show updated user statuses
+    const interval = setInterval(() => {
+      fetchDashboardData();
+    }, 30000);
+    
+    return () => clearInterval(interval);
+  }, []);
 
   const handleReview = (approval) => {
     setSelectedApproval(approval);
     setIsReviewModalOpen(true);
   };
 
-  const handleApprove = (id) => {
-    setPendingApprovals(pendingApprovals.filter(approval => approval.id !== id));
-    alert(`Service "${pendingApprovals.find(a => a.id === id)?.title}" has been approved!`);
+  const handleApprove = async (id) => {
+    try {
+      await adminAPI.approveService(id);
+      setPendingApprovals(pendingApprovals.filter(approval => approval.id !== id));
+      alert(`Service has been approved!`);
+      // Refresh dashboard data
+      const response = await adminAPI.getDashboard();
+      if (response.success) {
+        setPendingApprovals(response.data.pendingApprovals || []);
+        setStats(response.data.stats || []);
+      }
+    } catch (err) {
+      console.error('Error approving service:', err);
+      alert('Failed to approve service. Please try again.');
+    }
   };
 
-  const handleReject = (id) => {
-    setPendingApprovals(pendingApprovals.filter(approval => approval.id !== id));
-    alert(`Service "${pendingApprovals.find(a => a.id === id)?.title}" has been rejected.`);
+  const handleReject = async (id) => {
+    try {
+      await adminAPI.rejectService(id, 'Rejected by admin');
+      setPendingApprovals(pendingApprovals.filter(approval => approval.id !== id));
+      alert(`Service has been rejected.`);
+      // Refresh dashboard data
+      const response = await adminAPI.getDashboard();
+      if (response.success) {
+        setPendingApprovals(response.data.pendingApprovals || []);
+        setStats(response.data.stats || []);
+      }
+    } catch (err) {
+      console.error('Error rejecting service:', err);
+      alert('Failed to reject service. Please try again.');
+    }
   };
 
   return (
@@ -326,10 +371,41 @@ function AdminPanel() {
           </p>
         </div>
 
+        {loading && (
+          <div className="text-center py-12">
+            <p className="text-[#6b7280]">Loading dashboard data...</p>
+          </div>
+        )}
+
+        {error && (
+          <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
+            <p className="text-red-800">Error: {error}</p>
+          </div>
+        )}
+
+        {!loading && !error && (
+          <>
         <section className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-5 mb-8">
-          {stats.map(({ label, value, detail, trend, icon: Icon, accent }) => (
+          {stats.map((stat) => {
+            // Map icon string to component
+            const IconMap = {
+              'Users': Users,
+              'ClipboardList': ClipboardList,
+              'Activity': Activity,
+              'DollarSign': DollarSign
+            };
+            const Icon = IconMap[stat.icon] || Users;
+            const accentMap = {
+              'Total Users': 'bg-[#d1fae5] text-[#065f46]',
+              'Active Services': 'bg-[#e0e7ff] text-[#1e3a8a]',
+              'Total Bookings': 'bg-[#fef3c7] text-[#92400e]',
+              'Revenue': 'bg-[#fce7f3] text-[#9d174d]'
+            };
+            const accent = accentMap[stat.label] || 'bg-[#d1fae5] text-[#065f46]';
+            
+            return (
             <div
-              key={label}
+              key={stat.label}
               className="bg-white border border-gray-100 rounded-2xl p-5 shadow-sm hover:shadow-lg transition-shadow"
             >
               <div className="flex items-center justify-between mb-4">
@@ -337,14 +413,15 @@ function AdminPanel() {
                   <Icon className="w-6 h-6" />
                 </div>
                 <span className="text-xs font-semibold text-[#047857] bg-[#ecfdf5] px-3 py-1 rounded-full">
-                  {trend}
+                  {stat.trend}
                 </span>
               </div>
-              <p className="text-sm font-medium text-[#6b7280]">{label}</p>
-              <p className="text-3xl font-bold text-[#111827] mt-1">{value}</p>
-              <p className="text-sm text-[#6b7280] mt-1">{detail}</p>
+              <p className="text-sm font-medium text-[#6b7280]">{stat.label}</p>
+              <p className="text-3xl font-bold text-[#111827] mt-1">{stat.value}</p>
+              <p className="text-sm text-[#6b7280] mt-1">{stat.detail}</p>
             </div>
-          ))}
+            );
+          })}
         </section>
 
         <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
@@ -429,15 +506,30 @@ function AdminPanel() {
                       <span className="text-xs text-[#9ca3af]">{activity.time}</span>
                     </div>
                     <p className="text-sm text-[#6b7280]">{activity.action}</p>
-                    <span className="inline-flex mt-2 text-xs font-semibold px-3 py-1 rounded-full bg-white border border-gray-200 text-[#374151] capitalize">
-                      {activity.badge}
-                    </span>
+                    <div className="flex items-center gap-2 mt-2">
+                      <span className="inline-flex text-xs font-semibold px-3 py-1 rounded-full bg-white border border-gray-200 text-[#374151] capitalize">
+                        {activity.badge}
+                      </span>
+                      {activity.status && (
+                        <span className={`inline-flex text-xs font-semibold px-3 py-1 rounded-full ${
+                          activity.status === 'Active' 
+                            ? 'bg-[#dcfce7] text-[#166534]' 
+                            : activity.status === 'Pending'
+                            ? 'bg-[#fef3c7] text-[#92400e]'
+                            : 'bg-[#fee2e2] text-[#991b1b]'
+                        }`}>
+                          {activity.status}
+                        </span>
+                      )}
+                    </div>
                   </div>
                 </div>
               ))}
             </div>
           </section>
         </div>
+          </>
+        )}
       </main>
 
       {/* Review Modal */}
