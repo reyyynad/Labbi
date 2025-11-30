@@ -1,7 +1,9 @@
-import React, { useState } from 'react';
-import { Camera, Settings, CheckCircle, Edit2 } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Camera, Settings, CheckCircle, Edit2, Loader2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import Header from '../../components/header/Header';
+import { userAPI } from '../../services/api';
+import { logout } from '../../utils/auth';
 
 // ========== BUTTON COMPONENT ==========
 const Button = ({ 
@@ -41,56 +43,115 @@ const Button = ({
 const CustomerProfile = () => {
   const navigate = useNavigate();
   const [isEditing, setIsEditing] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
+  const [successMessage, setSuccessMessage] = useState('');
   
   const [profileData, setProfileData] = useState({
-    initials: 'MA',
-    fullName: 'Mohammed Ali',
-    email: 'mohammed.ali@example.com',
-    phone: '+966 50 123 4567',
-    location: 'Riyadh, Saudi Arabia',
-    memberSince: 'October 2024'
+    initials: '',
+    fullName: '',
+    email: '',
+    phone: '',
+    location: '',
+    memberSince: '',
+    isEmailVerified: false,
+    isPhoneVerified: false
   });
 
-  const [stats] = useState({
-    totalBookings: 12,
-    totalSpent: 1240,
-    favoriteServices: 3
+  const [stats, setStats] = useState({
+    totalBookings: 0,
+    totalSpent: 0,
+    favoriteServices: 0
   });
 
-  const [recentBookings] = useState([
-    {
-      service: 'House Cleaning',
-      provider: 'Renad Elsafi',
-      date: 'Nov 10, 2024',
-      status: 'Completed',
-      price: '120'
-    },
-    {
-      service: 'Plumbing Repair',
-      provider: 'Shatha Alharbi',
-      date: 'Nov 8, 2024',
-      status: 'Completed',
-      price: '85'
-    },
-    {
-      service: 'Personal Training',
-      provider: 'Arwa Aldawoud',
-      date: 'Nov 5, 2024',
-      status: 'Completed',
-      price: '50'
+  const [recentBookings, setRecentBookings] = useState([]);
+
+  // Fetch profile data on mount
+  useEffect(() => {
+    fetchProfile();
+  }, []);
+
+  const fetchProfile = async () => {
+    try {
+      setLoading(true);
+      setError('');
+      const response = await userAPI.getProfile();
+      
+      if (response.success) {
+        const { profile, stats: userStats, recentBookings: bookings } = response.data;
+        
+        setProfileData({
+          initials: profile.initials,
+          fullName: profile.fullName,
+          email: profile.email,
+          phone: profile.phone || '',
+          location: profile.location || '',
+          memberSince: profile.memberSince,
+          isEmailVerified: profile.isEmailVerified,
+          isPhoneVerified: profile.isPhoneVerified
+        });
+        
+        setStats(userStats);
+        setRecentBookings(bookings);
+      }
+    } catch (error) {
+      setError(error.message || 'Failed to load profile');
+    } finally {
+      setLoading(false);
     }
-  ]);
+  };
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setProfileData(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleSave = () => {
-    console.log('Profile updated:', profileData);
-    alert('Profile updated successfully!');
-    setIsEditing(false);
+  const handleSave = async () => {
+    try {
+      setSaving(true);
+      setError('');
+      setSuccessMessage('');
+      
+      const response = await userAPI.updateProfile({
+        fullName: profileData.fullName,
+        email: profileData.email,
+        phone: profileData.phone,
+        location: profileData.location
+      });
+      
+      if (response.success) {
+        setProfileData(prev => ({
+          ...prev,
+          initials: response.data.initials
+        }));
+        setSuccessMessage('Profile updated successfully!');
+        setIsEditing(false);
+        
+        // Clear success message after 3 seconds
+        setTimeout(() => setSuccessMessage(''), 3000);
+      }
+    } catch (error) {
+      setError(error.message || 'Failed to update profile');
+    } finally {
+      setSaving(false);
+    }
   };
+
+  const handleLogout = () => {
+    logout(navigate);
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <Header />
+        <div className="flex items-center justify-center h-[60vh]">
+          <Loader2 className="w-8 h-8 animate-spin text-[#047857]" />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -103,13 +164,25 @@ const CustomerProfile = () => {
             <p className="text-gray-600">Manage your personal information and preferences</p>
           </div>
           <button 
-            onClick={() => navigate('/settings')}
+            onClick={() => navigate('/customer/settings')}
             className="flex items-center gap-2 px-4 py-2 border-2 border-gray-300 rounded-lg hover:bg-gray-50"
           >
             <Settings className="w-4 h-4 text-[#374151]" />
             <span className="text-[#374151]">Settings</span>
           </button>
         </div>
+
+        {error && (
+          <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+            <p className="text-sm text-red-600">{error}</p>
+          </div>
+        )}
+
+        {successMessage && (
+          <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg">
+            <p className="text-sm text-green-600">{successMessage}</p>
+          </div>
+        )}
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Left Column - Profile Card */}
@@ -149,7 +222,7 @@ const CustomerProfile = () => {
               </div>
             </div>
 
-            <Button variant="outline" className="w-full">
+            <Button variant="outline" className="w-full" onClick={handleLogout}>
               Log Out
             </Button>
           </div>
@@ -166,8 +239,8 @@ const CustomerProfile = () => {
                     Edit Profile
                   </Button>
                 ) : (
-                  <Button variant="primary" onClick={handleSave}>
-                    Save Changes
+                  <Button variant="primary" onClick={handleSave} disabled={saving}>
+                    {saving ? 'Saving...' : 'Save Changes'}
                   </Button>
                 )}
               </div>
@@ -205,6 +278,7 @@ const CustomerProfile = () => {
                     value={profileData.phone}
                     onChange={handleInputChange}
                     disabled={!isEditing}
+                    placeholder={isEditing ? 'Enter phone number' : 'Not provided'}
                     className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg disabled:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-[#047857] focus:border-transparent"
                   />
                 </div>
@@ -217,6 +291,7 @@ const CustomerProfile = () => {
                     value={profileData.location}
                     onChange={handleInputChange}
                     disabled={!isEditing}
+                    placeholder={isEditing ? 'Enter location' : 'Not provided'}
                     className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg disabled:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-[#047857] focus:border-transparent"
                   />
                 </div>
@@ -248,27 +323,27 @@ const CustomerProfile = () => {
               <div className="space-y-4">
                 <div className="flex items-center justify-between p-4 bg-[#f0fdf4] border border-[#047857] rounded-lg">
                   <div className="flex items-center gap-3">
-                    <CheckCircle className="w-5 h-5 text-[#047857]" />
+                    <CheckCircle className={`w-5 h-5 ${profileData.isEmailVerified ? 'text-[#047857]' : 'text-gray-400'}`} />
                     <div>
                       <p className="font-semibold text-[#374151]">Email Verified</p>
                       <p className="text-sm text-gray-600">{profileData.email}</p>
                     </div>
                   </div>
-                  <span className="px-3 py-1 bg-[#047857] text-white rounded-full text-xs font-semibold">
-                    Verified
+                  <span className={`px-3 py-1 ${profileData.isEmailVerified ? 'bg-[#047857]' : 'bg-gray-400'} text-white rounded-full text-xs font-semibold`}>
+                    {profileData.isEmailVerified ? 'Verified' : 'Pending'}
                   </span>
                 </div>
 
                 <div className="flex items-center justify-between p-4 bg-[#f0fdf4] border border-[#047857] rounded-lg">
                   <div className="flex items-center gap-3">
-                    <CheckCircle className="w-5 h-5 text-[#047857]" />
+                    <CheckCircle className={`w-5 h-5 ${profileData.isPhoneVerified ? 'text-[#047857]' : 'text-gray-400'}`} />
                     <div>
                       <p className="font-semibold text-[#374151]">Phone Verified</p>
-                      <p className="text-sm text-gray-600">{profileData.phone}</p>
+                      <p className="text-sm text-gray-600">{profileData.phone || 'Not provided'}</p>
                     </div>
                   </div>
-                  <span className="px-3 py-1 bg-[#047857] text-white rounded-full text-xs font-semibold">
-                    Verified
+                  <span className={`px-3 py-1 ${profileData.isPhoneVerified ? 'bg-[#047857]' : 'bg-gray-400'} text-white rounded-full text-xs font-semibold`}>
+                    {profileData.isPhoneVerified ? 'Verified' : 'Pending'}
                   </span>
                 </div>
               </div>
@@ -279,7 +354,7 @@ const CustomerProfile = () => {
               <div className="flex items-center justify-between mb-6">
                 <h3 className="text-xl font-bold text-[#374151]">Recent Bookings</h3>
                 <button 
-                  onClick={() => navigate('/bookings')}
+                  onClick={() => navigate('/customer/bookings')}
                   className="text-sm text-[#047857] hover:text-[#065f46] font-medium"
                 >
                   View All
@@ -287,21 +362,34 @@ const CustomerProfile = () => {
               </div>
               
               <div className="space-y-4">
-                {recentBookings.map((booking, index) => (
-                  <div key={index} className="flex items-center justify-between p-4 bg-[#f0fdf4] border border-[#047857] rounded-lg">
-                    <div>
-                      <h4 className="font-semibold text-[#374151] mb-1">{booking.service}</h4>
-                      <p className="text-sm text-gray-600">Provider: {booking.provider}</p>
-                      <p className="text-xs text-gray-500 mt-1">{booking.date}</p>
+                {recentBookings.length > 0 ? (
+                  recentBookings.map((booking, index) => (
+                    <div key={index} className="flex items-center justify-between p-4 bg-[#f0fdf4] border border-[#047857] rounded-lg">
+                      <div>
+                        <h4 className="font-semibold text-[#374151] mb-1">{booking.service}</h4>
+                        <p className="text-sm text-gray-600">Provider: {booking.provider}</p>
+                        <p className="text-xs text-gray-500 mt-1">{booking.date}</p>
+                      </div>
+                      <div className="text-right">
+                        <span className="inline-block px-3 py-1 bg-[#047857] text-white text-xs rounded-full mb-2">
+                          {booking.status}
+                        </span>
+                        <p className="font-semibold text-[#374151]">SR{booking.price}</p>
+                      </div>
                     </div>
-                    <div className="text-right">
-                      <span className="inline-block px-3 py-1 bg-[#047857] text-white text-xs rounded-full mb-2">
-                        {booking.status}
-                      </span>
-                      <p className="font-semibold text-[#374151]">SR{booking.price}</p>
-                    </div>
+                  ))
+                ) : (
+                  <div className="text-center py-8">
+                    <p className="text-gray-500">No bookings yet</p>
+                    <Button 
+                      variant="primary" 
+                      className="mt-4"
+                      onClick={() => navigate('/')}
+                    >
+                      Browse Services
+                    </Button>
                   </div>
-                ))}
+                )}
               </div>
             </div>
           </div>
