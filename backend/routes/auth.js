@@ -17,7 +17,18 @@ const generateToken = (id) => {
 // @access  Public
 router.post('/register', async (req, res) => {
   try {
-    const { fullName, email, password, userType } = req.body;
+    const { 
+      fullName, 
+      email, 
+      password, 
+      userType,
+      phone,
+      location,
+      // Provider-specific fields
+      category,
+      bio,
+      experience
+    } = req.body;
 
     // Check if user already exists
     const existingUser = await User.findOne({ email: email.toLowerCase() });
@@ -28,20 +39,45 @@ router.post('/register', async (req, res) => {
       });
     }
 
-    // Create user
-    const user = await User.create({
+    // Build user data
+    const userData = {
       fullName,
       email: email.toLowerCase(),
       password,
-      userType: userType || 'customer'
-    });
+      userType: userType || 'customer',
+      phone: phone || '',
+      location: location || ''
+    };
+
+    // Add provider-specific profile data if registering as provider
+    if (userType === 'provider') {
+      userData.providerProfile = {
+        bio: bio || '',
+        category: category || '',
+        experience: experience || '',
+        title: `${category ? category.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase()) : ''} Specialist`,
+        isVerified: false,
+        isIdentityVerified: false,
+        isBackgroundChecked: false,
+        rating: 0,
+        totalReviews: 0,
+        totalBookings: 0,
+        totalEarnings: 0,
+        thisMonthEarnings: 0,
+        responseRate: 100,
+        completionRate: 100
+      };
+    }
+
+    // Create user
+    const user = await User.create(userData);
 
     // Generate token
     const token = generateToken(user._id);
 
     res.status(201).json({
       success: true,
-      message: 'Registration successful',
+      message: userType === 'provider' ? 'Provider registration successful' : 'Registration successful',
       data: {
         token,
         user: {
@@ -49,8 +85,11 @@ router.post('/register', async (req, res) => {
           fullName: user.fullName,
           email: user.email,
           userType: user.userType,
+          phone: user.phone,
+          location: user.location,
           initials: user.getInitials(),
-          memberSince: user.getMemberSince()
+          memberSince: user.getMemberSince(),
+          providerProfile: user.providerProfile
         }
       }
     });
@@ -100,24 +139,32 @@ router.post('/login', async (req, res) => {
     // Generate token
     const token = generateToken(user._id);
 
+    // Build response data
+    const responseData = {
+      id: user._id,
+      fullName: user.fullName,
+      email: user.email,
+      userType: user.userType,
+      phone: user.phone,
+      location: user.location,
+      initials: user.getInitials(),
+      memberSince: user.getMemberSince(),
+      isEmailVerified: user.isEmailVerified,
+      isPhoneVerified: user.isPhoneVerified,
+      notifications: user.notifications
+    };
+
+    // Include provider profile if user is a provider
+    if (user.userType === 'provider' && user.providerProfile) {
+      responseData.providerProfile = user.providerProfile;
+    }
+
     res.status(200).json({
       success: true,
       message: 'Login successful',
       data: {
         token,
-        user: {
-          id: user._id,
-          fullName: user.fullName,
-          email: user.email,
-          userType: user.userType,
-          phone: user.phone,
-          location: user.location,
-          initials: user.getInitials(),
-          memberSince: user.getMemberSince(),
-          isEmailVerified: user.isEmailVerified,
-          isPhoneVerified: user.isPhoneVerified,
-          notifications: user.notifications
-        }
+        user: responseData
       }
     });
   } catch (error) {

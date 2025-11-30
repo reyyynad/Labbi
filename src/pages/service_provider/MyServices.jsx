@@ -1,54 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Edit, Eye, Trash2, X, AlertCircle, Upload, Star, MapPin, Mail, Phone } from 'lucide-react';
+import { Plus, Edit, Eye, Trash2, X, AlertCircle, Upload, Star, MapPin, Mail, Phone, Loader2 } from 'lucide-react';
 import ProviderHeader from '../../components/header/ProviderHeader';
-
-// Mock services data
-const mockServices = [
-  {
-    id: 1,
-    title: "Professional House Cleaning",
-    category: "Home Services",
-    description: "Comprehensive cleaning service with eco-friendly products",
-    price: 40,
-    priceType: "hour",
-    status: "Active",
-    bookings: 127,
-    image: "https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=400"
-  },
-  {
-    id: 2,
-    title: "Deep Cleaning Service",
-    category: "Home Services",
-    description: "Intensive cleaning for homes and offices",
-    price: 60,
-    priceType: "hour",
-    status: "Active",
-    bookings: 45,
-    image: "https://images.unsplash.com/photo-1563453392212-326f5e854473?w=400"
-  },
-  {
-    id: 3,
-    title: "Move-In/Out Cleaning",
-    category: "Home Services",
-    description: "Complete cleaning for moving in or out of properties",
-    price: 150,
-    priceType: "session",
-    status: "Inactive",
-    bookings: 32,
-    image: "https://images.unsplash.com/photo-1585421514738-01798e348b17?w=400"
-  },
-  {
-    id: 4,
-    title: "Office Cleaning",
-    category: "Home Services",
-    description: "Professional office and workplace cleaning services",
-    price: 50,
-    priceType: "hour",
-    status: "Active",
-    bookings: 81,
-    image: "https://images.unsplash.com/photo-1497366216548-37526070297c?w=400"
-  }
-];
+import { servicesAPI } from '../../services/api';
 
 // ========== EDIT SERVICE MODAL COMPONENT ==========
 const EditServiceModal = ({ isOpen, onClose, service, onSave }) => {
@@ -712,11 +665,45 @@ const ServicePreviewModal = ({ isOpen, onClose, service }) => {
 };
 
 const MyServices = ({ onNavigate }) => {
-  const [services, setServices] = useState(mockServices);
+  const [services, setServices] = useState([]);
   const [editingService, setEditingService] = useState(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [viewingService, setViewingService] = useState(null);
   const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    fetchServices();
+  }, []);
+
+  const fetchServices = async () => {
+    try {
+      setLoading(true);
+      setError('');
+      
+      const response = await servicesAPI.getMyServices();
+      
+      if (response.success) {
+        setServices(response.data.map(s => ({
+          id: s.id,
+          title: s.title,
+          category: s.category,
+          description: s.description,
+          price: s.price,
+          priceType: s.priceType || 'hour',
+          status: s.status,
+          bookings: s.bookings || 0,
+          image: s.image || s.images?.[0] || ''
+        })));
+      }
+    } catch (err) {
+      console.error('Fetch services error:', err);
+      setError('Failed to load services');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleEdit = (serviceId) => {
     const service = services.find(s => s.id === serviceId);
@@ -734,17 +721,38 @@ const MyServices = ({ onNavigate }) => {
     }
   };
 
-  const handleDelete = (serviceId) => {
+  const handleDelete = async (serviceId) => {
     if (confirm('Are you sure you want to delete this service?')) {
-      setServices(services.filter(s => s.id !== serviceId));
-      alert('Service deleted successfully');
+      try {
+        const response = await servicesAPI.delete(serviceId);
+        if (response.success) {
+          setServices(services.filter(s => s.id !== serviceId));
+          alert('Service deleted successfully');
+        }
+      } catch (err) {
+        alert(err.message || 'Failed to delete service');
+      }
     }
   };
 
-  const handleSaveService = (updatedService) => {
+  const handleSaveService = async (updatedService) => {
     if (editingService) {
-      setServices(services.map(s => s.id === editingService.id ? updatedService : s));
-      alert('Service updated successfully!');
+      try {
+        const response = await servicesAPI.update(editingService.id, {
+          title: updatedService.title,
+          description: updatedService.description,
+          category: updatedService.category,
+          price: updatedService.price,
+          pricingType: updatedService.priceType === 'hour' ? 'hourly' : updatedService.priceType
+        });
+        
+        if (response.success) {
+          setServices(services.map(s => s.id === editingService.id ? updatedService : s));
+          alert('Service updated successfully!');
+        }
+      } catch (err) {
+        alert(err.message || 'Failed to update service');
+      }
     }
     setIsEditModalOpen(false);
   };
@@ -862,7 +870,17 @@ const MyServices = ({ onNavigate }) => {
         </div>
 
         {/* Services Grid */}
-        {services.length > 0 ? (
+        {loading ? (
+          <div className="flex items-center justify-center py-12">
+            <Loader2 className="w-8 h-8 animate-spin text-gray-400" />
+            <span className="ml-2 text-gray-600">Loading services...</span>
+          </div>
+        ) : error ? (
+          <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+            <p className="text-sm text-red-600">{error}</p>
+            <button onClick={fetchServices} className="mt-2 text-sm text-red-700 underline">Try again</button>
+          </div>
+        ) : services.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6">
             {services.map(service => (
               <ServiceCard key={service.id} service={service} />

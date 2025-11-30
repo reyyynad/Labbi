@@ -1,50 +1,7 @@
-import React, { useState } from 'react';
-import { Calendar, Clock, DollarSign, MapPin, User, X, Mail, Phone, CheckCircle } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Calendar, Clock, DollarSign, MapPin, User, X, Mail, Phone, CheckCircle, Loader2 } from 'lucide-react';
 import ProviderHeader from '../../components/header/ProviderHeader';
-
-// Mock bookings data
-const mockBookings = [
-  {
-    id: 1000,
-    customer: "Renad Elsafi",
-    service: "Professional House Cleaning",
-    date: "Nov 15, 2024",
-    time: "10:00 AM - 12:00 PM",
-    price: 120,
-    status: "Pending",
-    location: "King Saud Rd, Dhahran, Saudi Arabia"
-  },
-  {
-    id: 1001,
-    customer: "Shatha Alharbi",
-    service: "Professional House Cleaning",
-    date: "Nov 16, 2024",
-    time: "2:00 PM - 4:00 PM",
-    price: 160,
-    status: "Confirmed",
-    location: "Al Olaya District, Riyadh, Saudi Arabia"
-  },
-  {
-    id: 1002,
-    customer: "Adel Hassan",
-    service: "Deep Cleaning Service",
-    date: "Nov 10, 2024",
-    time: "9:00 AM - 1:00 PM",
-    price: 240,
-    status: "Completed",
-    location: "King Abdullah Rd, Riyadh, Saudi Arabia"
-  },
-  {
-    id: 1003,
-    customer: "Mohammed Ali",
-    service: "Move-In/Out Cleaning",
-    date: "Nov 8, 2024",
-    time: "10:00 AM - 2:00 PM",
-    price: 150,
-    status: "Completed",
-    location: "Diplomatic Quarter, Riyadh, Saudi Arabia"
-  }
-];
+import { providerAPI } from '../../services/api';
 
 // ========== BOOKING DETAILS MODAL COMPONENT ==========
 const BookingDetailsModal = ({ isOpen, onClose, booking }) => {
@@ -270,27 +227,73 @@ const BookingDetailsModal = ({ isOpen, onClose, booking }) => {
 };
 
 const ManageBookings = ({ onNavigate }) => {
-  const [bookings, setBookings] = useState(mockBookings);
+  const [bookings, setBookings] = useState([]);
   const [activeFilter, setActiveFilter] = useState("All Bookings");
   const [selectedBooking, setSelectedBooking] = useState(null);
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
-  const filteredBookings = bookings.filter(booking => {
-    if (activeFilter === "All Bookings") return true;
-    return booking.status === activeFilter;
-  });
+  useEffect(() => {
+    fetchBookings();
+  }, [activeFilter]);
 
-  const handleAccept = (bookingId) => {
-    setBookings(bookings.map(b => 
-      b.id === bookingId ? { ...b, status: "Confirmed" } : b
-    ));
-    alert(`Booking accepted successfully!`);
+  const fetchBookings = async () => {
+    try {
+      setLoading(true);
+      setError('');
+      
+      const response = await providerAPI.getBookings(activeFilter);
+      
+      if (response.success) {
+        setBookings(response.data.map(b => ({
+          id: b.id,
+          customer: b.customer,
+          service: b.service,
+          date: b.date,
+          time: b.time,
+          price: b.price,
+          status: b.status,
+          location: b.location || 'Location not specified',
+          customerEmail: b.customerEmail,
+          customerPhone: b.customerPhone
+        })));
+      }
+    } catch (err) {
+      console.error('Fetch bookings error:', err);
+      setError('Failed to load bookings');
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleDecline = (bookingId) => {
-    if (confirm(`Are you sure you want to decline this booking?`)) {
-      setBookings(bookings.filter(b => b.id !== bookingId));
-      alert(`Booking declined.`);
+  const filteredBookings = bookings;
+
+  const handleAccept = async (bookingId) => {
+    try {
+      const response = await providerAPI.acceptBooking(bookingId);
+      if (response.success) {
+        setBookings(bookings.map(b => 
+          b.id === bookingId ? { ...b, status: "Confirmed" } : b
+        ));
+        alert('Booking accepted successfully!');
+      }
+    } catch (err) {
+      alert(err.message || 'Failed to accept booking');
+    }
+  };
+
+  const handleDecline = async (bookingId) => {
+    if (confirm('Are you sure you want to decline this booking?')) {
+      try {
+        const response = await providerAPI.declineBooking(bookingId);
+        if (response.success) {
+          setBookings(bookings.filter(b => b.id !== bookingId));
+          alert('Booking declined.');
+        }
+      } catch (err) {
+        alert(err.message || 'Failed to decline booking');
+      }
     }
   };
 
@@ -450,7 +453,17 @@ const ManageBookings = ({ onNavigate }) => {
 
         {/* Bookings List */}
         <div>
-          {filteredBookings.length > 0 ? (
+          {loading ? (
+            <div className="flex items-center justify-center py-12">
+              <Loader2 className="w-8 h-8 animate-spin text-gray-400" />
+              <span className="ml-2 text-gray-600">Loading bookings...</span>
+            </div>
+          ) : error ? (
+            <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+              <p className="text-sm text-red-600">{error}</p>
+              <button onClick={fetchBookings} className="mt-2 text-sm text-red-700 underline">Try again</button>
+            </div>
+          ) : filteredBookings.length > 0 ? (
             filteredBookings.map(booking => (
               <BookingCard key={booking.id} booking={booking} />
             ))

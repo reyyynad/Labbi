@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { validateEmail, validatePassword } from '../../utils/validation'
 import { setAuthData } from '../../utils/auth'
+import { authAPI } from '../../services/api'
 import Header from '../../components/header/Header'
 import { Mail, Lock } from 'lucide-react'
 
@@ -14,6 +15,7 @@ function LoginProvider() {
   })
   const [errors, setErrors] = useState({})
   const [loading, setLoading] = useState(false)
+  const [apiError, setApiError] = useState('')
 
   useEffect(() => {
     const savedEmail = localStorage.getItem('rememberedEmail')
@@ -30,6 +32,9 @@ function LoginProvider() {
     }))
     if (errors[name]) {
       setErrors(prev => ({ ...prev, [name]: '' }))
+    }
+    if (apiError) {
+      setApiError('')
     }
   }
 
@@ -50,18 +55,42 @@ function LoginProvider() {
     }
 
     setLoading(true)
+    setApiError('')
 
-    setTimeout(() => {
-      const mockToken = 'mock_token_' + Date.now()
-      const isAdmin = formData.email.trim().toLowerCase() === 'admin123@gmail.com'
-      const userType = isAdmin ? 'admin' : 'provider'
-      const userName = isAdmin ? 'Admin' : formData.email.split('@')[0] || 'Provider'
+    try {
+      const response = await authAPI.login(formData.email, formData.password)
       
-      setAuthData(mockToken, formData.email, userType, userName, formData.remember)
-      
+      if (response.success) {
+        const { token, user } = response.data
+        
+        // Check if user is a provider or admin
+        if (user.userType !== 'provider' && user.userType !== 'admin') {
+          setApiError('This account is not registered as a service provider. Please use the customer login.')
+          setLoading(false)
+          return
+        }
+        
+        setAuthData(
+          token, 
+          user.email, 
+          user.userType, 
+          user.fullName, 
+          formData.remember,
+          user.id
+        )
+        
+        // Redirect based on user type
+        if (user.userType === 'admin') {
+          navigate('/admin-panel')
+        } else {
+          navigate('/provider')
+        }
+      }
+    } catch (error) {
+      setApiError(error.message || 'Login failed. Please check your credentials.')
+    } finally {
       setLoading(false)
-      navigate(isAdmin ? '/admin-panel' : '/provider')
-    }, 1500)
+    }
   }
 
   return (
@@ -81,6 +110,12 @@ function LoginProvider() {
             <h1 className="text-3xl font-bold mb-2 text-center">Welcome back</h1>
             <p className="text-gray-100 text-center mb-8">Log in to your Labbi - لبِّ provider account</p>
             
+            {apiError && (
+              <div className="mb-6 p-4 bg-red-500/20 border border-red-300/30 rounded-lg">
+                <p className="text-sm text-red-100">{apiError}</p>
+              </div>
+            )}
+
             <form onSubmit={handleSubmit} className="space-y-6">
               <div>
                 <label htmlFor="email" className="block text-sm font-medium text-white mb-2">

@@ -1,6 +1,8 @@
 import React, { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { validateEmail, validatePassword, validateForm } from '../../utils/validation'
+import { setAuthData } from '../../utils/auth'
+import { authAPI } from '../../services/api'
 import Header from '../../components/header/Header'
 import { User, Mail, Lock, Phone, Briefcase, MapPin, ArrowLeft } from 'lucide-react'
 
@@ -19,6 +21,7 @@ function SignupProvider() {
   })
   const [errors, setErrors] = useState({})
   const [loading, setLoading] = useState(false)
+  const [apiError, setApiError] = useState('')
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target
@@ -28,6 +31,9 @@ function SignupProvider() {
     }))
     if (errors[name]) {
       setErrors(prev => ({ ...prev, [name]: '' }))
+    }
+    if (apiError) {
+      setApiError('')
     }
   }
 
@@ -55,13 +61,47 @@ function SignupProvider() {
     }
 
     setLoading(true)
+    setApiError('')
 
-    setTimeout(() => {
-      // Store the name for later use
-      localStorage.setItem('signupName', formData.fullName)
+    try {
+      const response = await authAPI.register({
+        fullName: formData.fullName,
+        email: formData.email,
+        password: formData.password,
+        phone: formData.phone,
+        location: formData.location,
+        userType: 'provider',
+        category: formData.category,
+        bio: formData.bio,
+        experience: formData.experience
+      })
+
+      if (response.success) {
+        const { token, user } = response.data
+        
+        // Store auth data
+        setAuthData(
+          token,
+          user.email,
+          user.userType,
+          user.fullName,
+          true, // Remember by default after registration
+          user.id
+        )
+
+        // Navigate to verification page (or directly to provider dashboard)
+        navigate('/verify-email-provider', { 
+          state: { 
+            email: formData.email, 
+            name: formData.fullName 
+          } 
+        })
+      }
+    } catch (error) {
+      setApiError(error.message || 'Registration failed. Please try again.')
+    } finally {
       setLoading(false)
-      navigate('/verify-email-provider', { state: { email: formData.email, name: formData.fullName } })
-    }, 1500)
+    }
   }
 
   return (
@@ -88,6 +128,12 @@ function SignupProvider() {
           <div className="bg-white/10 backdrop-blur-md rounded-2xl shadow-2xl p-8 border border-white/20">
             <h1 className="text-3xl font-bold mb-2 text-center">Become a Service Provider</h1>
             <p className="text-gray-100 text-center mb-8">Create your professional profile and start offering your services</p>
+            
+            {apiError && (
+              <div className="mb-6 p-4 bg-red-500/20 border border-red-300/30 rounded-lg">
+                <p className="text-sm text-red-100">{apiError}</p>
+              </div>
+            )}
             
             <form onSubmit={handleSubmit} className="space-y-8">
               {/* Personal Information Section */}
