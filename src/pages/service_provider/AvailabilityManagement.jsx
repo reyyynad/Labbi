@@ -304,16 +304,41 @@ const AvailabilityManagement = ({ onNavigate }) => {
         if (response.success && response.data) {
           if (response.data.weeklySchedule) {
             setSchedule(response.data.weeklySchedule);
-          }
-          if (response.data.availableDates) {
-            setAvailableDates(new Set(response.data.availableDates));
+            
+            // Auto-generate available dates based on weekly schedule if no specific dates are set
+            if (!response.data.availableDates || response.data.availableDates.length === 0) {
+              const currentDate = new Date();
+              const year = currentDate.getFullYear();
+              const month = currentDate.getMonth();
+              const daysInMonth = new Date(year, month + 1, 0).getDate();
+              const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+              const generatedDates = new Set();
+              
+              for (let day = 1; day <= daysInMonth; day++) {
+                const date = new Date(year, month, day);
+                const dayOfWeek = dayNames[date.getDay()];
+                
+                if (response.data.weeklySchedule[dayOfWeek]?.enabled) {
+                  const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                  generatedDates.add(dateStr);
+                }
+              }
+              
+              setAvailableDates(generatedDates);
+            } else {
+              setAvailableDates(new Set(response.data.availableDates));
+            }
           }
           if (response.data.blockedDates) {
             setBlockedDates(response.data.blockedDates);
           }
         }
       } catch (err) {
-        console.log('Could not fetch availability:', err);
+        console.error('Could not fetch availability:', err);
+        // Don't show error on initial load if it's just that no availability is set yet
+        if (err.message && !err.message.includes('Route not found') && !err.message.includes('Not authorized')) {
+          setError(err.message || 'Failed to load availability');
+        }
       } finally {
         setLoading(false);
       }
@@ -336,6 +361,31 @@ const AvailabilityManagement = ({ onNavigate }) => {
 
   const handleScheduleChange = (newSchedule) => {
     setSchedule(newSchedule);
+    
+    // Auto-generate available dates based on weekly schedule for the current month
+    const newAvailableDates = new Set(availableDates);
+    const currentDate = new Date();
+    const year = selectedMonth.year;
+    const month = selectedMonth.month;
+    
+    // Get all days in the current month
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    
+    // Day name mapping (0 = Sunday, 1 = Monday, etc.)
+    const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+    
+    for (let day = 1; day <= daysInMonth; day++) {
+      const date = new Date(year, month, day);
+      const dayOfWeek = dayNames[date.getDay()];
+      
+      // If this day is enabled in the schedule, mark it as available
+      if (newSchedule[dayOfWeek]?.enabled) {
+        const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+        newAvailableDates.add(dateStr);
+      }
+    }
+    
+    setAvailableDates(newAvailableDates);
   };
 
   const handleAddBlockedDate = (dateInfo) => {
@@ -364,7 +414,15 @@ const AvailabilityManagement = ({ onNavigate }) => {
         setTimeout(() => setSuccess(''), 3000);
       }
     } catch (err) {
-      setError(err.message || 'Failed to save availability');
+      console.error('Save availability error:', err);
+      // Check if it's a network error or route not found
+      if (err.message && err.message.includes('Route not found')) {
+        setError('Unable to connect to server. Please check your connection and try again.');
+      } else if (err.message && err.message.includes('Not authorized')) {
+        setError('You are not authorized to perform this action. Please log in again.');
+      } else {
+        setError(err.message || 'Failed to save availability. Please try again.');
+      }
     } finally {
       setSaving(false);
     }

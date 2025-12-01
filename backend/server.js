@@ -17,12 +17,11 @@ const app = express();
 // Middleware
 app.use(cors({
   origin: ['http://localhost:5173', 'http://localhost:5174', 'http://localhost:3000'],
-  credentials: true
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
 }));
 app.use(express.json());
-
-// Connect Database
-connectDB();
 
 // Mount routes
 app.use('/api/auth', authRoutes);
@@ -66,6 +65,19 @@ app.use((req, res) => {
 });
 
 const PORT = process.env.PORT || 5000;
+
+// Start server immediately
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
 });
+
+// Connect Database in background (non-blocking)
+connectDB()
+  .then(() => {
+    console.log('MongoDB Connected Successfully');
+  })
+  .catch((err) => {
+    console.error('MongoDB Connection Failed:', err.message);
+    console.error('Warning: Database connection failed. Some features may not work.');
+    // Don't exit - allow server to run without DB for development
+  });

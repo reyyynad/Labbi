@@ -51,16 +51,35 @@ export const authAPI = {
 
   // Login user
   login: async (email, password) => {
-    const response = await fetch(`${API_BASE_URL}/auth/login`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password }),
-    });
-    const data = await response.json();
-    if (!response.ok) {
-      throw new Error(data.message || 'Login failed');
+    try {
+      const response = await fetch(`${API_BASE_URL}/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+      });
+      
+      // Check if response is ok before trying to parse JSON
+      if (!response.ok) {
+        let errorMessage = 'Login failed';
+        try {
+          const data = await response.json();
+          errorMessage = data.message || errorMessage;
+        } catch (e) {
+          // If response is not JSON, use status text
+          errorMessage = response.statusText || `Server error (${response.status})`;
+        }
+        throw new Error(errorMessage);
+      }
+      
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      // Handle network errors (fetch failures)
+      if (error.name === 'TypeError' && error.message.includes('fetch')) {
+        throw new Error('Unable to connect to server. Please check if the backend server is running.');
+      }
+      throw error;
     }
-    return data;
   },
 
   // Get current user

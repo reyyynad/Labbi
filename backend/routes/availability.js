@@ -1,13 +1,13 @@
 const express = require('express');
 const Availability = require('../models/Availability');
-const { protect } = require('../middleware/auth');
+const { protect, authorize } = require('../middleware/auth');
 
 const router = express.Router();
 
 // @route   GET /api/availability/my
 // @desc    Get current provider's availability
 // @access  Private (Provider only)
-router.get('/my', protect, async (req, res) => {
+router.get('/my', protect, authorize('provider'), async (req, res) => {
   try {
     let availability = await Availability.findOne({ provider: req.user._id });
     
@@ -36,7 +36,7 @@ router.get('/my', protect, async (req, res) => {
 // @route   PUT /api/availability
 // @desc    Update provider's availability
 // @access  Private (Provider only)
-router.put('/', protect, async (req, res) => {
+router.put('/', protect, authorize('provider'), async (req, res) => {
   try {
     const { weeklySchedule, availableDates, blockedDates } = req.body;
     
@@ -179,7 +179,7 @@ router.get('/slots/:providerId/:date', async (req, res) => {
 // @route   POST /api/availability/book-slot
 // @desc    Book a time slot (called when booking is created)
 // @access  Private
-router.post('/book-slot', protect, async (req, res) => {
+router.post('/book-slot', protect, authorize('customer', 'provider'), async (req, res) => {
   try {
     const { providerId, date, time, bookingId } = req.body;
     
@@ -209,7 +209,7 @@ router.post('/book-slot', protect, async (req, res) => {
 // @route   DELETE /api/availability/free-slot
 // @desc    Free a time slot (called when booking is cancelled)
 // @access  Private
-router.delete('/free-slot', protect, async (req, res) => {
+router.delete('/free-slot', protect, authorize('customer', 'provider'), async (req, res) => {
   try {
     const { providerId, date, time } = req.body;
     
