@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
-import { ArrowLeft, Calendar, Clock, CheckCircle } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { ArrowLeft, Calendar, Clock, CheckCircle, Loader2 } from 'lucide-react';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import Header from '../../components/header/Header';
-import { bookingsAPI } from '../../services/api';
+import { bookingsAPI, availabilityAPI } from '../../services/api';
 
 // ========== BUTTON COMPONENT ==========
 const Button = ({ 
@@ -39,14 +39,15 @@ const Button = ({
 };
 
 // ========== CALENDAR COMPONENT ==========
-const CalendarWidget = ({ selectedDate, setSelectedDate }) => {
-  const [currentMonth, setCurrentMonth] = useState(new Date(2025, 10)); // November 2025
+const CalendarWidget = ({ selectedDate, setSelectedDate, availability, blockedDates = [] }) => {
+  const [currentMonth, setCurrentMonth] = useState(new Date());
   
   const daysInMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 0).getDate();
   const firstDayOfMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 1).getDay();
   
   const monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
                       'July', 'August', 'September', 'October', 'November', 'December'];
+  const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
   
   const days = [];
   for (let i = 0; i < firstDayOfMonth; i++) {
@@ -67,6 +68,27 @@ const CalendarWidget = ({ selectedDate, setSelectedDate }) => {
     const checkDate = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), day);
     const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate());
     return checkDate < todayStart;
+  };
+
+  // Check if date is available based on provider's schedule
+  const isDateAvailable = (day) => {
+    if (!day || isPastDate(day)) return false;
+    
+    const dateStr = `${currentMonth.getFullYear()}-${String(currentMonth.getMonth() + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+    
+    // Check if blocked
+    if (blockedDates.some(b => b.date === dateStr)) return false;
+    
+    // Check weekly schedule
+    const date = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), day);
+    const dayName = dayNames[date.getDay()];
+    
+    if (availability?.weeklySchedule) {
+      return availability.weeklySchedule[dayName]?.enabled || false;
+    }
+    
+    // Default: weekdays available
+    return date.getDay() !== 0 && date.getDay() !== 6;
   };
   
   return (
@@ -103,51 +125,84 @@ const CalendarWidget = ({ selectedDate, setSelectedDate }) => {
       </div>
       
       <div className="grid grid-cols-7 gap-2">
-        {days.map((day, index) => (
-          <button
-            key={index}
-            disabled={!day || isPastDate(day)}
-            onClick={() => day && setSelectedDate({
-              day,
-              month: currentMonth.getMonth(),
-              year: currentMonth.getFullYear(),
-              displayDate: `${monthNames[currentMonth.getMonth()]} ${day}, ${currentMonth.getFullYear()}`
-            })}
-            className={`
-              py-2 text-sm rounded-lg transition-colors
-              ${!day ? 'invisible' : ''}
-              ${day && isPastDate(day) ? 'text-gray-300 cursor-not-allowed' : ''}
-              ${day && !isPastDate(day) && selectedDate?.day === day && 
-                selectedDate?.month === currentMonth.getMonth() && 
-                selectedDate?.year === currentMonth.getFullYear()
-                ? 'bg-[#047857] text-white font-semibold' 
-                : day && !isPastDate(day)
-                  ? 'hover:bg-white text-[#374151]' 
-                  : ''}
-              ${day && isToday(day) ? 'border-2 border-[#047857]' : ''}
-            `}
-          >
-            {day}
-          </button>
-        ))}
+        {days.map((day, index) => {
+          const available = isDateAvailable(day);
+          const past = day && isPastDate(day);
+          const isSelected = day && selectedDate?.day === day && 
+                            selectedDate?.month === currentMonth.getMonth() && 
+                            selectedDate?.year === currentMonth.getFullYear();
+          
+          return (
+            <button
+              key={index}
+              disabled={!day || past || !available}
+              onClick={() => day && available && setSelectedDate({
+                day,
+                month: currentMonth.getMonth(),
+                year: currentMonth.getFullYear(),
+                displayDate: `${monthNames[currentMonth.getMonth()]} ${day}, ${currentMonth.getFullYear()}`,
+                dateStr: `${currentMonth.getFullYear()}-${String(currentMonth.getMonth() + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`
+              })}
+              className={`
+                py-2 text-sm rounded-lg transition-colors
+                ${!day ? 'invisible' : ''}
+                ${past ? 'text-gray-300 cursor-not-allowed' : ''}
+                ${!past && !available ? 'text-gray-300 bg-gray-100 cursor-not-allowed' : ''}
+                ${isSelected ? 'bg-[#047857] text-white font-semibold' : ''}
+                ${day && !past && available && !isSelected ? 'hover:bg-white text-[#374151] bg-green-50' : ''}
+                ${day && isToday(day) && !isSelected ? 'border-2 border-[#047857]' : ''}
+              `}
+            >
+              {day}
+            </button>
+          );
+        })}
+      </div>
+      
+      <div className="mt-4 pt-4 border-t border-green-200">
+        <div className="flex items-center gap-4 text-xs text-gray-600">
+          <div className="flex items-center gap-1">
+            <div className="w-3 h-3 bg-green-50 border border-green-200 rounded"></div>
+            <span>Available</span>
+          </div>
+          <div className="flex items-center gap-1">
+            <div className="w-3 h-3 bg-gray-100 rounded"></div>
+            <span>Unavailable</span>
+          </div>
+        </div>
       </div>
     </div>
   );
 };
 
 // ========== TIME SLOTS COMPONENT ==========
-const TimeSlots = ({ selectedTime, setSelectedTime }) => {
-  const timeSlots = [
-    { time: '9:00 AM', available: true },
-    { time: '10:00 AM', available: true },
-    { time: '11:00 AM', available: false },
-    { time: '12:00 PM', available: true },
-    { time: '1:00 PM', available: true },
-    { time: '2:00 PM', available: true },
-    { time: '3:00 PM', available: false },
-    { time: '4:00 PM', available: true },
-    { time: '5:00 PM', available: true }
-  ];
+const TimeSlots = ({ selectedTime, setSelectedTime, timeSlots, loading }) => {
+  if (loading) {
+    return (
+      <div className="bg-[#f0fdf4] border border-[#047857] rounded-lg p-6">
+        <div className="flex items-center gap-2 mb-4">
+          <Clock className="text-[#047857]" size={20} />
+          <h3 className="text-lg font-semibold text-[#374151]">Available Time Slots</h3>
+        </div>
+        <div className="flex items-center justify-center py-8">
+          <Loader2 className="animate-spin text-[#047857]" size={24} />
+          <span className="ml-2 text-gray-600">Loading time slots...</span>
+        </div>
+      </div>
+    );
+  }
+
+  if (!timeSlots || timeSlots.length === 0) {
+    return (
+      <div className="bg-[#f0fdf4] border border-[#047857] rounded-lg p-6">
+        <div className="flex items-center gap-2 mb-4">
+          <Clock className="text-[#047857]" size={20} />
+          <h3 className="text-lg font-semibold text-[#374151]">Available Time Slots</h3>
+        </div>
+        <p className="text-center text-gray-500 py-4">No available time slots for this date</p>
+      </div>
+    );
+  }
   
   return (
     <div className="bg-[#f0fdf4] border border-[#047857] rounded-lg p-6">
@@ -173,7 +228,7 @@ const TimeSlots = ({ selectedTime, setSelectedTime }) => {
           >
             {slot.time}
             {!slot.available && (
-              <div className="text-xs mt-1">Unavailable</div>
+              <div className="text-xs mt-1">Booked</div>
             )}
           </button>
         ))}
@@ -199,6 +254,12 @@ const CustomerDateTimeSelection = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   
+  // Availability state
+  const [availability, setAvailability] = useState(null);
+  const [timeSlots, setTimeSlots] = useState([]);
+  const [loadingSlots, setLoadingSlots] = useState(false);
+  const [loadingAvailability, setLoadingAvailability] = useState(true);
+  
   // Service data from state or defaults
   const service = {
     title: location.state?.serviceName || 'Professional House Cleaning',
@@ -209,6 +270,66 @@ const CustomerDateTimeSelection = () => {
     serviceCost: location.state?.serviceCost || 80,
     serviceImage: location.state?.serviceImage || ''
   };
+
+  // Fetch provider availability on mount
+  useEffect(() => {
+    const fetchAvailability = async () => {
+      if (!service.providerId) {
+        setLoadingAvailability(false);
+        return;
+      }
+      
+      try {
+        const response = await availabilityAPI.getProviderAvailability(service.providerId);
+        if (response.success) {
+          setAvailability(response.data);
+        }
+      } catch (err) {
+        console.log('Could not fetch availability:', err);
+      } finally {
+        setLoadingAvailability(false);
+      }
+    };
+    
+    fetchAvailability();
+  }, [service.providerId]);
+
+  // Fetch time slots when date is selected
+  useEffect(() => {
+    const fetchTimeSlots = async () => {
+      if (!selectedDate?.dateStr || !service.providerId) {
+        setTimeSlots([]);
+        return;
+      }
+      
+      setLoadingSlots(true);
+      setSelectedTime(null); // Reset selected time
+      
+      try {
+        const response = await availabilityAPI.getTimeSlots(service.providerId, selectedDate.dateStr);
+        if (response.success) {
+          setTimeSlots(response.data);
+        }
+      } catch (err) {
+        console.log('Could not fetch time slots:', err);
+        // Fallback to default slots
+        setTimeSlots([
+          { time: '9:00 AM', available: true },
+          { time: '10:00 AM', available: true },
+          { time: '11:00 AM', available: true },
+          { time: '12:00 PM', available: true },
+          { time: '1:00 PM', available: true },
+          { time: '2:00 PM', available: true },
+          { time: '3:00 PM', available: true },
+          { time: '4:00 PM', available: true },
+        ]);
+      } finally {
+        setLoadingSlots(false);
+      }
+    };
+    
+    fetchTimeSlots();
+  }, [selectedDate, service.providerId]);
 
   const handleContinue = async () => {
     if (!selectedDate || !selectedTime) return;
@@ -313,13 +434,30 @@ const CustomerDateTimeSelection = () => {
         
         {/* Calendar */}
         <div className="mb-6">
-          <CalendarWidget selectedDate={selectedDate} setSelectedDate={setSelectedDate} />
+          {loadingAvailability ? (
+            <div className="bg-[#f0fdf4] border border-[#047857] rounded-lg p-6 flex items-center justify-center">
+              <Loader2 className="animate-spin text-[#047857]" size={24} />
+              <span className="ml-2 text-gray-600">Loading availability...</span>
+            </div>
+          ) : (
+            <CalendarWidget 
+              selectedDate={selectedDate} 
+              setSelectedDate={setSelectedDate}
+              availability={availability}
+              blockedDates={availability?.blockedDates || []}
+            />
+          )}
         </div>
         
         {/* Time Slots */}
         {selectedDate && (
           <div className="mb-6">
-            <TimeSlots selectedTime={selectedTime} setSelectedTime={setSelectedTime} />
+            <TimeSlots 
+              selectedTime={selectedTime} 
+              setSelectedTime={setSelectedTime}
+              timeSlots={timeSlots}
+              loading={loadingSlots}
+            />
           </div>
         )}
         

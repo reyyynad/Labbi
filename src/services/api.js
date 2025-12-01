@@ -409,6 +409,59 @@ export const adminAPI = {
   },
 };
 
+// ============ AVAILABILITY API ============
+
+export const availabilityAPI = {
+  // Get provider's own availability
+  getMyAvailability: async () => {
+    return authFetch('/availability/my');
+  },
+
+  // Update provider's availability
+  updateAvailability: async (data) => {
+    return authFetch('/availability', {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  },
+
+  // Get a provider's availability (public - for booking)
+  getProviderAvailability: async (providerId) => {
+    const response = await fetch(`${API_BASE_URL}/availability/provider/${providerId}`);
+    const data = await response.json();
+    if (!response.ok) {
+      throw new Error(data.message || 'Failed to get availability');
+    }
+    return data;
+  },
+
+  // Get available time slots for a specific date
+  getTimeSlots: async (providerId, date) => {
+    const response = await fetch(`${API_BASE_URL}/availability/slots/${providerId}/${date}`);
+    const data = await response.json();
+    if (!response.ok) {
+      throw new Error(data.message || 'Failed to get time slots');
+    }
+    return data;
+  },
+
+  // Book a slot (called when creating a booking)
+  bookSlot: async (providerId, date, time, bookingId) => {
+    return authFetch('/availability/book-slot', {
+      method: 'POST',
+      body: JSON.stringify({ providerId, date, time, bookingId }),
+    });
+  },
+
+  // Free a slot (called when cancelling a booking)
+  freeSlot: async (providerId, date, time) => {
+    return authFetch('/availability/free-slot', {
+      method: 'DELETE',
+      body: JSON.stringify({ providerId, date, time }),
+    });
+  },
+};
+
 export default {
   auth: authAPI,
   user: userAPI,
@@ -417,5 +470,6 @@ export default {
   services: servicesAPI,
   provider: providerAPI,
   admin: adminAPI,
+  availability: availabilityAPI,
 };
 

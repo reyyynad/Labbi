@@ -3,7 +3,7 @@ import { ArrowLeft, Star, MapPin, Mail, Phone, Loader2, AlertCircle } from 'luci
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import Header from '../../components/header/Header';
 import { getAuthToken } from '../../utils/auth';
-import { servicesAPI } from '../../services/api';
+import { servicesAPI, reviewsAPI } from '../../services/api';
 
 
 // ========== BUTTON COMPONENT ==========
@@ -222,9 +222,13 @@ const ReviewsSection = ({ reviews, totalReviews }) => {
     <div className="bg-white border border-gray-300 rounded p-6">
       <h2 className="text-lg font-semibold mb-4">Reviews ({totalReviews})</h2>
       <div>
-        {reviews.map((review, index) => (
-          <ReviewItem key={index} review={review} />
-        ))}
+        {reviews.length > 0 ? (
+          reviews.map((review, index) => (
+            <ReviewItem key={index} review={review} />
+          ))
+        ) : (
+          <p className="text-gray-500 text-sm text-center py-4">No reviews yet</p>
+        )}
       </div>
     </div>
   );
@@ -237,6 +241,7 @@ const CustomerServiceDetails = () => {
   const location = useLocation();
   const isAuthenticated = !!getAuthToken();
   const [serviceData, setServiceData] = useState(null);
+  const [reviews, setReviews] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   
@@ -256,6 +261,28 @@ const CustomerServiceDetails = () => {
       
       if (response.success) {
         setServiceData(response.data);
+        
+        // Fetch reviews for this provider
+        if (response.data.provider?._id) {
+          try {
+            const reviewsResponse = await reviewsAPI.getProviderReviews(response.data.provider._id);
+            if (reviewsResponse.success && reviewsResponse.data) {
+              setReviews(reviewsResponse.data.map(r => ({
+                author: r.customer?.fullName || 'Customer',
+                rating: r.rating,
+                comment: r.comment,
+                date: new Date(r.createdAt).toLocaleDateString('en-US', { 
+                  year: 'numeric', 
+                  month: 'short', 
+                  day: 'numeric' 
+                })
+              })));
+            }
+          } catch (reviewErr) {
+            console.log('Could not fetch reviews:', reviewErr);
+            // Don't fail the whole page if reviews fail
+          }
+        }
       } else {
         setError('Service not found');
       }
@@ -381,15 +408,6 @@ const CustomerServiceDetails = () => {
     `Average rating of ${service.rating} from ${service.reviews}+ reviews`,
     `Available in ${service.location}`,
     'Flexible scheduling and quick response'
-  ];
-
-  const reviews = [
-    {
-      author: 'Customer',
-      rating: 5,
-      comment: 'Excellent service! Very professional.',
-      date: 'Recently'
-    }
   ];
 
   return (

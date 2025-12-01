@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
-import { ChevronLeft, ChevronRight, X, Check } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { ChevronLeft, ChevronRight, X, Check, Loader2 } from 'lucide-react';
 import ProviderHeader from '../../components/header/ProviderHeader';
+import { availabilityAPI } from '../../services/api';
 
 // ========== CALENDAR COMPONENT ==========
 const Calendar = ({ selectedMonth, onMonthChange, availableDates, onDateToggle }) => {
@@ -271,16 +272,17 @@ const BlockDates = ({ blockedDates, onAddDate, onRemoveDate }) => {
 
 // ========== MAIN AVAILABILITY PAGE ==========
 const AvailabilityManagement = ({ onNavigate }) => {
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
+  
   const [selectedMonth, setSelectedMonth] = useState({ 
-    year: 2025, 
-    month: 10 // November (0-indexed)
+    year: new Date().getFullYear(), 
+    month: new Date().getMonth()
   });
   
-  const [availableDates, setAvailableDates] = useState(new Set([
-    '2025-11-04', '2025-11-05', '2025-11-06', '2025-11-07',
-    '2025-11-11', '2025-11-12', '2025-11-13', '2025-11-14',
-    '2025-11-18', '2025-11-19', '2025-11-20', '2025-11-21'
-  ]));
+  const [availableDates, setAvailableDates] = useState(new Set());
 
   const [schedule, setSchedule] = useState({
     Monday: { start: '09:00', end: '17:00', enabled: true },
@@ -292,9 +294,33 @@ const AvailabilityManagement = ({ onNavigate }) => {
     Sunday: { start: '09:00', end: '17:00', enabled: false }
   });
 
-  const [blockedDates, setBlockedDates] = useState([
-    { date: '2025-10-25', reason: 'Holiday' }
-  ]);
+  const [blockedDates, setBlockedDates] = useState([]);
+
+  // Fetch availability on mount
+  useEffect(() => {
+    const fetchAvailability = async () => {
+      try {
+        const response = await availabilityAPI.getMyAvailability();
+        if (response.success && response.data) {
+          if (response.data.weeklySchedule) {
+            setSchedule(response.data.weeklySchedule);
+          }
+          if (response.data.availableDates) {
+            setAvailableDates(new Set(response.data.availableDates));
+          }
+          if (response.data.blockedDates) {
+            setBlockedDates(response.data.blockedDates);
+          }
+        }
+      } catch (err) {
+        console.log('Could not fetch availability:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchAvailability();
+  }, []);
 
   // ========== HANDLERS ==========
   
@@ -306,42 +332,55 @@ const AvailabilityManagement = ({ onNavigate }) => {
       newDates.add(dateStr);
     }
     setAvailableDates(newDates);
-    
-    // TODO: API call to update availability
-    // await updateAvailability(dateStr, newDates.has(dateStr));
   };
 
   const handleScheduleChange = (newSchedule) => {
     setSchedule(newSchedule);
-    
-    // TODO: API call to update schedule
-    // await updateWeeklySchedule(newSchedule);
   };
 
   const handleAddBlockedDate = (dateInfo) => {
     setBlockedDates([...blockedDates, dateInfo]);
-    
-    // TODO: API call to add blocked date
-    // await addBlockedDate(dateInfo);
   };
 
   const handleRemoveBlockedDate = (index) => {
     const newBlockedDates = blockedDates.filter((_, i) => i !== index);
     setBlockedDates(newBlockedDates);
-    
-    // TODO: API call to remove blocked date
-    // await removeBlockedDate(blockedDates[index].date);
   };
 
   const handleSaveAvailability = async () => {
-    // TODO: API call to save all availability settings
-    console.log('Saving availability:', {
-      availableDates: Array.from(availableDates),
-      schedule,
-      blockedDates
-    });
-    alert('Availability saved successfully!');
+    setSaving(true);
+    setError('');
+    setSuccess('');
+    
+    try {
+      const response = await availabilityAPI.updateAvailability({
+        weeklySchedule: schedule,
+        availableDates: Array.from(availableDates),
+        blockedDates: blockedDates
+      });
+      
+      if (response.success) {
+        setSuccess('Availability saved successfully!');
+        setTimeout(() => setSuccess(''), 3000);
+      }
+    } catch (err) {
+      setError(err.message || 'Failed to save availability');
+    } finally {
+      setSaving(false);
+    }
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-white">
+        <ProviderHeader />
+        <div className="flex items-center justify-center py-32">
+          <Loader2 className="animate-spin text-[#047857]" size={32} />
+          <span className="ml-2 text-gray-600">Loading availability...</span>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-white">
@@ -379,16 +418,35 @@ const AvailabilityManagement = ({ onNavigate }) => {
               onRemoveDate={handleRemoveBlockedDate}
             />
 
+            {/* Status Messages */}
+            {error && (
+              <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
+                <p className="text-sm text-red-600">{error}</p>
+              </div>
+            )}
+            
+            {success && (
+              <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
+                <p className="text-sm text-green-600">{success}</p>
+              </div>
+            )}
+
             {/* Save Button */}
             <button 
               onClick={handleSaveAvailability}
-              className="w-full py-3 text-white rounded-lg font-medium hover:opacity-90 transition-colors"
+              disabled={saving}
+              className="w-full py-3 text-white rounded-lg font-medium hover:opacity-90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               style={{ backgroundColor: '#1e3a8a' }}
             >
-              Save Availability
+              {saving ? (
+                <>
+                  <Loader2 className="animate-spin" size={18} />
+                  Saving...
+                </>
+              ) : (
+                'Save Availability'
+              )}
             </button>
-
-            {/* Info Box */}
 
           </div>
         </div>
