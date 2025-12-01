@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Calendar, Clock, MapPin } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import Header from '../../components/header/Header';
-import { bookingsAPI } from '../../services/api';
+import { bookingsAPI, availabilityAPI } from '../../services/api';
 
 // ========== BUTTON COMPONENT ==========
 const Button = ({ 
@@ -52,25 +52,31 @@ const CustomerBookingConfirmation = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  // Get booking data from location state or use defaults
+  // Get booking data from location state - redirect if missing
   const bookingState = location.state || {};
   
+  // Redirect to home if no booking data passed
+  if (!bookingState.serviceId || !bookingState.serviceName) {
+    navigate('/');
+    return null;
+  }
+  
   const bookingData = {
-    serviceId: bookingState.serviceId || null,
-    service: bookingState.serviceName || 'Professional House Cleaning',
+    serviceId: bookingState.serviceId,
+    service: bookingState.serviceName,
     provider: bookingState.providerName || 'Service Provider',
-    providerId: bookingState.providerId || null,
-    date: bookingState.date || new Date().toISOString(),
-    displayDate: bookingState.displayDate || 'November 15, 2024',
-    time: bookingState.time || '10:00 AM - 12:00 PM',
+    providerId: bookingState.providerId,
+    date: bookingState.date,
+    displayDate: bookingState.displayDate,
+    time: bookingState.time,
     location: bookingState.location || 'To be confirmed',
-    duration: bookingState.duration || '2 hours',
-    serviceImage: bookingState.serviceImage || 'https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=200',
+    duration: bookingState.duration || '1 hour',
+    serviceImage: bookingState.serviceImage || '',
     pricing: {
-      serviceCost: bookingState.serviceCost || 80.00,
-      platformFee: bookingState.platformFee || 8.00,
-      tax: bookingState.tax || 7.20,
-      total: bookingState.total || 95.20
+      serviceCost: bookingState.serviceCost || 0,
+      platformFee: bookingState.platformFee || 0,
+      tax: bookingState.tax || 0,
+      total: bookingState.total || 0
     }
   };
 
@@ -100,6 +106,19 @@ const CustomerBookingConfirmation = () => {
       });
 
       if (response.success) {
+        // Book the time slot to prevent double booking
+        try {
+          await availabilityAPI.bookSlot(
+            bookingData.providerId,
+            bookingState.dateStr || bookingData.displayDate, // Use YYYY-MM-DD format
+            bookingData.time,
+            response.data.id
+          );
+        } catch (slotErr) {
+          console.log('Could not mark slot as booked:', slotErr);
+          // Continue anyway - booking was created
+        }
+        
         // Show success and navigate to bookings
         navigate('/customer/bookings', {
           state: {
@@ -258,27 +277,6 @@ const CustomerBookingConfirmation = () => {
                 Go Back
               </Button>
 
-              <div className="mt-6 pt-6 border-t border-gray-200">
-                <h4 className="text-xs font-semibold text-[#374151] mb-2">WHAT HAPPENS NEXT:</h4>
-                <ul className="text-xs text-gray-600 space-y-2">
-                  <li className="flex items-start gap-2">
-                    <span className="text-[#047857] mt-0.5">✓</span>
-                    <span>Booking request sent to provider</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <span className="text-[#047857] mt-0.5">✓</span>
-                    <span>Provider confirms within 24 hours</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <span className="text-[#047857] mt-0.5">✓</span>
-                    <span>Payment processed after confirmation</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <span className="text-[#047857] mt-0.5">✓</span>
-                    <span>Email confirmation sent</span>
-                  </li>
-                </ul>
-              </div>
             </div>
           </div>
         </div>

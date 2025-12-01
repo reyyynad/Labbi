@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { CheckCircle, Edit2, Phone, Mail, MapPin, Briefcase, X, TrendingUp, Calendar, DollarSign, Download, Loader2 } from 'lucide-react';
+import { CheckCircle, Edit2, Phone, Mail, MapPin, Briefcase, X, TrendingUp, Calendar, DollarSign, Download, Loader2, Camera } from 'lucide-react';
 import ProviderHeader from '../../components/header/ProviderHeader';
 import { providerAPI } from '../../services/api';
 

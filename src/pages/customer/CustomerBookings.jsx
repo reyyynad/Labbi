@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Calendar, Clock, DollarSign, MapPin, User, Star, X, Loader2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import Header from '../../components/header/Header';
-import { bookingsAPI, reviewsAPI } from '../../services/api';
+import { bookingsAPI, reviewsAPI, availabilityAPI } from '../../services/api';
 
 // ========== BUTTON COMPONENT ==========
 const Button = ({ 
@@ -322,8 +322,21 @@ const CustomerBookings = () => {
       return;
     }
 
+    // Find the booking to get provider and slot info
+    const booking = bookingsData.find(b => b.id === bookingId);
+
     try {
       await bookingsAPI.cancel(bookingId);
+      
+      // Free the time slot so others can book
+      if (booking?.providerId && booking?.dateStr && booking?.time) {
+        try {
+          await availabilityAPI.freeSlot(booking.providerId, booking.dateStr, booking.time);
+        } catch (freeErr) {
+          console.log('Could not free slot:', freeErr);
+        }
+      }
+      
       // Refresh bookings
       fetchBookings();
     } catch (error) {
@@ -336,7 +349,7 @@ const CustomerBookings = () => {
       {
         label: 'View Details',
         variant: 'primary',
-        onClick: () => navigate(`/services/${booking.id}`, { state: { fromBooking: true } })
+        onClick: () => navigate(`/services/${booking.serviceId || booking.id}`, { state: { fromBooking: true } })
       }
     ];
 
@@ -386,7 +399,14 @@ const CustomerBookings = () => {
                 isReschedule: true, 
                 bookingId: booking.id,
                 currentDate: booking.date,
-                currentTime: booking.time
+                currentDateStr: booking.dateStr,
+                currentTime: booking.time,
+                providerId: booking.providerId,
+                serviceName: booking.service,
+                providerName: booking.provider,
+                location: booking.location,
+                serviceCost: booking.price,
+                serviceId: booking.serviceId
               } 
             })
           },
