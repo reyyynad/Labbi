@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, Edit, Eye, Trash2, X, AlertCircle, Upload, Star, MapPin, Mail, Phone, Loader2 } from 'lucide-react';
 import ProviderHeader from '../../components/header/ProviderHeader';
-import { servicesAPI } from '../../services/api';
+import { servicesAPI, reviewsAPI, userAPI } from '../../services/api';
 
 // ========== EDIT SERVICE MODAL COMPONENT ==========
 const EditServiceModal = ({ isOpen, onClose, service, onSave }) => {
@@ -289,7 +289,7 @@ const EditServiceModal = ({ isOpen, onClose, service, onSave }) => {
           {/* Price */}
           <div className="mb-4">
             <label className="block text-sm font-medium text-gray-900 mb-2">
-              Price (USD)
+              Price (SR)
             </label>
             <input
               type="number"
@@ -401,49 +401,94 @@ const EditServiceModal = ({ isOpen, onClose, service, onSave }) => {
 
 // ========== SERVICE PREVIEW MODAL COMPONENT ==========
 const ServicePreviewModal = ({ isOpen, onClose, service }) => {
+  const [reviews, setReviews] = useState([]);
+  const [loadingReviews, setLoadingReviews] = useState(false);
+  const [providerData, setProviderData] = useState(null);
+
+  // Fetch reviews and provider data when modal opens
+  useEffect(() => {
+    if (isOpen && service?.id) {
+      fetchReviews();
+      fetchProviderData();
+    }
+  }, [isOpen, service?.id]);
+
+  const fetchReviews = async () => {
+    setLoadingReviews(true);
+    try {
+      const response = await reviewsAPI.getServiceReviews(service.id);
+      if (response.success) {
+        setReviews(response.data.map(r => ({
+          author: r.customerName || 'Customer',
+          rating: r.rating,
+          comment: r.comment,
+          date: formatDate(r.createdAt)
+        })));
+      }
+    } catch (err) {
+      console.log('Could not fetch reviews:', err);
+      setReviews([]);
+    } finally {
+      setLoadingReviews(false);
+    }
+  };
+
+  const fetchProviderData = async () => {
+    try {
+      const response = await userAPI.getProfile();
+      if (response.success) {
+        setProviderData(response.data.profile);
+      }
+    } catch (err) {
+      console.log('Could not fetch provider data:', err);
+    }
+  };
+
+  const formatDate = (dateString) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffTime = Math.abs(now - date);
+    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+    
+    if (diffDays === 0) return 'Today';
+    if (diffDays === 1) return 'Yesterday';
+    if (diffDays < 7) return `${diffDays} days ago`;
+    if (diffDays < 30) return `${Math.floor(diffDays / 7)} week${Math.floor(diffDays / 7) > 1 ? 's' : ''} ago`;
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  };
+
   if (!isOpen || !service) return null;
 
-  // Mock data for preview (how customers see it)
+  // Calculate average rating from actual reviews
+  const avgRating = reviews.length > 0 
+    ? (reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length).toFixed(1)
+    : 0;
+
   const servicePreview = {
     name: service.title,
     status: service.status === 'Active' ? 'Available' : 'Unavailable',
-    rating: 4.8, // Mock rating
-    reviews: service.bookings || 0,
-    location: 'Riyadh, Saudi Arabia',
+    rating: parseFloat(avgRating),
+    reviewsCount: reviews.length,
+    location: providerData?.location || 'Saudi Arabia',
     price: service.price,
     images: service.image ? [service.image] : []
   };
 
   const provider = {
-    name: 'Your Name', // Would come from provider profile
+    name: providerData?.fullName || 'Service Provider',
     title: `${service.category} Specialist`,
-    rating: 4.8,
-    reviews: service.bookings || 0,
+    rating: parseFloat(avgRating),
+    reviews: reviews.length,
     bookings: service.bookings || 0,
-    email: 'provider@example.com',
-    phone: '+966 50 123 4567'
+    email: providerData?.email || 'provider@labbi.com',
+    phone: providerData?.phone || '+966 50 000 0000'
   };
 
   const features = [
     `${service.category} service expertise`,
-    `Average rating of ${servicePreview.rating} from ${servicePreview.reviews}+ reviews`,
+    reviews.length > 0 ? `Average rating of ${avgRating} from ${reviews.length} review${reviews.length !== 1 ? 's' : ''}` : 'New service - be the first to review!',
     `Available in ${servicePreview.location}`,
     'Flexible scheduling and quick response'
-  ];
-
-  const reviews = [
-    {
-      author: 'Shatha Alharbi',
-      rating: 5,
-      comment: 'Excellent service! Very professional and delivered exactly what I needed.',
-      date: '2 days ago'
-    },
-    {
-      author: 'Arwa Aldawoud',
-      rating: 4,
-      comment: 'Great quality and friendly communication. Looking forward to booking again.',
-      date: '1 week ago'
-    }
   ];
 
   return (
@@ -485,8 +530,8 @@ const ServicePreviewModal = ({ isOpen, onClose, service }) => {
                 </div>
                 <div className="flex items-center gap-4 text-sm text-gray-600">
                   <div className="flex items-center gap-1">
-                    <Star size={14} className="fill-yellow-400 text-yellow-400" />
-                    <span>{servicePreview.rating} ({servicePreview.reviews} reviews)</span>
+                    <Star size={14} className={servicePreview.rating > 0 ? "fill-yellow-400 text-yellow-400" : "text-gray-300"} />
+                    <span>{servicePreview.rating > 0 ? servicePreview.rating : 'No rating'} ({servicePreview.reviewsCount} reviews)</span>
                   </div>
                   <div className="flex items-center gap-1">
                     <MapPin size={14} />
@@ -568,33 +613,46 @@ const ServicePreviewModal = ({ isOpen, onClose, service }) => {
 
               {/* Reviews Section */}
               <div className="bg-white border border-gray-300 rounded p-6">
-                <h2 className="text-lg font-semibold mb-4">Reviews ({servicePreview.reviews})</h2>
+                <h2 className="text-lg font-semibold mb-4">Reviews ({reviews.length})</h2>
                 <div>
-                  {reviews.map((review, index) => (
-                    <div key={index} className="flex gap-3 pb-4 mb-4 border-b border-gray-200 last:border-0">
-                      <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center flex-shrink-0">
-                        <span className="text-xs font-semibold">
-                          {review.author.split(' ').map(n => n[0]).join('').toUpperCase()}
-                        </span>
-                      </div>
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-2">
-                          <span className="font-semibold text-sm">{review.author}</span>
-                          <div className="flex items-center">
-                            {[1, 2, 3, 4, 5].map((star) => (
-                              <Star
-                                key={star}
-                                size={12}
-                                className={star <= review.rating ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300'}
-                              />
-                            ))}
-                          </div>
-                        </div>
-                        <p className="text-sm text-gray-700 mb-1">{review.comment}</p>
-                        <span className="text-xs text-gray-500">{review.date}</span>
-                      </div>
+                  {loadingReviews ? (
+                    <div className="flex items-center justify-center py-8">
+                      <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
+                      <span className="ml-2 text-gray-600">Loading reviews...</span>
                     </div>
-                  ))}
+                  ) : reviews.length > 0 ? (
+                    reviews.map((review, index) => (
+                      <div key={index} className="flex gap-3 pb-4 mb-4 border-b border-gray-200 last:border-0 last:mb-0 last:pb-0">
+                        <div className="w-10 h-10 bg-[#047857] rounded-full flex items-center justify-center flex-shrink-0">
+                          <span className="text-xs font-semibold text-white">
+                            {review.author.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)}
+                          </span>
+                        </div>
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-2">
+                            <span className="font-semibold text-sm">{review.author}</span>
+                            <div className="flex items-center">
+                              {[1, 2, 3, 4, 5].map((star) => (
+                                <Star
+                                  key={star}
+                                  size={12}
+                                  className={star <= review.rating ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300'}
+                                />
+                              ))}
+                            </div>
+                          </div>
+                          <p className="text-sm text-gray-700 mb-1">{review.comment}</p>
+                          <span className="text-xs text-gray-500">{review.date}</span>
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="text-center py-8">
+                      <Star className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+                      <p className="text-gray-500 text-sm">No reviews yet</p>
+                      <p className="text-gray-400 text-xs mt-1">Reviews will appear here when customers rate this service</p>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -605,7 +663,7 @@ const ServicePreviewModal = ({ isOpen, onClose, service }) => {
                 <div className="text-center mb-6 pb-6 border-b border-gray-200">
                   <p className="text-sm text-gray-600 mb-1">Starting at</p>
                   <p className="text-3xl font-bold text-[#047857]">
-                    ${servicePreview.price}
+                    SR{servicePreview.price}
                     <span className="text-base font-normal">/{service.priceType}</span>
                   </p>
                 </div>
@@ -613,15 +671,15 @@ const ServicePreviewModal = ({ isOpen, onClose, service }) => {
                 <div className="space-y-2 mb-6 pb-6 border-b border-gray-200">
                   <div className="flex justify-between text-sm">
                     <span className="text-gray-600">Subtotal:</span>
-                    <span className="font-medium">${servicePreview.price} USD</span>
+                    <span className="font-medium">SR{servicePreview.price}</span>
                   </div>
                   <div className="flex justify-between text-sm">
                     <span className="text-gray-600">Service Fee:</span>
-                    <span className="font-medium">$5 USD</span>
+                    <span className="font-medium">SR5.00</span>
                   </div>
                   <div className="flex justify-between text-base font-semibold pt-2">
                     <span>Total:</span>
-                    <span>${servicePreview.price + 5} USD</span>
+                    <span>SR{(servicePreview.price + 5).toFixed(2)}</span>
                   </div>
                 </div>
 
@@ -631,12 +689,6 @@ const ServicePreviewModal = ({ isOpen, onClose, service }) => {
                     className="w-full px-5 py-2.5 bg-gray-300 text-gray-500 rounded font-medium cursor-not-allowed"
                   >
                     Book Now
-                  </button>
-                  <button 
-                    disabled
-                    className="w-full px-5 py-2.5 border-2 border-gray-300 text-gray-500 rounded font-medium cursor-not-allowed"
-                  >
-                    Save for Later
                   </button>
                 </div>
 
@@ -802,7 +854,7 @@ const MyServices = ({ onNavigate }) => {
               {service.title}
             </h3>
             <div className="text-right">
-              <p className="text-lg font-bold text-gray-900">${service.price}/{service.priceType}</p>
+              <p className="text-lg font-bold text-gray-900">SR{service.price}/{service.priceType}</p>
             </div>
           </div>
 

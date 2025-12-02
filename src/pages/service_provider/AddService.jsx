@@ -331,7 +331,7 @@ const AddService = ({ onNavigate }) => {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-900 mb-2">
-                    Price (USD)
+                    Price (SR)
                   </label>
                   <input
                     type="number"

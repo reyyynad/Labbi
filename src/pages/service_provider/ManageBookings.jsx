@@ -1,29 +1,130 @@
 import React, { useState, useEffect } from 'react';
-import { Calendar, Clock, DollarSign, MapPin, User, X, Mail, Phone, CheckCircle, Loader2 } from 'lucide-react';
+import { Calendar, Clock, DollarSign, MapPin, User, X, Mail, Phone, CheckCircle, Loader2, MessageCircle } from 'lucide-react';
 import ProviderHeader from '../../components/header/ProviderHeader';
 import { providerAPI } from '../../services/api';
+
+// ========== CONTACT CUSTOMER MODAL ==========
+const ContactCustomerModal = ({ isOpen, onClose, booking }) => {
+  if (!isOpen || !booking) return null;
+
+  const customerPhone = booking.customerPhone || '+966501234567';
+  const cleanPhone = customerPhone.replace(/[\s\-\(\)]/g, '');
+  
+  const handleCall = () => {
+    window.location.href = `tel:${cleanPhone}`;
+  };
+
+  const handleWhatsApp = () => {
+    const message = encodeURIComponent(`Hi ${booking.customer}, I'm contacting you regarding your booking for "${booking.service}" on ${booking.date} at ${booking.time}.`);
+    window.open(`https://wa.me/${cleanPhone.replace('+', '')}?text=${message}`, '_blank');
+  };
+
+  const handleEmail = () => {
+    const email = booking.customerEmail || `${booking.customer.toLowerCase().replace(' ', '.')}@example.com`;
+    const subject = encodeURIComponent(`Regarding your booking: ${booking.service}`);
+    const body = encodeURIComponent(`Hi ${booking.customer},\n\nI'm contacting you regarding your booking for "${booking.service}" on ${booking.date} at ${booking.time}.\n\nBest regards`);
+    window.location.href = `mailto:${email}?subject=${subject}&body=${body}`;
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={onClose}>
+      <div 
+        className="bg-white rounded-lg shadow-xl max-w-md w-full"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-center justify-between p-6 border-b border-gray-200">
+          <h2 className="text-xl font-bold text-gray-900">Contact Customer</h2>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
+            <X size={24} />
+          </button>
+        </div>
+
+        <div className="p-6">
+          {/* Customer Info */}
+          <div className="flex items-center gap-4 mb-6 p-4 bg-gray-50 rounded-lg">
+            <div className="w-14 h-14 bg-[#047857] rounded-full flex items-center justify-center flex-shrink-0">
+              <span className="text-lg font-semibold text-white">
+                {booking.customer.split(' ').map(n => n[0]).join('').toUpperCase()}
+              </span>
+            </div>
+            <div>
+              <p className="font-semibold text-gray-900 text-lg">{booking.customer}</p>
+              <p className="text-sm text-gray-600">{booking.service}</p>
+              <p className="text-xs text-gray-500">{booking.date} at {booking.time}</p>
+            </div>
+          </div>
+
+          {/* Contact Options */}
+          <div className="space-y-3">
+            <button
+              onClick={handleCall}
+              className="w-full flex items-center gap-4 p-4 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors border border-blue-200"
+            >
+              <div className="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center">
+                <Phone className="w-6 h-6 text-white" />
+              </div>
+              <div className="text-left">
+                <p className="font-semibold text-gray-900">Call Customer</p>
+                <p className="text-sm text-gray-600">{customerPhone}</p>
+              </div>
+            </button>
+
+            <button
+              onClick={handleWhatsApp}
+              className="w-full flex items-center gap-4 p-4 bg-green-50 hover:bg-green-100 rounded-lg transition-colors border border-green-200"
+            >
+              <div className="w-12 h-12 bg-green-500 rounded-full flex items-center justify-center">
+                <MessageCircle className="w-6 h-6 text-white" />
+              </div>
+              <div className="text-left">
+                <p className="font-semibold text-gray-900">WhatsApp</p>
+                <p className="text-sm text-gray-600">Send a message via WhatsApp</p>
+              </div>
+            </button>
+
+            <button
+              onClick={handleEmail}
+              className="w-full flex items-center gap-4 p-4 bg-purple-50 hover:bg-purple-100 rounded-lg transition-colors border border-purple-200"
+            >
+              <div className="w-12 h-12 bg-purple-500 rounded-full flex items-center justify-center">
+                <Mail className="w-6 h-6 text-white" />
+              </div>
+              <div className="text-left">
+                <p className="font-semibold text-gray-900">Email</p>
+                <p className="text-sm text-gray-600">{booking.customerEmail || `${booking.customer.toLowerCase().replace(' ', '.')}@example.com`}</p>
+              </div>
+            </button>
+          </div>
+        </div>
+
+        <div className="flex items-center justify-end p-6 border-t border-gray-200 bg-gray-50">
+          <button
+            onClick={onClose}
+            className="px-6 py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
+          >
+            Close
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 // ========== BOOKING DETAILS MODAL COMPONENT ==========
 const BookingDetailsModal = ({ isOpen, onClose, booking }) => {
   if (!isOpen || !booking) return null;
 
-  // Mock additional booking details
+  // Booking details without payment method info
   const bookingDetails = {
-    bookingId: `#${booking.id}`,
-    customerEmail: `${booking.customer.toLowerCase().replace(' ', '.')}@example.com`,
-    customerPhone: '+966 50 123 4567',
+    bookingId: `#${booking.id.slice(-8)}`,
+    customerEmail: booking.customerEmail || `${booking.customer.toLowerCase().replace(' ', '.')}@example.com`,
+    customerPhone: booking.customerPhone || '+966 50 123 4567',
     serviceFee: 5,
     subtotal: booking.price - 5,
     total: booking.price,
-    duration: booking.time.split(' - ').length > 1 
-      ? `${Math.abs(new Date(`2000-01-01 ${booking.time.split(' - ')[0]}`) - new Date(`2000-01-01 ${booking.time.split(' - ')[1]}`)) / (1000 * 60 * 60)} hours`
-      : '2 hours',
-    bookedOn: 'Nov 10, 2024',
-    specialRequests: booking.status === 'Completed' 
-      ? 'Please use eco-friendly products. Ring the doorbell twice.'
-      : 'None',
-    paymentStatus: booking.status === 'Pending' ? 'Pending' : 'Paid',
-    paymentMethod: 'Credit Card'
+    duration: booking.duration || '1 hour',
+    bookedOn: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+    specialRequests: 'None'
   };
 
   const getStatusColor = (status) => {
@@ -105,8 +206,8 @@ const BookingDetailsModal = ({ isOpen, onClose, booking }) => {
             <h3 className="text-lg font-semibold text-gray-900 mb-4">Customer Information</h3>
             <div className="space-y-3">
               <div className="flex items-center gap-3">
-                <div className="w-12 h-12 bg-gray-200 rounded-full flex items-center justify-center flex-shrink-0">
-                  <span className="text-sm font-semibold">
+                <div className="w-12 h-12 bg-[#047857] rounded-full flex items-center justify-center flex-shrink-0">
+                  <span className="text-sm font-semibold text-white">
                     {booking.customer.split(' ').map(n => n[0]).join('').toUpperCase()}
                   </span>
                 </div>
@@ -126,63 +227,32 @@ const BookingDetailsModal = ({ isOpen, onClose, booking }) => {
             </div>
           </div>
 
-          {/* Booking & Payment Details */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-            {/* Booking Details */}
-            <div className="bg-white border border-gray-200 rounded-lg p-4">
-              <h4 className="text-sm font-semibold text-gray-900 mb-3">Booking Details</h4>
-              <div className="space-y-2 text-sm">
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Booked On:</span>
-                  <span className="font-medium text-gray-900">{bookingDetails.bookedOn}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Booking ID:</span>
-                  <span className="font-medium text-gray-900">{bookingDetails.bookingId}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Special Requests:</span>
-                  <span className="font-medium text-gray-900 text-right max-w-[200px]">
-                    {bookingDetails.specialRequests}
-                  </span>
-                </div>
+          {/* Booking Details Card */}
+          <div className="bg-white border border-gray-200 rounded-lg p-4 mb-6">
+            <h4 className="text-sm font-semibold text-gray-900 mb-3">Booking Information</h4>
+            <div className="space-y-2 text-sm">
+              <div className="flex justify-between">
+                <span className="text-gray-600">Booked On:</span>
+                <span className="font-medium text-gray-900">{bookingDetails.bookedOn}</span>
               </div>
-            </div>
-
-            {/* Payment Details */}
-            <div className="bg-white border border-gray-200 rounded-lg p-4">
-              <h4 className="text-sm font-semibold text-gray-900 mb-3">Payment Details</h4>
-              <div className="space-y-2 text-sm">
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Subtotal:</span>
-                  <span className="font-medium text-gray-900">SR{bookingDetails.subtotal}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Service Fee:</span>
-                  <span className="font-medium text-gray-900">SR{bookingDetails.serviceFee}</span>
-                </div>
-                <div className="flex justify-between pt-2 border-t border-gray-200">
-                  <span className="font-semibold text-gray-900">Total:</span>
-                  <span className="font-bold text-gray-900">SR{bookingDetails.total}</span>
-                </div>
-                <div className="flex items-center gap-2 mt-3">
-                  <span className="text-gray-600">Payment Status:</span>
-                  <span className={`px-2 py-1 rounded text-xs font-semibold ${
-                    bookingDetails.paymentStatus === 'Paid' 
-                      ? 'bg-green-100 text-green-800' 
-                      : 'bg-yellow-100 text-yellow-800'
-                  }`}>
-                    {bookingDetails.paymentStatus}
-                  </span>
-                </div>
-                <div className="text-xs text-gray-600 mt-2">
-                  Method: {bookingDetails.paymentMethod}
-                </div>
+              <div className="flex justify-between">
+                <span className="text-gray-600">Booking ID:</span>
+                <span className="font-medium text-gray-900">{bookingDetails.bookingId}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-600">Service Price:</span>
+                <span className="font-bold text-gray-900">SR{booking.price}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-600">Special Requests:</span>
+                <span className="font-medium text-gray-900 text-right max-w-[200px]">
+                  {bookingDetails.specialRequests}
+                </span>
               </div>
             </div>
           </div>
 
-          {/* Action Buttons */}
+          {/* Status Info Boxes */}
           {booking.status === 'Confirmed' && (
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
               <div className="flex items-start gap-3">
@@ -231,6 +301,8 @@ const ManageBookings = ({ onNavigate }) => {
   const [activeFilter, setActiveFilter] = useState("All Bookings");
   const [selectedBooking, setSelectedBooking] = useState(null);
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
+  const [isContactModalOpen, setIsContactModalOpen] = useState(false);
+  const [contactBooking, setContactBooking] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -306,7 +378,29 @@ const ManageBookings = ({ onNavigate }) => {
   };
 
   const handleContactCustomer = (bookingId) => {
-    alert(`Contact customer for booking #${bookingId}`);
+    const booking = bookings.find(b => b.id === bookingId);
+    if (booking) {
+      setContactBooking(booking);
+      setIsContactModalOpen(true);
+    }
+  };
+
+  const handleMarkComplete = async (bookingId) => {
+    if (!confirm('Are you sure you want to mark this booking as completed?')) {
+      return;
+    }
+    
+    try {
+      const response = await providerAPI.completeBooking(bookingId);
+      if (response.success) {
+        setBookings(bookings.map(b => 
+          b.id === bookingId ? { ...b, status: "Completed" } : b
+        ));
+        alert('Booking marked as completed!');
+      }
+    } catch (err) {
+      alert(err.message || 'Failed to mark booking as completed');
+    }
   };
 
   const getStatusColor = (status) => {
@@ -389,11 +483,11 @@ const ManageBookings = ({ onNavigate }) => {
         {booking.status === "Confirmed" && (
           <>
             <button 
-              onClick={() => handleViewDetails(booking.id)}
+              onClick={() => handleMarkComplete(booking.id)}
               className="flex-1 px-4 py-2 text-white rounded-md text-sm font-medium hover:opacity-90 transition-colors"
               style={{ backgroundColor: '#065f46' }}
             >
-              View Details
+              Mark Completed
             </button>
             <button 
               onClick={() => handleContactCustomer(booking.id)}
@@ -401,6 +495,13 @@ const ManageBookings = ({ onNavigate }) => {
               style={{ backgroundColor: '#f0fdf4', color: '#374151', borderColor: '#e5e7eb' }}
             >
               Contact Customer
+            </button>
+            <button 
+              onClick={() => handleViewDetails(booking.id)}
+              className="px-4 py-2 border rounded-md text-sm font-medium hover:opacity-90 transition-colors"
+              style={{ backgroundColor: 'white', color: '#374151', borderColor: '#e5e7eb' }}
+            >
+              Details
             </button>
           </>
         )}
@@ -489,6 +590,16 @@ const ManageBookings = ({ onNavigate }) => {
           setSelectedBooking(null);
         }}
         booking={selectedBooking}
+      />
+
+      {/* Contact Customer Modal */}
+      <ContactCustomerModal
+        isOpen={isContactModalOpen}
+        onClose={() => {
+          setIsContactModalOpen(false);
+          setContactBooking(null);
+        }}
+        booking={contactBooking}
       />
     </div>
   );

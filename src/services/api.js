@@ -196,6 +196,16 @@ export const reviewsAPI = {
     return data;
   },
 
+  // Get service-specific reviews
+  getServiceReviews: async (serviceId) => {
+    const response = await fetch(`${API_BASE_URL}/reviews/service/${serviceId}`);
+    const data = await response.json();
+    if (!response.ok) {
+      throw new Error(data.message || 'Failed to get reviews');
+    }
+    return data;
+  },
+
   // Get my reviews (for providers)
   getMyReviews: async () => {
     return authFetch('/reviews/my-reviews');
@@ -331,6 +341,11 @@ export const providerAPI = {
   getServices: async () => {
     return authFetch('/services/my-services');
   },
+
+  // Get provider earnings details
+  getEarnings: async () => {
+    return authFetch('/bookings/provider/earnings');
+  },
 };
 
 // ============ ADMIN API ============
@@ -446,18 +461,18 @@ export const availabilityAPI = {
   },
 
   // Book a slot (called when creating a booking)
-  bookSlot: async (providerId, date, time, bookingId) => {
+  bookSlot: async (providerId, date, time, bookingId, duration = 1) => {
     return authFetch('/availability/book-slot', {
       method: 'POST',
-      body: JSON.stringify({ providerId, date, time, bookingId }),
+      body: JSON.stringify({ providerId, date, time, bookingId, duration }),
     });
   },
 
   // Free a slot (called when cancelling a booking)
-  freeSlot: async (providerId, date, time) => {
+  freeSlot: async (providerId, date, time, duration = 1) => {
     return authFetch('/availability/free-slot', {
       method: 'DELETE',
-      body: JSON.stringify({ providerId, date, time }),
+      body: JSON.stringify({ providerId, date, time, duration }),
     });
   },
 };

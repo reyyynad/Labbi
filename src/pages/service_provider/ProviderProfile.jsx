@@ -4,77 +4,15 @@ import ProviderHeader from '../../components/header/ProviderHeader';
 import { providerAPI } from '../../services/api';
 
 // ========== EARNINGS DETAILS MODAL COMPONENT ==========
-const EarningsDetailsModal = ({ isOpen, onClose, earningsData }) => {
+const EarningsDetailsModal = ({ isOpen, onClose, earningsData, profileEarnings, loading }) => {
   if (!isOpen) return null;
 
-  // Mock earnings transactions
-  const transactions = [
-    {
-      id: 1,
-      date: 'Nov 15, 2024',
-      service: 'Professional House Cleaning',
-      customer: 'Renad Elsafi',
-      amount: 120,
-      status: 'Paid',
-      bookingId: '#1000'
-    },
-    {
-      id: 2,
-      date: 'Nov 12, 2024',
-      service: 'Deep Cleaning Service',
-      customer: 'Shatha Alharbi',
-      amount: 240,
-      status: 'Paid',
-      bookingId: '#1001'
-    },
-    {
-      id: 3,
-      date: 'Nov 10, 2024',
-      service: 'Move-In/Out Cleaning',
-      customer: 'Adel Hassan',
-      amount: 240,
-      status: 'Paid',
-      bookingId: '#1002'
-    },
-    {
-      id: 4,
-      date: 'Nov 8, 2024',
-      service: 'Office Cleaning',
-      customer: 'Mohammed Ali',
-      amount: 150,
-      status: 'Paid',
-      bookingId: '#1003'
-    },
-    {
-      id: 5,
-      date: 'Nov 5, 2024',
-      service: 'Professional House Cleaning',
-      customer: 'Arwa Aldawoud',
-      amount: 120,
-      status: 'Paid',
-      bookingId: '#1004'
-    },
-    {
-      id: 6,
-      date: 'Oct 28, 2024',
-      service: 'Deep Cleaning Service',
-      customer: 'Renad Elsafi',
-      amount: 240,
-      status: 'Paid',
-      bookingId: '#1005'
-    }
-  ];
-
-  // Monthly breakdown
-  const monthlyBreakdown = [
-    { month: 'November 2024', earnings: 3240, bookings: 12 },
-    { month: 'October 2024', earnings: 2890, bookings: 10 },
-    { month: 'September 2024', earnings: 2150, bookings: 8 },
-    { month: 'August 2024', earnings: 3170, bookings: 11 }
-  ];
-
-  const totalEarnings = earningsData?.totalEarnings || 12450;
-  const thisMonthEarnings = earningsData?.thisMonthEarnings || 3240;
+  // Use earningsData if available, otherwise fallback to profileEarnings
+  const transactions = earningsData?.transactions || [];
+  const monthlyBreakdown = earningsData?.monthlyBreakdown || [];
+  const totalEarnings = earningsData?.totalEarnings ?? profileEarnings?.totalEarnings ?? 0;
+  const thisMonthEarnings = earningsData?.thisMonthEarnings ?? profileEarnings?.thisMonthEarnings ?? 0;
+  const totalTransactions = earningsData?.totalTransactions || transactions.length;
 
   // Export function to download transactions as CSV
   const handleExport = () => {
@@ -139,6 +77,13 @@ const EarningsDetailsModal = ({ isOpen, onClose, earningsData }) => {
 
         {/* Content */}
         <div className="p-6">
+          {loading ? (
+            <div className="flex items-center justify-center py-12">
+              <Loader2 className="w-8 h-8 animate-spin text-gray-400" />
+              <span className="ml-2 text-gray-600">Loading earnings data...</span>
+            </div>
+          ) : (
+          <>
           {/* Summary Cards */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
             <div className="bg-gradient-to-br from-green-50 to-green-100 border border-green-200 rounded-lg p-6">
@@ -162,100 +107,113 @@ const EarningsDetailsModal = ({ isOpen, onClose, earningsData }) => {
                 <p className="text-sm text-gray-600">Total Transactions</p>
                 <DollarSign className="w-5 h-5 text-purple-600" />
               </div>
-              <p className="text-3xl font-bold text-gray-900">{transactions.length}</p>
+              <p className="text-3xl font-bold text-gray-900">{totalTransactions}</p>
             </div>
           </div>
 
           {/* Monthly Breakdown */}
           <div className="bg-gray-50 border border-gray-200 rounded-lg p-6 mb-6">
             <h3 className="text-lg font-semibold text-gray-900 mb-4">Monthly Breakdown</h3>
-            <div className="space-y-4">
-              {monthlyBreakdown.map((month, index) => (
-                <div key={index} className="bg-white rounded-lg p-4 border border-gray-200">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="font-semibold text-gray-900">{month.month}</span>
-                    <span className="font-bold text-gray-900">SR{month.earnings.toLocaleString()}</span>
+            {monthlyBreakdown.length > 0 ? (
+              <div className="space-y-4">
+                {monthlyBreakdown.map((month, index) => (
+                  <div key={index} className="bg-white rounded-lg p-4 border border-gray-200">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="font-semibold text-gray-900">{month.month}</span>
+                      <span className="font-bold text-gray-900">SR{month.earnings.toLocaleString()}</span>
+                    </div>
+                    <div className="flex items-center justify-between text-sm text-gray-600">
+                      <span>{month.bookings} bookings</span>
+                      <span>Avg: SR{month.bookings > 0 ? Math.round(month.earnings / month.bookings) : 0} per booking</span>
+                    </div>
+                    <div className="mt-2 w-full bg-gray-200 rounded-full h-2">
+                      <div 
+                        className="h-2 rounded-full bg-green-600"
+                        style={{ width: `${monthlyBreakdown.length > 0 ? (month.earnings / Math.max(...monthlyBreakdown.map(m => m.earnings), 1)) * 100 : 0}%` }}
+                      ></div>
+                    </div>
                   </div>
-                  <div className="flex items-center justify-between text-sm text-gray-600">
-                    <span>{month.bookings} bookings</span>
-                    <span>Avg: SR{Math.round(month.earnings / month.bookings)} per booking</span>
-                  </div>
-                  <div className="mt-2 w-full bg-gray-200 rounded-full h-2">
-                    <div 
-                      className="h-2 rounded-full bg-green-600"
-                      style={{ width: `${(month.earnings / Math.max(...monthlyBreakdown.map(m => m.earnings))) * 100}%` }}
-                    ></div>
-                  </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-gray-500 text-center py-4">No earnings data available yet</p>
+            )}
           </div>
 
           {/* Transaction History */}
           <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
             <div className="flex items-center justify-between p-6 border-b border-gray-200">
               <h3 className="text-lg font-semibold text-gray-900">Recent Transactions</h3>
-              <button 
-                onClick={handleExport}
-                className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
-              >
-                <Download size={16} />
-                Export
-              </button>
+              {transactions.length > 0 && (
+                <button 
+                  onClick={handleExport}
+                  className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+                >
+                  <Download size={16} />
+                  Export
+                </button>
+              )}
             </div>
             
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Date
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Service
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Customer
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Booking ID
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Amount
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Status
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {transactions.map((transaction) => (
-                    <tr key={transaction.id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {transaction.date}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {transaction.service}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                        {transaction.customer}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                        {transaction.bookingId}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">
-                        SR{transaction.amount}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
-                          {transaction.status}
-                        </span>
-                      </td>
+            {transactions.length > 0 ? (
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Date
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Service
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Customer
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Booking ID
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Amount
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Status
+                      </th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {transactions.map((transaction) => (
+                      <tr key={transaction.id} className="hover:bg-gray-50">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                          {transaction.date}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                          {transaction.service}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                          {transaction.customer}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                          {transaction.bookingId}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">
+                          SR{transaction.amount}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span className="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                            {transaction.status}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <div className="text-center py-8">
+                <p className="text-gray-500">No transactions yet</p>
+                <p className="text-sm text-gray-400 mt-1">Completed bookings will appear here</p>
+              </div>
+            )}
           </div>
 
           {/* Payment Summary */}
@@ -263,21 +221,22 @@ const EarningsDetailsModal = ({ isOpen, onClose, earningsData }) => {
             <h3 className="text-lg font-semibold text-gray-900 mb-4">Payment Summary</h3>
             <div className="grid grid-cols-2 gap-4 text-sm">
               <div>
-                <p className="text-gray-600 mb-1">Available Balance</p>
-                <p className="text-2xl font-bold text-gray-900">SR{thisMonthEarnings.toLocaleString()}</p>
+                <p className="text-gray-600 mb-1">Total Earnings</p>
+                <p className="text-2xl font-bold text-gray-900">SR{totalEarnings.toLocaleString()}</p>
               </div>
               <div>
-                <p className="text-gray-600 mb-1">Next Payout</p>
-                <p className="text-2xl font-bold text-gray-900">Dec 1, 2024</p>
+                <p className="text-gray-600 mb-1">This Month</p>
+                <p className="text-2xl font-bold text-gray-900">SR{thisMonthEarnings.toLocaleString()}</p>
               </div>
             </div>
             <div className="mt-4 pt-4 border-t border-gray-200">
               <p className="text-xs text-gray-600">
-                Payments are processed monthly and transferred to your registered bank account. 
-                Please ensure your payment details are up to date in settings.
+                Earnings are calculated from completed bookings. Complete more bookings to increase your earnings.
               </p>
             </div>
           </div>
+          </>
+          )}
         </div>
 
         {/* Footer */}
@@ -323,6 +282,8 @@ const ProviderProfile = ({ onNavigate }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [originalData, setOriginalData] = useState(null);
   const [isEarningsModalOpen, setIsEarningsModalOpen] = useState(false);
+  const [earningsData, setEarningsData] = useState(null);
+  const [earningsLoading, setEarningsLoading] = useState(false);
   const [recentBookings, setRecentBookings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -472,8 +433,20 @@ const ProviderProfile = ({ onNavigate }) => {
     setOriginalData(null);
   };
 
-  const handleViewEarningsDetails = () => {
+  const handleViewEarningsDetails = async () => {
     setIsEarningsModalOpen(true);
+    setEarningsLoading(true);
+    
+    try {
+      const response = await providerAPI.getEarnings();
+      if (response.success) {
+        setEarningsData(response.data);
+      }
+    } catch (err) {
+      console.error('Failed to fetch earnings:', err);
+    } finally {
+      setEarningsLoading(false);
+    }
   };
 
   const initials = profileData.fullName
@@ -874,7 +847,12 @@ const ProviderProfile = ({ onNavigate }) => {
       <EarningsDetailsModal
         isOpen={isEarningsModalOpen}
         onClose={() => setIsEarningsModalOpen(false)}
-        earningsData={profileData}
+        earningsData={earningsData}
+        profileEarnings={{
+          totalEarnings: profileData.totalEarnings,
+          thisMonthEarnings: profileData.thisMonthEarnings
+        }}
+        loading={earningsLoading}
       />
     </div>
   );

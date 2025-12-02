@@ -257,6 +257,7 @@ const CustomerDateTimeSelection = () => {
   
   // Availability state
   const [availability, setAvailability] = useState(null);
+  const [hasAvailability, setHasAvailability] = useState(true);
   const [timeSlots, setTimeSlots] = useState([]);
   const [loadingSlots, setLoadingSlots] = useState(false);
   const [loadingAvailability, setLoadingAvailability] = useState(true);
@@ -269,7 +270,8 @@ const CustomerDateTimeSelection = () => {
     serviceId: location.state?.serviceId || id,
     location: location.state?.location || 'Location',
     serviceCost: location.state?.serviceCost || 0,
-    serviceImage: location.state?.serviceImage || ''
+    serviceImage: location.state?.serviceImage || '',
+    sessionDuration: location.state?.sessionDuration || 1
   };
   
   // Redirect if no proper service data was passed
@@ -292,9 +294,11 @@ const CustomerDateTimeSelection = () => {
         const response = await availabilityAPI.getProviderAvailability(service.providerId);
         if (response.success) {
           setAvailability(response.data);
+          setHasAvailability(response.data.hasAvailability !== false);
         }
       } catch (err) {
         console.log('Could not fetch availability:', err);
+        setHasAvailability(false);
       } finally {
         setLoadingAvailability(false);
       }
@@ -344,15 +348,7 @@ const CustomerDateTimeSelection = () => {
       try {
         const dateObj = new Date(selectedDate.year, selectedDate.month, selectedDate.day);
         
-        // Free the old slot first
-        if (service.providerId && currentDateStr && currentTime) {
-          try {
-            await availabilityAPI.freeSlot(service.providerId, currentDateStr, currentTime);
-          } catch (freeErr) {
-            console.log('Could not free old slot:', freeErr);
-          }
-        }
-        
+        // Note: Backend handles freeing old slot when rescheduling
         await bookingsAPI.reschedule(
           bookingId,
           dateObj.toISOString(),
@@ -360,24 +356,13 @@ const CustomerDateTimeSelection = () => {
           selectedTime
         );
         
-        // Book the new slot
-        if (service.providerId) {
-          try {
-            await availabilityAPI.bookSlot(
-              service.providerId,
-              selectedDate.dateStr,
-              selectedTime,
-              bookingId
-            );
-          } catch (bookErr) {
-            console.log('Could not book new slot:', bookErr);
-          }
-        }
+        // Note: Old slot is freed by backend, and new slot will be booked when provider accepts
+        // Rescheduled bookings go back to Pending status
         
         navigate('/customer/bookings', {
           state: {
             success: true,
-            message: 'Booking rescheduled successfully!'
+            message: 'Booking rescheduled! Waiting for provider confirmation.'
           }
         });
       } catch (err) {
@@ -387,7 +372,8 @@ const CustomerDateTimeSelection = () => {
     } else {
       // For new booking, go to confirmation page with all data
       const dateObj = new Date(selectedDate.year, selectedDate.month, selectedDate.day);
-      const serviceCost = service.serviceCost;
+      const duration = service.sessionDuration || 1;
+      const serviceCost = service.serviceCost * duration; // Multiply by duration
       const platformFee = serviceCost * 0.1;
       const tax = (serviceCost + platformFee) * 0.08;
       const total = serviceCost + platformFee + tax;
@@ -403,7 +389,8 @@ const CustomerDateTimeSelection = () => {
           displayDate: selectedDate.displayDate,
           time: selectedTime,
           location: service.location,
-          duration: '1 hour',
+          duration: `${duration} hour${duration > 1 ? 's' : ''}`,
+          durationHours: duration,
           serviceImage: service.serviceImage,
           serviceCost,
           platformFee,
@@ -466,6 +453,20 @@ const CustomerDateTimeSelection = () => {
               <Loader2 className="animate-spin text-[#047857]" size={24} />
               <span className="ml-2 text-gray-600">Loading availability...</span>
             </div>
+          ) : !hasAvailability ? (
+            <div className="bg-yellow-50 border border-yellow-300 rounded-lg p-8 text-center">
+              <Calendar className="w-12 h-12 text-yellow-500 mx-auto mb-4" />
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">Availability Not Set</h3>
+              <p className="text-gray-600 mb-4">
+                This service provider hasn't set their availability yet. Please check back later or contact the provider directly.
+              </p>
+              <button
+                onClick={() => navigate(-1)}
+                className="px-6 py-2 bg-[#047857] text-white rounded-lg font-medium hover:bg-[#065f46]"
+              >
+                Go Back
+              </button>
+            </div>
           ) : (
             <CalendarWidget 
               selectedDate={selectedDate} 
@@ -477,7 +478,7 @@ const CustomerDateTimeSelection = () => {
         </div>
         
         {/* Time Slots */}
-        {selectedDate && (
+        {selectedDate && hasAvailability && (
           <div className="mb-6">
             <TimeSlots 
               selectedTime={selectedTime} 
@@ -504,18 +505,20 @@ const CustomerDateTimeSelection = () => {
         )}
         
         {/* Continue/Reschedule Button */}
-        <Button 
-          variant="primary" 
-          size="large"
-          disabled={!selectedDate || !selectedTime || loading}
-          onClick={handleContinue}
-        >
-          {loading 
-            ? 'Processing...' 
-            : isReschedule 
-              ? 'Confirm Reschedule' 
-              : 'Continue to Booking'}
-        </Button>
+        {hasAvailability && (
+          <Button 
+            variant="primary" 
+            size="large"
+            disabled={!selectedDate || !selectedTime || loading}
+            onClick={handleContinue}
+          >
+            {loading 
+              ? 'Processing...' 
+              : isReschedule 
+                ? 'Confirm Reschedule' 
+                : 'Continue to Booking'}
+          </Button>
+        )}
       </div>
     </div>
   );

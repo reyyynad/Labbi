@@ -11,6 +11,11 @@ const seedAdmins = async () => {
     // Define all admin accounts
     const admins = [
       {
+        email: 'admin@labbi.com',
+        fullName: 'Labbi Admin',
+        password: 'Admin123!'
+      },
+      {
         email: 'arwayaser26@gmail.com',
         fullName: 'Arwa Aldawoud',
         password: '12345678'

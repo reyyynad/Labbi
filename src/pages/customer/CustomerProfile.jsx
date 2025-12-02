@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Settings, CheckCircle, Edit2, Loader2 } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { Settings, CheckCircle, Edit2, Loader2, Camera } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import Header from '../../components/header/Header';
 import { userAPI } from '../../services/api';
@@ -56,13 +56,15 @@ const CustomerProfile = () => {
     location: '',
     memberSince: '',
     isEmailVerified: false,
-    isPhoneVerified: false
+    isPhoneVerified: false,
+    profileImage: ''
   });
+  
+  const fileInputRef = useRef(null);
 
   const [stats, setStats] = useState({
     totalBookings: 0,
-    totalSpent: 0,
-    favoriteServices: 0
+    totalSpent: 0
   });
 
   const [recentBookings, setRecentBookings] = useState([]);
@@ -89,7 +91,8 @@ const CustomerProfile = () => {
           location: profile.location || '',
           memberSince: profile.memberSince,
           isEmailVerified: profile.isEmailVerified,
-          isPhoneVerified: profile.isPhoneVerified
+          isPhoneVerified: profile.isPhoneVerified,
+          profileImage: profile.profileImage || ''
         });
         
         setStats(userStats);
@@ -107,6 +110,52 @@ const CustomerProfile = () => {
     setProfileData(prev => ({ ...prev, [name]: value }));
   };
 
+  const handleImageUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      setError('Please select an image file');
+      return;
+    }
+    
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      setError('Image size should be less than 5MB');
+      return;
+    }
+    
+    // Convert to base64
+    const reader = new FileReader();
+    reader.onloadend = async () => {
+      const base64Image = reader.result;
+      
+      try {
+        setSaving(true);
+        setError('');
+        
+        const response = await userAPI.updateProfile({
+          profileImage: base64Image
+        });
+        
+        if (response.success) {
+          setProfileData(prev => ({
+            ...prev,
+            profileImage: base64Image
+          }));
+          setSuccessMessage('Profile picture updated!');
+          setTimeout(() => setSuccessMessage(''), 3000);
+        }
+      } catch (err) {
+        setError(err.message || 'Failed to update profile picture');
+      } finally {
+        setSaving(false);
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
   const handleSave = async () => {
     try {
       setSaving(true);
@@ -117,7 +166,8 @@ const CustomerProfile = () => {
         fullName: profileData.fullName,
         email: profileData.email,
         phone: profileData.phone,
-        location: profileData.location
+        location: profileData.location,
+        profileImage: profileData.profileImage
       });
       
       if (response.success) {
@@ -127,7 +177,8 @@ const CustomerProfile = () => {
           email: response.data.email,
           phone: response.data.phone,
           location: response.data.location,
-          initials: response.data.initials
+          initials: response.data.initials,
+          profileImage: response.data.profileImage || prev.profileImage
         }));
         
         setSuccessMessage('Profile updated successfully!');
@@ -194,9 +245,31 @@ const CustomerProfile = () => {
           <div className="bg-white border-2 border-[#047857] rounded-lg p-6">
             <div className="text-center mb-6">
               <div className="relative inline-block mb-4">
-                <div className="w-32 h-32 bg-[#047857] rounded-full flex items-center justify-center text-4xl font-bold text-white">
-                  {profileData.initials}
-                </div>
+                {profileData.profileImage ? (
+                  <img 
+                    src={profileData.profileImage} 
+                    alt={profileData.fullName}
+                    className="w-32 h-32 rounded-full object-cover"
+                  />
+                ) : (
+                  <div className="w-32 h-32 bg-[#047857] rounded-full flex items-center justify-center text-4xl font-bold text-white">
+                    {profileData.initials}
+                  </div>
+                )}
+                <button
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={saving}
+                  className="absolute bottom-0 right-0 w-10 h-10 bg-[#047857] hover:bg-[#065f46] rounded-full flex items-center justify-center text-white shadow-lg transition-colors"
+                >
+                  <Camera size={18} />
+                </button>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageUpload}
+                  className="hidden"
+                />
               </div>
               <h2 className="text-xl font-bold text-[#374151] mb-2">{profileData.fullName}</h2>
               <p className="text-sm text-gray-600">Customer</p>
@@ -216,11 +289,6 @@ const CustomerProfile = () => {
               <div>
                 <p className="text-sm text-gray-600 mb-1">Total Spent</p>
                 <p className="font-semibold text-[#374151]">SR{stats.totalSpent}</p>
-              </div>
-              
-              <div>
-                <p className="text-sm text-gray-600 mb-1">Favorite Services</p>
-                <p className="font-semibold text-[#374151]">{stats.favoriteServices}</p>
               </div>
             </div>
 
@@ -301,7 +369,7 @@ const CustomerProfile = () => {
             </div>
 
             {/* Account Stats */}
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-2 gap-4">
               <div className="bg-[#f0fdf4] border-2 border-[#047857] rounded-lg p-6">
                 <p className="text-sm text-gray-600 mb-1">Total Bookings</p>
                 <p className="text-3xl font-bold text-[#374151]">{stats.totalBookings}</p>
@@ -310,11 +378,6 @@ const CustomerProfile = () => {
               <div className="bg-[#f0fdf4] border-2 border-[#047857] rounded-lg p-6">
                 <p className="text-sm text-gray-600 mb-1">Total Spent</p>
                 <p className="text-3xl font-bold text-[#374151]">SR{stats.totalSpent.toLocaleString()}</p>
-              </div>
-              
-              <div className="bg-[#f0fdf4] border-2 border-[#047857] rounded-lg p-6">
-                <p className="text-sm text-gray-600 mb-1">Favorite Services</p>
-                <p className="text-3xl font-bold text-[#374151]">{stats.favoriteServices}</p>
               </div>
             </div>
 

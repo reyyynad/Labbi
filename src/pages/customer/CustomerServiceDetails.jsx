@@ -5,6 +5,16 @@ import Header from '../../components/header/Header';
 import { getAuthToken } from '../../utils/auth';
 import { servicesAPI, reviewsAPI } from '../../services/api';
 
+// Helper to format date
+const formatReviewDate = (dateString) => {
+  const date = new Date(dateString);
+  return date.toLocaleDateString('en-US', { 
+    year: 'numeric', 
+    month: 'short', 
+    day: 'numeric' 
+  });
+};
+
 
 // ========== BUTTON COMPONENT ==========
 const Button = ({ 
@@ -125,7 +135,7 @@ const ProviderInfo = ({ provider }) => {
 };
 
 // ========== BOOKING FORM WIDGET ==========
-const BookingForm = ({ price, priceType, serviceId, navigate, isAuthenticated, serviceName, providerName, providerId, location, serviceImage }) => {
+const BookingForm = ({ price, priceType, serviceId, navigate, isAuthenticated, serviceName, providerName, providerId, location, serviceImage, sessionDuration = 1 }) => {
   const subtotal = price || 50;
   const serviceFee = 5;
   const total = subtotal + serviceFee;
@@ -135,7 +145,7 @@ const BookingForm = ({ price, priceType, serviceId, navigate, isAuthenticated, s
       navigate('/auth-registration', { state: { from: `/services/${serviceId}` } });
       return;
     }
-    // Pass all service data to datetime selection
+    // Pass all service data to datetime selection including duration
     navigate(`/customer/booking/datetime/${serviceId}`, {
       state: {
         serviceName,
@@ -144,7 +154,8 @@ const BookingForm = ({ price, priceType, serviceId, navigate, isAuthenticated, s
         location,
         serviceCost: price,
         serviceImage,
-        serviceId
+        serviceId,
+        sessionDuration: sessionDuration || 1
       }
     });
   };
@@ -174,9 +185,6 @@ const BookingForm = ({ price, priceType, serviceId, navigate, isAuthenticated, s
       <div className="space-y-3">
         <Button variant="primary" size="medium" onClick={handleBookNow}>
           Book Now
-        </Button>
-        <Button variant="outline" size="medium">
-          Save for Later
         </Button>
       </div>
     </div>
@@ -273,26 +281,20 @@ const CustomerServiceDetails = () => {
       if (response.success) {
         setServiceData(response.data);
         
-        // Fetch reviews for this provider
-        if (response.data.provider?._id) {
-          try {
-            const reviewsResponse = await reviewsAPI.getProviderReviews(response.data.provider._id);
-            if (reviewsResponse.success && reviewsResponse.data) {
-              setReviews(reviewsResponse.data.map(r => ({
-                author: r.customer?.fullName || 'Customer',
-                rating: r.rating,
-                comment: r.comment,
-                date: new Date(r.createdAt).toLocaleDateString('en-US', { 
-                  year: 'numeric', 
-                  month: 'short', 
-                  day: 'numeric' 
-                })
-              })));
-            }
-          } catch (reviewErr) {
-            console.log('Could not fetch reviews:', reviewErr);
-            // Don't fail the whole page if reviews fail
+        // Fetch reviews for this specific service (not all provider reviews)
+        try {
+          const reviewsResponse = await reviewsAPI.getServiceReviews(id);
+          if (reviewsResponse.success && reviewsResponse.data) {
+            setReviews(reviewsResponse.data.map(r => ({
+              author: r.customerName || 'Customer',
+              rating: r.rating,
+              comment: r.comment,
+              date: formatReviewDate(r.createdAt)
+            })));
           }
+        } catch (reviewErr) {
+          console.log('Could not fetch reviews:', reviewErr);
+          // Don't fail the whole page if reviews fail
         }
       } else {
         setError('Service not found');
@@ -478,6 +480,7 @@ const CustomerServiceDetails = () => {
                 providerId={serviceData.provider?._id}
                 location={service.location}
                 serviceImage={service.images?.[0] || ''}
+                sessionDuration={serviceData.sessionDuration || 1}
               />
             </div>
           )}
