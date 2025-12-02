@@ -247,6 +247,7 @@ const CustomerDateTimeSelection = () => {
   const isReschedule = location.state?.isReschedule || false;
   const bookingId = location.state?.bookingId || id;
   const currentDate = location.state?.currentDate || null;
+  const currentDateStr = location.state?.currentDateStr || null;
   const currentTime = location.state?.currentTime || null;
   
   const [selectedDate, setSelectedDate] = useState(null);
@@ -260,16 +261,24 @@ const CustomerDateTimeSelection = () => {
   const [loadingSlots, setLoadingSlots] = useState(false);
   const [loadingAvailability, setLoadingAvailability] = useState(true);
   
-  // Service data from state or defaults
+  // Service data from state - must be provided from previous page
   const service = {
-    title: location.state?.serviceName || 'Professional House Cleaning',
-    provider: location.state?.providerName || 'Mohammed Ali',
+    title: location.state?.serviceName || 'Service',
+    provider: location.state?.providerName || 'Provider',
     providerId: location.state?.providerId || null,
     serviceId: location.state?.serviceId || id,
-    location: location.state?.location || 'To be confirmed',
-    serviceCost: location.state?.serviceCost || 80,
+    location: location.state?.location || 'Location',
+    serviceCost: location.state?.serviceCost || 0,
     serviceImage: location.state?.serviceImage || ''
   };
+  
+  // Redirect if no proper service data was passed
+  useEffect(() => {
+    if (!location.state?.providerId) {
+      console.warn('No provider ID passed - redirecting');
+      navigate(`/services/${id}`);
+    }
+  }, [location.state?.providerId, navigate, id]);
 
   // Fetch provider availability on mount
   useEffect(() => {
@@ -309,20 +318,13 @@ const CustomerDateTimeSelection = () => {
         const response = await availabilityAPI.getTimeSlots(service.providerId, selectedDate.dateStr);
         if (response.success) {
           setTimeSlots(response.data);
+        } else {
+          setTimeSlots([]);
         }
       } catch (err) {
         console.log('Could not fetch time slots:', err);
-        // Fallback to default slots
-        setTimeSlots([
-          { time: '9:00 AM', available: true },
-          { time: '10:00 AM', available: true },
-          { time: '11:00 AM', available: true },
-          { time: '12:00 PM', available: true },
-          { time: '1:00 PM', available: true },
-          { time: '2:00 PM', available: true },
-          { time: '3:00 PM', available: true },
-          { time: '4:00 PM', available: true },
-        ]);
+        // No fallback - show empty slots
+        setTimeSlots([]);
       } finally {
         setLoadingSlots(false);
       }
@@ -341,12 +343,36 @@ const CustomerDateTimeSelection = () => {
       // Handle reschedule
       try {
         const dateObj = new Date(selectedDate.year, selectedDate.month, selectedDate.day);
+        
+        // Free the old slot first
+        if (service.providerId && currentDateStr && currentTime) {
+          try {
+            await availabilityAPI.freeSlot(service.providerId, currentDateStr, currentTime);
+          } catch (freeErr) {
+            console.log('Could not free old slot:', freeErr);
+          }
+        }
+        
         await bookingsAPI.reschedule(
           bookingId,
           dateObj.toISOString(),
           selectedDate.displayDate,
           selectedTime
         );
+        
+        // Book the new slot
+        if (service.providerId) {
+          try {
+            await availabilityAPI.bookSlot(
+              service.providerId,
+              selectedDate.dateStr,
+              selectedTime,
+              bookingId
+            );
+          } catch (bookErr) {
+            console.log('Could not book new slot:', bookErr);
+          }
+        }
         
         navigate('/customer/bookings', {
           state: {
@@ -373,6 +399,7 @@ const CustomerDateTimeSelection = () => {
           providerName: service.provider,
           providerId: service.providerId,
           date: dateObj.toISOString(),
+          dateStr: selectedDate.dateStr, // YYYY-MM-DD format for slot booking
           displayDate: selectedDate.displayDate,
           time: selectedTime,
           location: service.location,

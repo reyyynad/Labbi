@@ -125,7 +125,7 @@ const ProviderInfo = ({ provider }) => {
 };
 
 // ========== BOOKING FORM WIDGET ==========
-const BookingForm = ({ price, priceType, serviceId, navigate, isAuthenticated }) => {
+const BookingForm = ({ price, priceType, serviceId, navigate, isAuthenticated, serviceName, providerName, providerId, location, serviceImage }) => {
   const subtotal = price || 50;
   const serviceFee = 5;
   const total = subtotal + serviceFee;
@@ -135,7 +135,18 @@ const BookingForm = ({ price, priceType, serviceId, navigate, isAuthenticated })
       navigate('/auth-registration', { state: { from: `/services/${serviceId}` } });
       return;
     }
-    navigate(`/customer/booking/datetime/${serviceId}`);
+    // Pass all service data to datetime selection
+    navigate(`/customer/booking/datetime/${serviceId}`, {
+      state: {
+        serviceName,
+        providerName,
+        providerId,
+        location,
+        serviceCost: price,
+        serviceImage,
+        serviceId
+      }
+    });
   };
 
   return (
@@ -462,6 +473,11 @@ const CustomerServiceDetails = () => {
                 serviceId={id}
                 navigate={navigate}
                 isAuthenticated={isAuthenticated}
+                serviceName={service.name}
+                providerName={provider.name}
+                providerId={serviceData.provider?._id}
+                location={service.location}
+                serviceImage={service.images?.[0] || ''}
               />
             </div>
           )}

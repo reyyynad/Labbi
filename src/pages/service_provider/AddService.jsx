@@ -49,10 +49,35 @@ const AddService = ({ onNavigate }) => {
 
   const handleImageUpload = (e) => {
     const files = Array.from(e.target.files);
-    // In real implementation, you'd upload to server
+    
+    // Limit to 5 images total
+    if (formData.images.length + files.length > 5) {
+      setApiError('Maximum 5 images allowed');
+      return;
+    }
+    
+    // Convert files to base64
+    files.forEach(file => {
+      if (file.size > 5 * 1024 * 1024) {
+        setApiError('Each image must be less than 5MB');
+        return;
+      }
+      
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        setFormData(prev => ({
+          ...prev,
+          images: [...prev.images, event.target.result]
+        }));
+      };
+      reader.readAsDataURL(file);
+    });
+  };
+
+  const removeImage = (index) => {
     setFormData(prev => ({
       ...prev,
-      images: [...prev.images, ...files]
+      images: prev.images.filter((_, i) => i !== index)
     }));
   };
 
@@ -95,7 +120,7 @@ const AddService = ({ onNavigate }) => {
           pricingType: formData.pricingType,
           price: parseFloat(formData.price),
           sessionDuration: parseFloat(formData.sessionDuration) || 1,
-          images: [] // In real implementation, upload images first
+          images: formData.images // Send base64 encoded images
         });
         
         if (response.success) {
@@ -351,9 +376,27 @@ const AddService = ({ onNavigate }) => {
               
               {formData.images.length > 0 && (
                 <div className="mt-4 p-4 bg-white rounded-lg border border-gray-200">
-                  <p className="text-sm text-gray-700 font-medium">
-                    {formData.images.length} file(s) selected
+                  <p className="text-sm text-gray-700 font-medium mb-3">
+                    {formData.images.length} image(s) selected
                   </p>
+                  <div className="grid grid-cols-5 gap-3">
+                    {formData.images.map((img, index) => (
+                      <div key={index} className="relative">
+                        <img 
+                          src={img} 
+                          alt={`Preview ${index + 1}`}
+                          className="w-full h-20 object-cover rounded-lg border border-gray-200"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => removeImage(index)}
+                          className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center text-xs hover:bg-red-600"
+                        >
+                          ×
+                        </button>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               )}
 
