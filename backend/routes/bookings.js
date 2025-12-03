@@ -1,6 +1,111 @@
 const express = require('express');
 const Booking = require('../models/Booking');
+const Availability = require('../models/Availability');
 const { protect, authorize } = require('../middleware/auth');
+
+// Helper function to parse duration string to hours
+const parseDuration = (duration) => {
+  if (!duration) return 1;
+  const match = duration.match(/(\d+)/);
+  return match ? parseInt(match[1]) : 1;
+};
+
+// Helper function to book time slots
+const bookTimeSlots = async (providerId, date, time, duration, bookingId) => {
+  try {
+    let availability = await Availability.findOne({ provider: providerId });
+    if (!availability) {
+      availability = new Availability({ provider: providerId });
+    }
+    
+    const durationHours = parseDuration(duration);
+    const dateStr = date instanceof Date ? date.toISOString().split('T')[0] : date;
+    
+    // Parse time
+    const parseTime = (timeStr) => {
+      const match = timeStr.match(/(\d+):(\d+)\s*(AM|PM)/i);
+      if (!match) return null;
+      let hours = parseInt(match[1]);
+      const period = match[3].toUpperCase();
+      if (period === 'PM' && hours !== 12) hours += 12;
+      if (period === 'AM' && hours === 12) hours = 0;
+      return hours;
+    };
+    
+    const formatTime = (hour) => {
+      const period = hour >= 12 ? 'PM' : 'AM';
+      const displayHour = hour > 12 ? hour - 12 : (hour === 0 ? 12 : hour);
+      return `${displayHour}:00 ${period}`;
+    };
+    
+    const startHour = parseTime(time);
+    if (startHour !== null) {
+      for (let i = 0; i < durationHours; i++) {
+        const slotTime = formatTime(startHour + i);
+        const isAlreadyBooked = availability.bookedSlots.some(
+          s => s.date === dateStr && s.time === slotTime
+        );
+        if (!isAlreadyBooked) {
+          availability.bookedSlots.push({ date: dateStr, time: slotTime, bookingId });
+        }
+      }
+    }
+    
+    await availability.save();
+    return true;
+  } catch (error) {
+    console.error('Error booking slots:', error);
+    return false;
+  }
+};
+
+// Helper function to free time slots
+const freeTimeSlots = async (providerId, date, time, duration) => {
+  try {
+    const availability = await Availability.findOne({ provider: providerId });
+    if (!availability) return true;
+    
+    const durationHours = parseDuration(duration);
+    const dateStr = date instanceof Date ? date.toISOString().split('T')[0] : date;
+    
+    const parseTime = (timeStr) => {
+      const match = timeStr.match(/(\d+):(\d+)\s*(AM|PM)/i);
+      if (!match) return null;
+      let hours = parseInt(match[1]);
+      const period = match[3].toUpperCase();
+      if (period === 'PM' && hours !== 12) hours += 12;
+      if (period === 'AM' && hours === 12) hours = 0;
+      return hours;
+    };
+    
+    const formatTime = (hour) => {
+      const period = hour >= 12 ? 'PM' : 'AM';
+      const displayHour = hour > 12 ? hour - 12 : (hour === 0 ? 12 : hour);
+      return `${displayHour}:00 ${period}`;
+    };
+    
+    const startHour = parseTime(time);
+    if (startHour !== null) {
+      const timesToFree = [];
+      for (let i = 0; i < durationHours; i++) {
+        timesToFree.push(formatTime(startHour + i));
+      }
+      availability.bookedSlots = availability.bookedSlots.filter(
+        s => !(s.date === dateStr && timesToFree.includes(s.time))
+      );
+    } else {
+      availability.bookedSlots = availability.bookedSlots.filter(
+        s => !(s.date === dateStr && s.time === time)
+      );
+    }
+    
+    await availability.save();
+    return true;
+  } catch (error) {
+    console.error('Error freeing slots:', error);
+    return false;
+  }
+};
 
 const router = express.Router();
 
@@ -44,6 +149,7 @@ router.get('/', protect, async (req, res) => {
         date: booking.displayDate,
         dateStr: booking.date ? new Date(booking.date).toISOString().split('T')[0] : null,
         time: booking.time,
+        duration: booking.duration || '1 hour',
         location: booking.location,
         status: booking.status,
         price: booking.pricing?.total || 0,
@@ -94,6 +200,7 @@ router.get('/provider', protect, async (req, res) => {
         date: booking.displayDate,
         dateStr: booking.date ? new Date(booking.date).toISOString().split('T')[0] : null,
         time: booking.time,
+        duration: booking.duration || '1 hour',
         location: booking.location,
         status: booking.status,
         price: booking.pricing?.total || 0,
@@ -103,6 +210,163 @@ router.get('/provider', protect, async (req, res) => {
     });
   } catch (error) {
     console.error('Get provider bookings error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error'
+    });
+  }
+});
+
+// @route   GET /api/bookings/provider/stats
+// @desc    Get booking stats for provider dashboard
+// @access  Private (Provider only)
+router.get('/provider/stats', protect, async (req, res) => {
+  try {
+    const providerId = req.user._id;
+
+    // Get total bookings count
+    const totalBookings = await Booking.countDocuments({ provider: providerId });
+
+    // Get pending bookings count
+    const pendingBookings = await Booking.countDocuments({ 
+      provider: providerId, 
+      status: 'Pending' 
+    });
+
+    // Get completed bookings count
+    const completedBookings = await Booking.countDocuments({ 
+      provider: providerId, 
+      status: 'Completed' 
+    });
+
+    // Calculate total revenue from completed bookings
+    const completedBookingsData = await Booking.find({ 
+      provider: providerId, 
+      status: 'Completed' 
+    });
+    
+    const totalRevenue = completedBookingsData.reduce((sum, booking) => {
+      return sum + (booking.pricing?.total || 0);
+    }, 0);
+
+    // Get this month's earnings
+    const startOfMonth = new Date();
+    startOfMonth.setDate(1);
+    startOfMonth.setHours(0, 0, 0, 0);
+
+    const thisMonthBookings = await Booking.find({
+      provider: providerId,
+      status: 'Completed',
+      createdAt: { $gte: startOfMonth }
+    });
+
+    const thisMonthEarnings = thisMonthBookings.reduce((sum, booking) => {
+      return sum + (booking.pricing?.total || 0);
+    }, 0);
+
+    res.status(200).json({
+      success: true,
+      data: {
+        totalBookings,
+        pendingBookings,
+        completedBookings,
+        totalRevenue,
+        thisMonthEarnings
+      }
+    });
+  } catch (error) {
+    console.error('Get provider stats error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error'
+    });
+  }
+});
+
+// @route   GET /api/bookings/provider/earnings
+// @desc    Get detailed earnings data for provider
+// @access  Private (Provider only)
+router.get('/provider/earnings', protect, async (req, res) => {
+  try {
+    const providerId = req.user._id;
+
+    // Get all completed bookings for this provider
+    const completedBookings = await Booking.find({ 
+      provider: providerId, 
+      status: 'Completed' 
+    })
+      .populate('customer', 'fullName')
+      .sort({ createdAt: -1 });
+
+    // Calculate total earnings
+    const totalEarnings = completedBookings.reduce((sum, booking) => {
+      return sum + (booking.pricing?.total || 0);
+    }, 0);
+
+    // Get this month's bookings and earnings
+    const startOfMonth = new Date();
+    startOfMonth.setDate(1);
+    startOfMonth.setHours(0, 0, 0, 0);
+    
+    const thisMonthBookings = completedBookings.filter(b => new Date(b.createdAt) >= startOfMonth);
+    const thisMonthEarnings = thisMonthBookings.reduce((sum, booking) => {
+      return sum + (booking.pricing?.total || 0);
+    }, 0);
+
+    // Calculate monthly breakdown (last 6 months)
+    const monthlyBreakdown = [];
+    for (let i = 0; i < 6; i++) {
+      const monthStart = new Date();
+      monthStart.setMonth(monthStart.getMonth() - i);
+      monthStart.setDate(1);
+      monthStart.setHours(0, 0, 0, 0);
+      
+      const monthEnd = new Date(monthStart);
+      monthEnd.setMonth(monthEnd.getMonth() + 1);
+      
+      const monthBookings = completedBookings.filter(b => {
+        const bookingDate = new Date(b.createdAt);
+        return bookingDate >= monthStart && bookingDate < monthEnd;
+      });
+      
+      const monthEarnings = monthBookings.reduce((sum, b) => sum + (b.pricing?.total || 0), 0);
+      
+      if (monthBookings.length > 0 || i < 4) { // Always show at least 4 months
+        monthlyBreakdown.push({
+          month: monthStart.toLocaleDateString('en-US', { year: 'numeric', month: 'long' }),
+          earnings: Math.round(monthEarnings * 100) / 100,
+          bookings: monthBookings.length
+        });
+      }
+    }
+
+    // Format transactions (recent completed bookings)
+    const transactions = completedBookings.slice(0, 20).map((booking, index) => ({
+      id: booking._id,
+      date: new Date(booking.createdAt).toLocaleDateString('en-US', { 
+        year: 'numeric', 
+        month: 'short', 
+        day: 'numeric' 
+      }),
+      service: booking.serviceName,
+      customer: booking.customer?.fullName || 'Customer',
+      bookingId: `#${1000 + index}`,
+      amount: Math.round((booking.pricing?.total || 0) * 100) / 100,
+      status: 'Paid'
+    }));
+
+    res.status(200).json({
+      success: true,
+      data: {
+        totalEarnings: Math.round(totalEarnings * 100) / 100,
+        thisMonthEarnings: Math.round(thisMonthEarnings * 100) / 100,
+        totalTransactions: completedBookings.length,
+        monthlyBreakdown: monthlyBreakdown.filter(m => m.bookings > 0 || monthlyBreakdown.indexOf(m) < 4),
+        transactions
+      }
+    });
+  } catch (error) {
+    console.error('Get provider earnings error:', error);
     res.status(500).json({
       success: false,
       message: 'Server error'
@@ -244,18 +508,36 @@ router.put('/:id/reschedule', protect, async (req, res) => {
       });
     }
 
+    // Store old date/time and status before updating
+    const wasConfirmed = booking.status === 'Confirmed';
+    const oldDate = booking.date;
+    const oldTime = booking.time;
+
+    // Free old slots if booking was confirmed
+    if (wasConfirmed) {
+      await freeTimeSlots(
+        booking.provider,
+        oldDate,
+        oldTime,
+        booking.duration
+      );
+    }
+
     booking.date = new Date(date);
     booking.displayDate = displayDate;
     booking.time = time;
+    // Set status back to Pending so provider needs to re-accept
+    booking.status = 'Pending';
     await booking.save();
 
     res.status(200).json({
       success: true,
-      message: 'Booking rescheduled successfully',
+      message: 'Booking rescheduled successfully. Awaiting provider confirmation.',
       data: {
         id: booking._id,
         date: booking.displayDate,
-        time: booking.time
+        time: booking.time,
+        status: booking.status
       }
     });
   } catch (error) {
@@ -293,9 +575,22 @@ router.put('/:id/cancel', protect, async (req, res) => {
       });
     }
 
+    // If booking was confirmed, free the time slots
+    const wasConfirmed = booking.status === 'Confirmed';
+    
     booking.status = 'Cancelled';
     booking.cancellationReason = reason || '';
     await booking.save();
+
+    // Free slots only if the booking was confirmed (slots are booked only for confirmed bookings)
+    if (wasConfirmed) {
+      await freeTimeSlots(
+        booking.provider,
+        booking.date,
+        booking.time,
+        booking.duration
+      );
+    }
 
     res.status(200).json({
       success: true,
@@ -390,6 +685,15 @@ router.put('/:id/accept', protect, async (req, res) => {
 
     booking.status = 'Confirmed';
     await booking.save();
+
+    // Now book the time slot(s) since provider accepted
+    await bookTimeSlots(
+      booking.provider,
+      booking.date,
+      booking.time,
+      booking.duration,
+      booking._id
+    );
 
     res.status(200).json({
       success: true,
@@ -501,72 +805,6 @@ router.put('/:id/complete', protect, async (req, res) => {
     });
   } catch (error) {
     console.error('Complete booking error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Server error'
-    });
-  }
-});
-
-// @route   GET /api/bookings/provider/stats
-// @desc    Get booking stats for provider dashboard
-// @access  Private (Provider only)
-router.get('/provider/stats', protect, async (req, res) => {
-  try {
-    const providerId = req.user._id;
-
-    // Get total bookings count
-    const totalBookings = await Booking.countDocuments({ provider: providerId });
-
-    // Get pending bookings count
-    const pendingBookings = await Booking.countDocuments({ 
-      provider: providerId, 
-      status: 'Pending' 
-    });
-
-    // Get completed bookings count
-    const completedBookings = await Booking.countDocuments({ 
-      provider: providerId, 
-      status: 'Completed' 
-    });
-
-    // Calculate total revenue from completed bookings
-    const completedBookingsData = await Booking.find({ 
-      provider: providerId, 
-      status: 'Completed' 
-    });
-    
-    const totalRevenue = completedBookingsData.reduce((sum, booking) => {
-      return sum + (booking.pricing?.total || 0);
-    }, 0);
-
-    // Get this month's earnings
-    const startOfMonth = new Date();
-    startOfMonth.setDate(1);
-    startOfMonth.setHours(0, 0, 0, 0);
-
-    const thisMonthBookings = await Booking.find({
-      provider: providerId,
-      status: 'Completed',
-      createdAt: { $gte: startOfMonth }
-    });
-
-    const thisMonthEarnings = thisMonthBookings.reduce((sum, booking) => {
-      return sum + (booking.pricing?.total || 0);
-    }, 0);
-
-    res.status(200).json({
-      success: true,
-      data: {
-        totalBookings,
-        pendingBookings,
-        completedBookings,
-        totalRevenue,
-        thisMonthEarnings
-      }
-    });
-  } catch (error) {
-    console.error('Get provider stats error:', error);
     res.status(500).json({
       success: false,
       message: 'Server error'

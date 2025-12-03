@@ -3,6 +3,7 @@ const User = require('../models/User');
 const Booking = require('../models/Booking');
 const Review = require('../models/Review');
 const Service = require('../models/Service');
+const Availability = require('../models/Availability');
 const { protect } = require('../middleware/auth');
 
 const router = express.Router();
@@ -122,7 +123,6 @@ router.get('/profile', protect, async (req, res) => {
     const totalBookings = await Booking.countDocuments({ customer: req.user._id });
     const bookings = await Booking.find({ customer: req.user._id });
     const totalSpent = bookings.reduce((sum, booking) => sum + (booking.pricing?.total || 0), 0);
-    const favoriteServices = user.favoriteServices?.length || 0;
 
     // Get recent bookings
     const recentBookings = await Booking.find({ customer: req.user._id })
@@ -147,8 +147,7 @@ router.get('/profile', protect, async (req, res) => {
         },
         stats: {
           totalBookings,
-          totalSpent: Math.round(totalSpent),
-          favoriteServices
+          totalSpent: Math.round(totalSpent)
         },
         recentBookings: recentBookings.map(booking => ({
           id: booking._id,
@@ -272,19 +271,54 @@ router.put('/notifications', protect, async (req, res) => {
 });
 
 // @route   DELETE /api/users/account
-// @desc    Delete user account
+// @desc    Delete user account and all related data
 // @access  Private
 router.delete('/account', protect, async (req, res) => {
   try {
-    // Delete user's bookings
-    await Booking.deleteMany({ customer: req.user._id });
+    const userId = req.user._id;
+    const user = await User.findById(userId);
+    
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
 
-    // Delete user
-    await User.findByIdAndDelete(req.user._id);
+    // Delete based on user type
+    if (user.userType === 'customer') {
+      // Delete customer's bookings (as customer)
+      await Booking.deleteMany({ customer: userId });
+      
+      // Delete customer's reviews
+      await Review.deleteMany({ customer: userId });
+      
+    } else if (user.userType === 'provider') {
+      // Delete provider's services
+      await Service.deleteMany({ provider: userId });
+      
+      // Delete provider's availability
+      await Availability.deleteMany({ provider: userId });
+      
+      // Delete bookings where this user is the provider
+      await Booking.deleteMany({ provider: userId });
+      
+      // Delete reviews for this provider
+      await Review.deleteMany({ provider: userId });
+      
+      // Also delete any bookings they made as customer (if any)
+      await Booking.deleteMany({ customer: userId });
+      
+      // Delete any reviews they wrote as customer (if any)
+      await Review.deleteMany({ customer: userId });
+    }
+
+    // Finally, delete the user account
+    await User.findByIdAndDelete(userId);
 
     res.status(200).json({
       success: true,
-      message: 'Account deleted successfully'
+      message: 'Account and all related data deleted successfully'
     });
   } catch (error) {
     console.error('Delete account error:', error);

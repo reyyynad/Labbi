@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Calendar, Clock, DollarSign, MapPin, User, Star, X, Loader2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import Header from '../../components/header/Header';
-import { bookingsAPI, reviewsAPI, availabilityAPI } from '../../services/api';
+import { bookingsAPI, reviewsAPI } from '../../services/api';
 
 // ========== BUTTON COMPONENT ==========
 const Button = ({ 
@@ -278,7 +278,7 @@ const CustomerBookings = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
-  const tabs = ['All Bookings', 'Upcoming', 'Confirmed', 'Completed', 'Cancelled'];
+  const tabs = ['All Bookings', 'Pending', 'Confirmed', 'Completed', 'Cancelled'];
 
   // Fetch bookings on mount and tab change
   useEffect(() => {
@@ -328,14 +328,7 @@ const CustomerBookings = () => {
     try {
       await bookingsAPI.cancel(bookingId);
       
-      // Free the time slot so others can book
-      if (booking?.providerId && booking?.dateStr && booking?.time) {
-        try {
-          await availabilityAPI.freeSlot(booking.providerId, booking.dateStr, booking.time);
-        } catch (freeErr) {
-          console.log('Could not free slot:', freeErr);
-        }
-      }
+      // Note: Backend handles freeing time slot when canceling confirmed bookings
       
       // Refresh bookings
       fetchBookings();
@@ -360,7 +353,7 @@ const CustomerBookings = () => {
           {
             label: 'Book Again',
             variant: 'primary',
-            onClick: () => navigate(`/services/${booking.id}`)
+            onClick: () => navigate(`/services/${booking.serviceId}`)
           },
           {
             label: 'Leave Review',
@@ -379,7 +372,7 @@ const CustomerBookings = () => {
           {
             label: 'Book Again',
             variant: 'primary',
-            onClick: () => navigate(`/services/${booking.id}`)
+            onClick: () => navigate(`/services/${booking.serviceId}`)
           },
           ...standardActions
         ]

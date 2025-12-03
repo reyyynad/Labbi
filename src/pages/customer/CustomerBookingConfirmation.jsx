@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Calendar, Clock, MapPin } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import Header from '../../components/header/Header';
-import { bookingsAPI, availabilityAPI } from '../../services/api';
+import { bookingsAPI } from '../../services/api';
 
 // ========== BUTTON COMPONENT ==========
 const Button = ({ 
@@ -71,6 +71,7 @@ const CustomerBookingConfirmation = () => {
     time: bookingState.time,
     location: bookingState.location || 'To be confirmed',
     duration: bookingState.duration || '1 hour',
+    durationHours: bookingState.durationHours || 1,
     serviceImage: bookingState.serviceImage || '',
     pricing: {
       serviceCost: bookingState.serviceCost || 0,
@@ -106,24 +107,14 @@ const CustomerBookingConfirmation = () => {
       });
 
       if (response.success) {
-        // Book the time slot to prevent double booking
-        try {
-          await availabilityAPI.bookSlot(
-            bookingData.providerId,
-            bookingState.dateStr || bookingData.displayDate, // Use YYYY-MM-DD format
-            bookingData.time,
-            response.data.id
-          );
-        } catch (slotErr) {
-          console.log('Could not mark slot as booked:', slotErr);
-          // Continue anyway - booking was created
-        }
+        // Note: Time slot will be marked as booked when provider ACCEPTS the booking
+        // This allows the provider to decline without blocking the time slot
         
         // Show success and navigate to bookings
         navigate('/customer/bookings', {
           state: {
             success: true,
-            message: 'Booking confirmed successfully!'
+            message: 'Booking request submitted! Waiting for provider confirmation.'
           }
         });
       }

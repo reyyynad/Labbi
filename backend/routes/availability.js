@@ -87,16 +87,17 @@ router.get('/provider/:providerId', async (req, res) => {
     const availability = await Availability.findOne({ provider: req.params.providerId });
     
     if (!availability) {
-      // Return default availability if none set
+      // No availability set - return indicator so frontend knows
       return res.status(200).json({
         success: true,
         data: {
+          hasAvailability: false,
           weeklySchedule: {
-            Monday: { enabled: true, start: '09:00', end: '17:00' },
-            Tuesday: { enabled: true, start: '09:00', end: '17:00' },
-            Wednesday: { enabled: true, start: '09:00', end: '17:00' },
-            Thursday: { enabled: true, start: '09:00', end: '17:00' },
-            Friday: { enabled: true, start: '09:00', end: '17:00' },
+            Monday: { enabled: false, start: '09:00', end: '17:00' },
+            Tuesday: { enabled: false, start: '09:00', end: '17:00' },
+            Wednesday: { enabled: false, start: '09:00', end: '17:00' },
+            Thursday: { enabled: false, start: '09:00', end: '17:00' },
+            Friday: { enabled: false, start: '09:00', end: '17:00' },
             Saturday: { enabled: false, start: '09:00', end: '17:00' },
             Sunday: { enabled: false, start: '09:00', end: '17:00' }
           },
@@ -110,6 +111,7 @@ router.get('/provider/:providerId', async (req, res) => {
     res.status(200).json({
       success: true,
       data: {
+        hasAvailability: true,
         weeklySchedule: availability.weeklySchedule,
         availableDates: availability.availableDates,
         blockedDates: availability.blockedDates,
@@ -134,30 +136,12 @@ router.get('/slots/:providerId/:date', async (req, res) => {
     
     let availability = await Availability.findOne({ provider: providerId });
     
-    // If no availability record, create default slots
+    // If no availability record, return empty - provider must set availability
     if (!availability) {
-      const dayOfWeek = new Date(date + 'T00:00:00').getDay();
-      const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
-      
-      if (isWeekend) {
-        return res.status(200).json({
-          success: true,
-          data: []
-        });
-      }
-      
-      // Default 9 AM to 5 PM slots
-      const slots = [];
-      for (let hour = 9; hour < 17; hour++) {
-        const timeStr = hour < 12 
-          ? `${hour}:00 AM`
-          : `${hour === 12 ? 12 : hour - 12}:00 PM`;
-        slots.push({ time: timeStr, available: true });
-      }
-      
       return res.status(200).json({
         success: true,
-        data: slots
+        hasAvailability: false,
+        data: []
       });
     }
     
@@ -165,6 +149,7 @@ router.get('/slots/:providerId/:date', async (req, res) => {
     
     res.status(200).json({
       success: true,
+      hasAvailability: true,
       data: slots
     });
   } catch (error) {
@@ -181,7 +166,7 @@ router.get('/slots/:providerId/:date', async (req, res) => {
 // @access  Private
 router.post('/book-slot', protect, authorize('customer', 'provider'), async (req, res) => {
   try {
-    const { providerId, date, time, bookingId } = req.body;
+    const { providerId, date, time, bookingId, duration } = req.body;
     
     let availability = await Availability.findOne({ provider: providerId });
     
@@ -189,13 +174,53 @@ router.post('/book-slot', protect, authorize('customer', 'provider'), async (req
       availability = new Availability({ provider: providerId });
     }
     
-    // Add the booked slot
-    availability.bookedSlots.push({ date, time, bookingId });
+    // Calculate how many slots to book based on duration
+    const durationHours = parseInt(duration) || 1;
+    
+    // Parse the start time
+    const parseTime = (timeStr) => {
+      const match = timeStr.match(/(\d+):(\d+)\s*(AM|PM)/i);
+      if (!match) return null;
+      let hours = parseInt(match[1]);
+      const minutes = parseInt(match[2]);
+      const period = match[3].toUpperCase();
+      
+      if (period === 'PM' && hours !== 12) hours += 12;
+      if (period === 'AM' && hours === 12) hours = 0;
+      
+      return hours;
+    };
+    
+    const formatTime = (hour) => {
+      const period = hour >= 12 ? 'PM' : 'AM';
+      const displayHour = hour > 12 ? hour - 12 : (hour === 0 ? 12 : hour);
+      return `${displayHour}:00 ${period}`;
+    };
+    
+    const startHour = parseTime(time);
+    
+    if (startHour !== null) {
+      // Book multiple consecutive slots based on duration
+      for (let i = 0; i < durationHours; i++) {
+        const slotTime = formatTime(startHour + i);
+        // Check if slot is not already booked
+        const isAlreadyBooked = availability.bookedSlots.some(
+          s => s.date === date && s.time === slotTime
+        );
+        if (!isAlreadyBooked) {
+          availability.bookedSlots.push({ date, time: slotTime, bookingId });
+        }
+      }
+    } else {
+      // Fallback: just book the single slot if time parsing fails
+      availability.bookedSlots.push({ date, time, bookingId });
+    }
+    
     await availability.save();
     
     res.status(200).json({
       success: true,
-      message: 'Slot booked successfully'
+      message: `${durationHours} slot(s) booked successfully`
     });
   } catch (error) {
     console.error('Book slot error:', error);
@@ -211,20 +236,59 @@ router.post('/book-slot', protect, authorize('customer', 'provider'), async (req
 // @access  Private
 router.delete('/free-slot', protect, authorize('customer', 'provider'), async (req, res) => {
   try {
-    const { providerId, date, time } = req.body;
+    const { providerId, date, time, duration } = req.body;
     
     const availability = await Availability.findOne({ provider: providerId });
     
     if (availability) {
-      availability.bookedSlots = availability.bookedSlots.filter(
-        s => !(s.date === date && s.time === time)
-      );
+      // Calculate how many slots to free based on duration
+      const durationHours = parseInt(duration) || 1;
+      
+      // Parse the start time
+      const parseTime = (timeStr) => {
+        const match = timeStr.match(/(\d+):(\d+)\s*(AM|PM)/i);
+        if (!match) return null;
+        let hours = parseInt(match[1]);
+        const minutes = parseInt(match[2]);
+        const period = match[3].toUpperCase();
+        
+        if (period === 'PM' && hours !== 12) hours += 12;
+        if (period === 'AM' && hours === 12) hours = 0;
+        
+        return hours;
+      };
+      
+      const formatTime = (hour) => {
+        const period = hour >= 12 ? 'PM' : 'AM';
+        const displayHour = hour > 12 ? hour - 12 : (hour === 0 ? 12 : hour);
+        return `${displayHour}:00 ${period}`;
+      };
+      
+      const startHour = parseTime(time);
+      
+      if (startHour !== null && durationHours > 1) {
+        // Free multiple consecutive slots based on duration
+        const timesToFree = [];
+        for (let i = 0; i < durationHours; i++) {
+          timesToFree.push(formatTime(startHour + i));
+        }
+        
+        availability.bookedSlots = availability.bookedSlots.filter(
+          s => !(s.date === date && timesToFree.includes(s.time))
+        );
+      } else {
+        // Free single slot
+        availability.bookedSlots = availability.bookedSlots.filter(
+          s => !(s.date === date && s.time === time)
+        );
+      }
+      
       await availability.save();
     }
     
     res.status(200).json({
       success: true,
-      message: 'Slot freed successfully'
+      message: 'Slot(s) freed successfully'
     });
   } catch (error) {
     console.error('Free slot error:', error);

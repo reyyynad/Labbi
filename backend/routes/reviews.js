@@ -1,6 +1,7 @@
 const express = require('express');
 const Review = require('../models/Review');
 const Booking = require('../models/Booking');
+const Service = require('../models/Service');
 const { protect } = require('../middleware/auth');
 
 const router = express.Router();
@@ -85,6 +86,17 @@ router.post('/', protect, async (req, res) => {
     booking.hasReview = true;
     await booking.save();
 
+    // Update service's rating and reviewsCount
+    if (booking.service) {
+      const serviceReviews = await Review.find({ service: booking.service });
+      const avgRating = serviceReviews.reduce((sum, r) => sum + r.rating, 0) / serviceReviews.length;
+      
+      await Service.findByIdAndUpdate(booking.service, {
+        rating: Math.round(avgRating * 10) / 10,
+        reviewsCount: serviceReviews.length
+      });
+    }
+
     res.status(201).json({
       success: true,
       message: 'Review submitted successfully',
@@ -140,6 +152,42 @@ router.get('/provider/:providerId', async (req, res) => {
     });
   } catch (error) {
     console.error('Get provider reviews error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error'
+    });
+  }
+});
+
+// @route   GET /api/reviews/service/:serviceId
+// @desc    Get all reviews for a specific service
+// @access  Public
+router.get('/service/:serviceId', async (req, res) => {
+  try {
+    const reviews = await Review.find({ service: req.params.serviceId })
+      .populate('customer', 'fullName')
+      .sort({ createdAt: -1 })
+      .lean();
+
+    const avgRating = reviews.length > 0
+      ? reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length
+      : 0;
+
+    res.status(200).json({
+      success: true,
+      count: reviews.length,
+      avgRating: Math.round(avgRating * 10) / 10,
+      data: reviews.map(review => ({
+        id: review._id,
+        service: review.serviceName,
+        customerName: review.customer?.fullName || 'Anonymous',
+        rating: review.rating,
+        comment: review.comment,
+        createdAt: review.createdAt
+      }))
+    });
+  } catch (error) {
+    console.error('Get service reviews error:', error);
     res.status(500).json({
       success: false,
       message: 'Server error'

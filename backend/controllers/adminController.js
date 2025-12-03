@@ -165,6 +165,14 @@ exports.getDashboard = async (req, res) => {
              'bg-[#e0e7ff] text-[#1e3a8a]'
     }));
 
+    // Format revenue properly - show actual amount with 2 decimal places
+    const formatRevenue = (amount) => {
+      if (amount >= 1000) {
+        return `${(amount / 1000).toFixed(2)}K SR`;
+      }
+      return `${amount.toFixed(2)} SR`;
+    };
+
     res.status(200).json({
       success: true,
       data: {
@@ -177,7 +185,8 @@ exports.getDashboard = async (req, res) => {
           pendingServices: pendingServices,
           totalBookings: totalBookings.toLocaleString(),
           totalReviews: totalReviews.toLocaleString(),
-          revenue: `${(revenue / 1000).toFixed(0)}K SR`
+          revenue: formatRevenue(revenue),
+          revenueRaw: revenue.toFixed(2)
         },
         stats: [
           {
@@ -203,7 +212,7 @@ exports.getDashboard = async (req, res) => {
           },
           {
             label: 'Revenue',
-            value: `${(revenue / 1000).toFixed(0)}K SR`,
+            value: formatRevenue(revenue),
             detail: 'This month',
             trend: `${revenueGrowth > 0 ? '+' : ''}${revenueGrowth}%`,
             icon: 'DollarSign'
