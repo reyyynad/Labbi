@@ -8,7 +8,12 @@
     "dev": "nodemon server.js",
     "seed:admin": "node scripts/seedAdmin.js"
   },
-  "keywords": ["labbi", "booking", "services", "api"],
+  "keywords": [
+    "labbi",
+    "booking",
+    "services",
+    "api"
+  ],
   "author": "",
   "license": "ISC",
   "type": "commonjs",
@@ -17,6 +22,7 @@
     "cors": "^2.8.5",
     "dotenv": "^17.2.3",
     "express": "^5.1.0",
+    "google-auth-library": "^10.5.0",
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^9.0.0"
   },

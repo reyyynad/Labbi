@@ -1,5 +1,6 @@
 const express = require('express');
 const jwt = require('jsonwebtoken');
+const { OAuth2Client } = require('google-auth-library');
 const User = require('../models/User');
 const { protect } = require('../middleware/auth');
 
@@ -181,6 +182,150 @@ router.post('/login', async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Server error during login'
+    });
+  }
+});
+
+// @route   POST /api/auth/google
+// @desc    Authenticate with Google OAuth
+// @access  Public
+router.post('/google', async (req, res) => {
+  try {
+    const { credential, userType } = req.body;
+
+    if (!credential) {
+      return res.status(400).json({
+        success: false,
+        message: 'Google credential is required'
+      });
+    }
+
+    // Initialize Google OAuth client
+    const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+
+    // Verify the Google ID token
+    let ticket;
+    try {
+      ticket = await client.verifyIdToken({
+        idToken: credential,
+        audience: process.env.GOOGLE_CLIENT_ID,
+      });
+    } catch (error) {
+      console.error('Google token verification error:', error);
+      return res.status(401).json({
+        success: false,
+        message: 'Invalid Google token'
+      });
+    }
+
+    const payload = ticket.getPayload();
+    const { sub: googleId, email, name: fullName, picture: profileImage } = payload;
+
+    if (!email) {
+      return res.status(400).json({
+        success: false,
+        message: 'Email not provided by Google'
+      });
+    }
+
+    // Check if user exists with this email or Google ID
+    let user = await User.findOne({
+      $or: [
+        { email: email.toLowerCase() },
+        { googleId: googleId }
+      ]
+    });
+
+    if (user) {
+      // User exists - update Google ID if not set
+      if (!user.googleId) {
+        user.googleId = googleId;
+        user.authProvider = 'google';
+        user.isEmailVerified = true; // Google email is verified
+        if (profileImage) {
+          user.profileImage = profileImage;
+        }
+        await user.save();
+      }
+      
+      // Update profile image if available and different
+      if (profileImage && user.profileImage !== profileImage) {
+        user.profileImage = profileImage;
+        await user.save();
+      }
+    } else {
+      // Create new user
+      const userData = {
+        fullName: fullName || 'User',
+        email: email.toLowerCase(),
+        googleId: googleId,
+        authProvider: 'google',
+        userType: userType || 'customer',
+        isEmailVerified: true, // Google email is verified
+        profileImage: profileImage || ''
+      };
+
+      // Add provider profile if userType is provider
+      if (userType === 'provider') {
+        userData.providerProfile = {
+          bio: '',
+          category: '',
+          experience: '',
+          title: '',
+          isVerified: false,
+          isIdentityVerified: false,
+          isBackgroundChecked: false,
+          rating: 0,
+          totalReviews: 0,
+          totalBookings: 0,
+          totalEarnings: 0,
+          thisMonthEarnings: 0,
+          responseRate: 100,
+          completionRate: 100
+        };
+      }
+
+      user = await User.create(userData);
+    }
+
+    // Generate JWT token
+    const token = generateToken(user._id);
+
+    // Build response data
+    const responseData = {
+      id: user._id,
+      name: user.fullName,
+      fullName: user.fullName,
+      email: user.email,
+      role: user.userType,
+      userType: user.userType,
+      phone: user.phone,
+      location: user.location,
+      initials: user.getInitials(),
+      memberSince: user.getMemberSince(),
+      isEmailVerified: user.isEmailVerified,
+      isPhoneVerified: user.isPhoneVerified,
+      notifications: user.notifications
+    };
+
+    // Include provider profile if user is a provider
+    if (user.userType === 'provider' && user.providerProfile) {
+      responseData.providerProfile = user.providerProfile;
+    }
+
+    res.status(200).json({
+      success: true,
+      message: 'Google authentication successful',
+      data: {
+        token,
+        user: responseData
+      }
+    });
+  } catch (error) {
+    console.error('Google OAuth error:', error);
+    res.status(500).json({
+      success: false,
+      message: error.message || 'Server error during Google authentication'
     });
   }
 });

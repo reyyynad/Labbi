@@ -1,8 +1,13 @@
 import React, { useState } from 'react';
 import { Bell, Shield, Trash2, Clock } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import ProviderHeader from '../../components/header/ProviderHeader';
+import DeleteAccountModal from '../../components/common/DeleteAccountModal';
+import { userAPI } from '../../services/api';
+import { clearAuthData } from '../../utils/auth';
 
 const Settings = ({ onNavigate }) => {
+  const navigate = useNavigate();
   const [notifications, setNotifications] = useState({
     email: true,
     sms: true,
@@ -20,6 +25,9 @@ const Settings = ({ onNavigate }) => {
     new: '',
     confirm: ''
   });
+
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deletingAccount, setDeletingAccount] = useState(false);
 
   const handleNotificationToggle = (type) => {
     setNotifications(prev => ({
@@ -62,9 +70,21 @@ const Settings = ({ onNavigate }) => {
   };
 
   const handleDeleteAccount = () => {
-    if (confirm('Are you sure you want to delete your account? This action cannot be undone. All your services, bookings, and earnings history will be permanently removed.')) {
-      console.log('Account deletion requested');
-      alert('Account deletion request submitted. You will receive a confirmation email within 24 hours.');
+    setShowDeleteModal(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    setDeletingAccount(true);
+    
+    try {
+      await userAPI.deleteAccount();
+      clearAuthData();
+      // Redirect to Labbi home page with full reload to clear all state
+      window.location.href = '/';
+    } catch (error) {
+      alert(error.message || 'Failed to delete account');
+      setDeletingAccount(false);
+      setShowDeleteModal(false);
     }
   };
 
@@ -271,6 +291,15 @@ const Settings = ({ onNavigate }) => {
           </div>
         </div>
       </main>
+
+      {/* Delete Account Modal */}
+      <DeleteAccountModal
+        isOpen={showDeleteModal}
+        onClose={() => setShowDeleteModal(false)}
+        onConfirm={handleConfirmDelete}
+        userType="provider"
+        isDeleting={deletingAccount}
+      />
     </div>
   );
 };

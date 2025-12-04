@@ -108,6 +108,29 @@ export const authAPI = {
       body: JSON.stringify({ currentPassword, newPassword }),
     });
   },
+
+  // Google OAuth login
+  googleLogin: async (credential, userType = 'customer') => {
+    const response = await fetch(`${API_BASE_URL}/auth/google`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ credential, userType }),
+    });
+    
+    if (!response.ok) {
+      let errorMessage = 'Google login failed';
+      try {
+        const data = await response.json();
+        errorMessage = data.message || errorMessage;
+      } catch (e) {
+        errorMessage = response.statusText || `Server error (${response.status})`;
+      }
+      throw new Error(errorMessage);
+    }
+    
+    const data = await response.json();
+    return data;
+  },
 };
 
 // ============ USER API ============
@@ -208,16 +231,6 @@ export const reviewsAPI = {
   // Get provider reviews
   getProviderReviews: async (providerId) => {
     const response = await fetch(`${API_BASE_URL}/reviews/provider/${providerId}`);
-    const data = await response.json();
-    if (!response.ok) {
-      throw new Error(data.message || 'Failed to get reviews');
-    }
-    return data;
-  },
-
-  // Get service-specific reviews
-  getServiceReviews: async (serviceId) => {
-    const response = await fetch(`${API_BASE_URL}/reviews/service/${serviceId}`);
     const data = await response.json();
     if (!response.ok) {
       throw new Error(data.message || 'Failed to get reviews');
@@ -360,11 +373,6 @@ export const providerAPI = {
   getServices: async () => {
     return authFetch('/services/my-services');
   },
-
-  // Get provider earnings details
-  getEarnings: async () => {
-    return authFetch('/bookings/provider/earnings');
-  },
 };
 
 // ============ ADMIN API ============
@@ -480,18 +488,18 @@ export const availabilityAPI = {
   },
 
   // Book a slot (called when creating a booking)
-  bookSlot: async (providerId, date, time, bookingId, duration = 1) => {
+  bookSlot: async (providerId, date, time, bookingId) => {
     return authFetch('/availability/book-slot', {
       method: 'POST',
-      body: JSON.stringify({ providerId, date, time, bookingId, duration }),
+      body: JSON.stringify({ providerId, date, time, bookingId }),
     });
   },
 
   // Free a slot (called when cancelling a booking)
-  freeSlot: async (providerId, date, time, duration = 1) => {
+  freeSlot: async (providerId, date, time) => {
     return authFetch('/availability/free-slot', {
       method: 'DELETE',
-      body: JSON.stringify({ providerId, date, time, duration }),
+      body: JSON.stringify({ providerId, date, time }),
     });
   },
 };
