@@ -1,5 +1,5 @@
 // API Service for Labbi Application
-const API_BASE_URL = 'http://localhost:5000/api';
+const API_BASE_URL = 'http://localhost:5001/api';
 
 // Helper function to get auth token
 const getToken = () => {
@@ -101,12 +101,53 @@ export const authAPI = {
     return data;
   },
 
+  // Reset password
+  resetPassword: async (token, password) => {
+    const response = await fetch(`${API_BASE_URL}/auth/reset-password/${token}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password }),
+    });
+    const data = await response.json();
+    if (!response.ok) {
+      throw new Error(data.message || 'Password reset failed');
+    }
+    return data;
+  },
+
   // Update password
   updatePassword: async (currentPassword, newPassword) => {
     return authFetch('/auth/update-password', {
       method: 'PUT',
       body: JSON.stringify({ currentPassword, newPassword }),
     });
+  },
+
+  // Verify email
+  verifyEmail: async (token) => {
+    const response = await fetch(`${API_BASE_URL}/auth/verify-email/${token}`, {
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json' },
+    });
+    const data = await response.json();
+    if (!response.ok) {
+      throw new Error(data.message || 'Email verification failed');
+    }
+    return data;
+  },
+
+  // Resend verification email
+  resendVerification: async (email) => {
+    const response = await fetch(`${API_BASE_URL}/auth/resend-verification`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email }),
+    });
+    const data = await response.json();
+    if (!response.ok) {
+      throw new Error(data.message || 'Failed to resend verification email');
+    }
+    return data;
   },
 
   // Google OAuth login

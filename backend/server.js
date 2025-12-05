@@ -45,6 +45,12 @@ app.get('/', (req, res) => {
       reviews: '/api/reviews',
       services: '/api/services',
       admin: '/api/admin'
+    },
+    emailConfig: {
+      smtpUser: process.env.SMTP_USER ? '✅ Configured' : '❌ Not configured',
+      smtpPass: process.env.SMTP_PASS ? '✅ Configured (' + process.env.SMTP_PASS.length + ' chars)' : '❌ Not configured',
+      smtpHost: process.env.SMTP_HOST || 'smtp.gmail.com (default)',
+      smtpPort: process.env.SMTP_PORT || '587 (default)'
     }
   });
 });
@@ -66,7 +72,7 @@ app.use((req, res) => {
   });
 });
 
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 5001;
 
 // Start server immediately
 app.listen(PORT, () => {

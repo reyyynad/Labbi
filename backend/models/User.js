@@ -60,6 +60,22 @@ const userSchema = new mongoose.Schema({
     type: Boolean,
     default: false
   },
+  emailVerificationToken: {
+    type: String,
+    select: false
+  },
+  emailVerificationExpires: {
+    type: Date,
+    select: false
+  },
+  passwordResetToken: {
+    type: String,
+    select: false
+  },
+  passwordResetExpires: {
+    type: Date,
+    select: false
+  },
   isPhoneVerified: {
     type: Boolean,
     default: false
@@ -173,6 +189,38 @@ userSchema.methods.getInitials = function() {
 userSchema.methods.getMemberSince = function() {
   const options = { year: 'numeric', month: 'long' };
   return this.createdAt.toLocaleDateString('en-US', options);
+};
+
+// Generate email verification token
+userSchema.methods.generateEmailVerificationToken = function() {
+  const crypto = require('crypto');
+  const token = crypto.randomBytes(32).toString('hex');
+  
+  this.emailVerificationToken = crypto
+    .createHash('sha256')
+    .update(token)
+    .digest('hex');
+  
+  // Token expires in 24 hours
+  this.emailVerificationExpires = Date.now() + 24 * 60 * 60 * 1000;
+  
+  return token;
+};
+
+// Generate password reset token
+userSchema.methods.generatePasswordResetToken = function() {
+  const crypto = require('crypto');
+  const token = crypto.randomBytes(32).toString('hex');
+  
+  this.passwordResetToken = crypto
+    .createHash('sha256')
+    .update(token)
+    .digest('hex');
+  
+  // Token expires in 1 hour
+  this.passwordResetExpires = Date.now() + 60 * 60 * 1000;
+  
+  return token;
 };
 
 module.exports = mongoose.model('User', userSchema);

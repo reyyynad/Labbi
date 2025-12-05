@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { validateEmail } from '../../utils/validation'
+import { authAPI } from '../../services/api'
 import Header from '../../components/header/Header'
 import { Mail, ArrowLeft } from 'lucide-react'
 
@@ -9,14 +10,16 @@ function ForgotPassword() {
   const [errors, setErrors] = useState({})
   const [loading, setLoading] = useState(false)
   const [submitted, setSubmitted] = useState(false)
+  const [apiError, setApiError] = useState('')
 
   const handleChange = (e) => {
     const { name, value } = e.target
     setFormData(prev => ({ ...prev, [name]: value }))
     if (errors[name]) setErrors(prev => ({ ...prev, [name]: '' }))
+    if (apiError) setApiError('')
   }
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
 
     const newErrors = {}
@@ -30,10 +33,16 @@ function ForgotPassword() {
     }
 
     setLoading(true)
-    setTimeout(() => {
-      setLoading(false)
+    setApiError('')
+    
+    try {
+      await authAPI.forgotPassword(formData.email)
       setSubmitted(true)
-    }, 1500)
+    } catch (error) {
+      setApiError(error.message || 'Failed to send reset email. Please try again.')
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
@@ -57,6 +66,12 @@ function ForgotPassword() {
                 <p className="text-gray-100 text-center mb-8">
                   Enter your email address and we'll send you a link to reset your password.
                 </p>
+
+                {apiError && (
+                  <div className="mb-6 p-4 bg-red-500/20 border border-red-300/30 rounded-lg">
+                    <p className="text-sm text-red-100">{apiError}</p>
+                  </div>
+                )}
 
                 <form onSubmit={handleSubmit} className="space-y-6">
                   <div>
@@ -111,10 +126,11 @@ function ForgotPassword() {
                 </p>
                 <div className="space-y-3">
                   <button
-                    onClick={() => setSubmitted(false)}
-                    className="w-full bg-white/10 hover:bg-white/20 text-white font-semibold py-3 px-4 rounded-lg transition-colors border border-white/30"
+                    onClick={handleSubmit}
+                    disabled={loading}
+                    className="w-full bg-white/10 hover:bg-white/20 text-white font-semibold py-3 px-4 rounded-lg transition-colors border border-white/30 disabled:opacity-50"
                   >
-                    Resend Email
+                    {loading ? 'Sending...' : 'Resend Email'}
                   </button>
                   <Link to="/login" className="flex items-center justify-center gap-2 text-sm text-white/80 hover:text-white transition-colors">
                     <ArrowLeft size={16} />

@@ -87,7 +87,31 @@ function LoginProvider() {
         }
       }
     } catch (error) {
-      setApiError(error.message || 'Login failed. Please check your credentials.')
+      // Check if error is about email verification
+      if (error.message && error.message.includes('verify your email')) {
+        setApiError(error.message + ' Click "Resend Verification" below to receive a new email.')
+      } else {
+        setApiError(error.message || 'Login failed. Please check your credentials.')
+      }
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleResendVerification = async () => {
+    if (!formData.email) {
+      setApiError('Please enter your email address first')
+      return
+    }
+    
+    setLoading(true)
+    setApiError('')
+    
+    try {
+      await authAPI.resendVerification(formData.email)
+      setApiError('Verification email sent! Please check your inbox.')
+    } catch (error) {
+      setApiError(error.message || 'Failed to resend verification email')
     } finally {
       setLoading(false)
     }
@@ -112,7 +136,17 @@ function LoginProvider() {
             
             {apiError && (
               <div className="mb-6 p-4 bg-red-500/20 border border-red-300/30 rounded-lg">
-                <p className="text-sm text-red-100">{apiError}</p>
+                <p className="text-sm text-red-100 mb-2">{apiError}</p>
+                {apiError.includes('verify your email') && (
+                  <button
+                    type="button"
+                    onClick={handleResendVerification}
+                    disabled={loading}
+                    className="text-sm text-white underline hover:no-underline disabled:opacity-50"
+                  >
+                    Resend Verification Email
+                  </button>
+                )}
               </div>
             )}
 

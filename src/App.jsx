@@ -12,6 +12,7 @@ import SignupProvider from './pages/auth_registration/SignupProvider';
 import VerifyEmail from './pages/auth_registration/VerifyEmail';
 import VerifyEmailProvider from './pages/auth_registration/VerifyEmailProvider';
 import ForgotPassword from './pages/auth_registration/ForgotPassword';
+import ResetPassword from './pages/auth_registration/ResetPassword';
 
 // Customer Pages
 import CustomerInterface from './pages/customer/CustomerInterface';
@@ -49,11 +50,14 @@ function App() {
         <Route path="/login-provider" element={<LoginProvider />} />
         <Route path="/login-admin" element={<LoginAdmin />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/reset-password/:token" element={<ResetPassword />} />
         <Route path="/auth-registration" element={<AuthRegistration />} />
         <Route path="/signup-customer" element={<SignupCustomer />} />
         <Route path="/signup-provider" element={<SignupProvider />} />
         <Route path="/verify-email" element={<VerifyEmail />} />
+        <Route path="/verify-email/:token" element={<VerifyEmail />} />
         <Route path="/verify-email-provider" element={<VerifyEmailProvider />} />
+        <Route path="/verify-email-provider/:token" element={<VerifyEmailProvider />} />
 
         {/* Public Customer Interface */}
         <Route path="/" element={<CustomerInterface />} />
