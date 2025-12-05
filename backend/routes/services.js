@@ -29,24 +29,29 @@ router.get('/', async (req, res) => {
     res.status(200).json({
       success: true,
       count: services.length,
-      data: services.map(service => ({
-        id: service._id,
-        title: service.title,
-        description: service.description,
-        category: service.category,
-        subcategory: service.subcategory,
-        price: service.price,
-        pricingType: service.pricingType,
-        priceType: service.pricingType === 'hourly' ? 'hour' : service.pricingType,
-        images: service.images || [],
-        status: service.status,
-        bookings: service.bookingsCount || 0,
-        rating: service.rating || 0,
-        reviewsCount: service.reviewsCount || 0,
-        provider: service.provider,
-        location: service.location || service.provider?.location,
-        createdAt: service.createdAt
-      }))
+      data: services.map(service => {
+        // Filter out empty strings and invalid images
+        const validImages = (service.images || []).filter(img => img && typeof img === 'string' && img.trim().length > 0);
+        
+        return {
+          id: service._id,
+          title: service.title,
+          description: service.description,
+          category: service.category,
+          subcategory: service.subcategory,
+          price: service.price,
+          pricingType: service.pricingType,
+          priceType: service.pricingType === 'hourly' ? 'hour' : service.pricingType,
+          images: validImages,
+          status: service.status,
+          bookings: service.bookingsCount || 0,
+          rating: service.rating || 0,
+          reviewsCount: service.reviewsCount || 0,
+          provider: service.provider,
+          location: service.location || service.provider?.location,
+          createdAt: service.createdAt
+        };
+      })
     });
   } catch (error) {
     console.error('Get services error:', error);
@@ -84,8 +89,8 @@ router.get('/my-services', protect, async (req, res) => {
         price: service.price,
         pricingType: service.pricingType,
         priceType: service.pricingType === 'hourly' ? 'hour' : service.pricingType,
-        images: service.images || [],
-        image: service.images?.[0] || '',
+        images: (service.images || []).filter(img => img && typeof img === 'string' && img.trim().length > 0),
+        image: (service.images && service.images.length > 0 && service.images[0] && service.images[0].trim().length > 0) ? service.images[0] : '',
         status: service.status,
         bookings: service.bookingsCount || 0,
         rating: service.rating || 0,
@@ -117,6 +122,15 @@ router.get('/:id', async (req, res) => {
       });
     }
 
+    // Get provider's total booking count (across all their services)
+    const Booking = require('../models/Booking');
+    const providerTotalBookings = await Booking.countDocuments({ 
+      provider: service.provider?._id || service.provider 
+    });
+
+    // Filter out empty strings and invalid images
+    const validImages = (service.images || []).filter(img => img && typeof img === 'string' && img.trim().length > 0);
+    
     res.status(200).json({
       success: true,
       data: {
@@ -129,9 +143,10 @@ router.get('/:id', async (req, res) => {
         pricingType: service.pricingType,
         priceType: service.pricingType === 'hourly' ? 'hour' : service.pricingType,
         sessionDuration: service.sessionDuration,
-        images: service.images || [],
+        images: validImages,
         status: service.status,
-        bookings: service.bookingsCount || 0,
+        bookings: service.bookingsCount || 0, // Bookings for this specific service
+        providerBookings: providerTotalBookings, // Total bookings for the provider
         rating: service.rating || 0,
         reviewsCount: service.reviewsCount || 0,
         provider: service.provider,
@@ -173,6 +188,16 @@ router.post('/', protect, async (req, res) => {
       });
     }
 
+    // Filter out empty strings and invalid images
+    const validImages = (images || []).filter(img => 
+      img && 
+      typeof img === 'string' && 
+      img.trim().length > 0 && 
+      (img.startsWith('data:image') || img.startsWith('http'))
+    );
+    
+    console.log('Creating service with images:', validImages.length, 'valid images out of', images ? images.length : 0);
+    
     const service = await Service.create({
       provider: req.user._id,
       title,
@@ -182,10 +207,12 @@ router.post('/', protect, async (req, res) => {
       pricingType: pricingType || 'hourly',
       price,
       sessionDuration: sessionDuration || 1,
-      images: images || [],
+      images: validImages,
       location: location || req.user.location || '',
       status: 'Pending' // Services start as pending for review
     });
+    
+    console.log('Service created with images:', service.images ? service.images.length : 0);
 
     res.status(201).json({
       success: true,
@@ -197,7 +224,8 @@ router.post('/', protect, async (req, res) => {
         category: service.category,
         price: service.price,
         pricingType: service.pricingType,
-        status: service.status
+        status: service.status,
+        images: service.images || [] // Include images in response
       }
     });
   } catch (error) {
@@ -245,6 +273,16 @@ router.put('/:id', protect, async (req, res) => {
       location
     } = req.body;
 
+    // Filter out empty strings and invalid images
+    const validImages = images !== undefined 
+      ? (images || []).filter(img => 
+          img && 
+          typeof img === 'string' && 
+          img.trim().length > 0 && 
+          (img.startsWith('data:image') || img.startsWith('http'))
+        )
+      : service.images;
+
     // Update fields
     service.title = title || service.title;
     service.description = description || service.description;
@@ -253,7 +291,7 @@ router.put('/:id', protect, async (req, res) => {
     service.pricingType = pricingType || service.pricingType;
     service.price = price !== undefined ? price : service.price;
     service.sessionDuration = sessionDuration || service.sessionDuration;
-    service.images = images || service.images;
+    service.images = validImages;
     service.location = location !== undefined ? location : service.location;
     
     // Only admin can change status to Active
@@ -273,7 +311,8 @@ router.put('/:id', protect, async (req, res) => {
         category: service.category,
         price: service.price,
         pricingType: service.pricingType,
-        status: service.status
+        status: service.status,
+        images: service.images || [] // Include images in response
       }
     });
   } catch (error) {

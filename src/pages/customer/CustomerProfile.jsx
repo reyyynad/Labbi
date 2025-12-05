@@ -256,20 +256,24 @@ const CustomerProfile = () => {
                     {profileData.initials}
                   </div>
                 )}
-                <button
-                  onClick={() => fileInputRef.current?.click()}
-                  disabled={saving}
-                  className="absolute bottom-0 right-0 w-10 h-10 bg-[#047857] hover:bg-[#065f46] rounded-full flex items-center justify-center text-white shadow-lg transition-colors"
-                >
-                  <Camera size={18} />
-                </button>
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/*"
-                  onChange={handleImageUpload}
-                  className="hidden"
-                />
+                {isEditing && (
+                  <>
+                    <button
+                      onClick={() => fileInputRef.current?.click()}
+                      disabled={saving}
+                      className="absolute bottom-0 right-0 w-10 h-10 bg-[#047857] hover:bg-[#065f46] rounded-full flex items-center justify-center text-white shadow-lg transition-colors"
+                    >
+                      <Camera size={18} />
+                    </button>
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/*"
+                      onChange={handleImageUpload}
+                      className="hidden"
+                    />
+                  </>
+                )}
               </div>
               <h2 className="text-xl font-bold text-[#374151] mb-2">{profileData.fullName}</h2>
               <p className="text-sm text-gray-600">Customer</p>

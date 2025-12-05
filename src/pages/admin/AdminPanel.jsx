@@ -117,13 +117,6 @@ const ReviewModal = ({ isOpen, onClose, approval, onApprove, onReject }) => {
                     <span>Submitted {approval.submitted}</span>
                   </div>
                 </div>
-                <span className={`inline-block px-3 py-1 text-xs font-semibold rounded-full ${
-                  approval.status === 'High Priority' 
-                    ? 'bg-red-100 text-red-800 border border-red-300' 
-                    : 'bg-blue-100 text-blue-800 border border-blue-300'
-                }`}>
-                  {approval.status}
-                </span>
               </div>
             </div>
           </div>
@@ -137,7 +130,7 @@ const ReviewModal = ({ isOpen, onClose, approval, onApprove, onReject }) => {
                   <FileText size={16} />
                   Service Description
                 </h4>
-                <p className="text-sm text-[#6b7280] leading-relaxed bg-white border border-gray-200 rounded-lg p-4">
+                <p className="text-sm text-[#6b7280] leading-relaxed bg-white border border-gray-200 rounded-lg p-4 break-words whitespace-pre-wrap overflow-wrap-anywhere">
                   {serviceDetails.description}
                 </p>
               </div>
@@ -148,10 +141,6 @@ const ReviewModal = ({ isOpen, onClose, approval, onApprove, onReject }) => {
                   <div className="flex items-center gap-2 text-sm text-[#6b7280]">
                     <CheckCircle size={16} className="text-[#047857]" />
                     <span>Category: {approval.category}</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-sm text-[#6b7280]">
-                    <CheckCircle size={16} className="text-[#047857]" />
-                    <span>Status: {approval.status}</span>
                   </div>
                 </div>
               </div>

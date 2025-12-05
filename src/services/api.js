@@ -242,6 +242,16 @@ export const reviewsAPI = {
   getMyReviews: async () => {
     return authFetch('/reviews/my-reviews');
   },
+
+  // Get reviews for a specific service
+  getServiceReviews: async (serviceId) => {
+    const response = await fetch(`${API_BASE_URL}/reviews/service/${serviceId}`);
+    const data = await response.json();
+    if (!response.ok) {
+      throw new Error(data.message || 'Failed to get service reviews');
+    }
+    return data;
+  },
 };
 
 // ============ SERVICES API ============
@@ -372,6 +382,11 @@ export const providerAPI = {
   // Get provider services
   getServices: async () => {
     return authFetch('/services/my-services');
+  },
+
+  // Get provider earnings
+  getEarnings: async () => {
+    return authFetch('/bookings/provider/earnings');
   },
 };
 

@@ -55,8 +55,29 @@ const Button = ({
 // ========== SERVICE GALLERY WIDGET ==========
 const ServiceGallery = ({ images = [], serviceName }) => {
   const fallbackImage = 'https://via.placeholder.com/600x400/cccccc/666666?text=No+Image';
-  const primaryImage = images[0] || fallbackImage;
-  const thumbnails = images.slice(1, 5);
+  // Only use fallback if images array is empty or doesn't exist
+  const hasImages = images && images.length > 0;
+  const primaryImage = hasImages ? images[0] : fallbackImage;
+  const thumbnails = hasImages ? images.slice(1, 5) : [];
+  const totalImages = hasImages ? images.length : 0;
+
+  // If only one image, show it without grid and without empty placeholders
+  if (totalImages === 1) {
+    return (
+      <div className="mb-4">
+        <div className="bg-gray-100 border border-gray-300 rounded overflow-hidden h-64">
+          <img 
+            src={primaryImage} 
+            alt={serviceName}
+            className="w-full h-full object-cover"
+            onError={(e) => {
+              e.target.src = 'https://via.placeholder.com/600x400/cccccc/666666?text=Image+Not+Found';
+            }}
+          />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="mb-4">
@@ -71,25 +92,19 @@ const ServiceGallery = ({ images = [], serviceName }) => {
             }}
           />
         </div>
-        {/* Thumbnails */}
-        {thumbnails.length > 0
-          ? thumbnails.map((thumb, index) => (
-              <div key={`${thumb}-${index}`} className="bg-gray-100 border border-gray-300 rounded overflow-hidden h-24">
-                <img
-                  src={thumb}
-                  alt={`${serviceName} preview ${index + 1}`}
-                  className="w-full h-full object-cover"
-                  onError={(e) => {
-                    e.target.src = fallbackImage;
-                  }}
-                />
-              </div>
-            ))
-          : [1, 2, 3, 4].map((num) => (
-              <div key={num} className="bg-gray-100 border border-gray-300 rounded flex items-center justify-center h-24">
-                <span className="text-xs text-gray-400">({num})</span>
-              </div>
-            ))}
+        {/* Thumbnails - only show if there are more images */}
+        {thumbnails.length > 0 && thumbnails.map((thumb, index) => (
+          <div key={`${thumb}-${index}`} className="bg-gray-100 border border-gray-300 rounded overflow-hidden h-24">
+            <img
+              src={thumb}
+              alt={`${serviceName} preview ${index + 1}`}
+              className="w-full h-full object-cover"
+              onError={(e) => {
+                e.target.src = fallbackImage;
+              }}
+            />
+          </div>
+        ))}
       </div>
     </div>
   );
@@ -97,12 +112,35 @@ const ServiceGallery = ({ images = [], serviceName }) => {
 
 // ========== PROVIDER INFO WIDGET ==========
 const ProviderInfo = ({ provider }) => {
+  // Get initials from provider name
+  const getInitials = (name) => {
+    if (!name) return 'SP';
+    const parts = name.split(' ');
+    if (parts.length >= 2) {
+      return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+    }
+    return name.substring(0, 2).toUpperCase();
+  };
+
+  const initials = getInitials(provider.name);
+  const profileImage = provider.profileImage && provider.profileImage.trim() ? provider.profileImage : null;
+  const [imageError, setImageError] = useState(false);
+
   return (
     <div className="border border-gray-300 rounded p-4 mb-4 bg-white">
       <div className="flex items-start gap-4">
-        <div className="w-12 h-12 bg-gray-200 rounded-full flex items-center justify-center flex-shrink-0">
-          <span className="text-sm font-semibold">RE</span>
-        </div>
+        {profileImage && !imageError ? (
+          <img 
+            src={profileImage} 
+            alt={provider.name}
+            className="w-12 h-12 rounded-full object-cover flex-shrink-0"
+            onError={() => setImageError(true)}
+          />
+        ) : (
+          <div className="w-12 h-12 bg-gray-200 rounded-full flex items-center justify-center flex-shrink-0">
+            <span className="text-sm font-semibold">{initials}</span>
+          </div>
+        )}
         <div className="flex-1">
           <h3 className="font-semibold text-base mb-1">{provider.name}</h3>
           <p className="text-sm text-gray-600 mb-2">{provider.title}</p>
@@ -196,7 +234,7 @@ const ServiceDescription = ({ description, features }) => {
   return (
     <div className="bg-white border border-gray-300 rounded p-6 mb-4">
       <h2 className="text-lg font-semibold mb-4">About This Service</h2>
-      <p className="text-sm text-gray-700 leading-relaxed mb-4">
+      <p className="text-sm text-gray-700 leading-relaxed mb-4 break-words whitespace-pre-wrap overflow-wrap-anywhere">
         {description}
       </p>
       <ul className="space-y-2">
@@ -398,10 +436,15 @@ const CustomerServiceDetails = () => {
     status: serviceData.status === 'Active' ? 'Available' : serviceData.status,
     rating: serviceData.rating || 0,
     reviews: serviceData.reviewsCount || 0,
+    bookings: serviceData.bookings || 0, // Bookings for this specific service
     location: serviceData.location || serviceData.provider?.location || 'Saudi Arabia',
     price: serviceData.price,
     priceType: serviceData.priceType || 'hour',
-    images: serviceData.images?.length > 0 ? serviceData.images : [getDefaultImage(serviceData.category)]
+    images: (() => {
+      // Filter out empty strings and invalid images
+      const validImages = (serviceData.images || []).filter(img => img && img.trim().length > 0 && (img.startsWith('data:image') || img.startsWith('http')));
+      return validImages.length > 0 ? validImages : [getDefaultImage(serviceData.category)];
+    })()
   };
 
   const provider = {
@@ -409,9 +452,10 @@ const CustomerServiceDetails = () => {
     title: `${formatCategory(serviceData.category)} Specialist`,
     rating: serviceData.rating || 0,
     reviews: serviceData.reviewsCount || 0,
-    bookings: serviceData.bookings || 0,
+    bookings: serviceData.providerBookings || serviceData.bookings || 0, // Use provider's total bookings
     email: serviceData.provider?.email || 'contact@labbi.com',
-    phone: serviceData.provider?.phone || '+966 50 000 0000'
+    phone: serviceData.provider?.phone || '+966 50 000 0000',
+    profileImage: serviceData.provider?.profileImage || ''
   };
 
   const description = serviceData.description || 'Professional service with high quality standards.';
@@ -451,7 +495,7 @@ const CustomerServiceDetails = () => {
               <div className="flex items-center gap-4 text-sm text-gray-600">
                 <div className="flex items-center gap-1">
                   <Star size={14} className="fill-yellow-400 text-yellow-400" />
-                  <span>{service.rating} ({service.reviews} reviews)</span>
+                  <span>{service.rating} ({service.reviews} reviews, {service.bookings} bookings)</span>
                 </div>
                 <div className="flex items-center gap-1">
                   <MapPin size={14} />

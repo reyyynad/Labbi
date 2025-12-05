@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { ChevronLeft, ChevronRight, X, Check, Loader2 } from 'lucide-react';
+import { ChevronLeft, ChevronRight, X, Loader2 } from 'lucide-react';
 import ProviderHeader from '../../components/header/ProviderHeader';
 import { availabilityAPI } from '../../services/api';
 
 // ========== CALENDAR COMPONENT ==========
-const Calendar = ({ selectedMonth, onMonthChange, availableDates, onDateToggle }) => {
+const Calendar = ({ selectedMonth, onMonthChange, availableDates, onDateToggle, blockedDates = [] }) => {
   const getDaysInMonth = (year, month) => {
     return new Date(year, month + 1, 0).getDate();
   };
@@ -17,6 +17,16 @@ const Calendar = ({ selectedMonth, onMonthChange, availableDates, onDateToggle }
     'January', 'February', 'March', 'April', 'May', 'June',
     'July', 'August', 'September', 'October', 'November', 'December'
   ];
+
+  // Check if a date is in the past
+  const isPastDate = (day) => {
+    if (!day) return false;
+    const date = new Date(selectedMonth.year, selectedMonth.month, day);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    date.setHours(0, 0, 0, 0);
+    return date < today;
+  };
 
   const daysInMonth = getDaysInMonth(selectedMonth.year, selectedMonth.month);
   const firstDay = getFirstDayOfMonth(selectedMonth.year, selectedMonth.month);
@@ -35,8 +45,14 @@ const Calendar = ({ selectedMonth, onMonthChange, availableDates, onDateToggle }
     return availableDates.has(dateStr);
   };
 
+  const isDateBlocked = (day) => {
+    if (!day) return false;
+    const dateStr = `${selectedMonth.year}-${String(selectedMonth.month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+    return blockedDates.some(blocked => blocked.date === dateStr);
+  };
+
   const handleDateClick = (day) => {
-    if (!day) return;
+    if (!day || isPastDate(day)) return; // Prevent clicking past dates
     const dateStr = `${selectedMonth.year}-${String(selectedMonth.month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
     onDateToggle(dateStr);
   };
@@ -92,25 +108,35 @@ const Calendar = ({ selectedMonth, onMonthChange, availableDates, onDateToggle }
         ))}
         
         {/* Calendar Days */}
-        {days.map((day, index) => (
-          <button
-            key={index}
-            onClick={() => handleDateClick(day)}
-            disabled={!day}
-            className={`
-              aspect-square p-2 text-sm rounded border
-              ${!day ? 'invisible' : ''}
-              ${isDateAvailable(day) 
-                ? 'text-white border-transparent hover:opacity-90' 
-                : 'bg-white text-gray-900 border-gray-300 hover:bg-gray-50'
-              }
-              transition-colors cursor-pointer disabled:cursor-default
-            `}
-            style={isDateAvailable(day) ? { backgroundColor: '#047857' } : {}}
-          >
-            {day}
-          </button>
-        ))}
+        {days.map((day, index) => {
+          const isPast = isPastDate(day);
+          const isBlocked = isDateBlocked(day);
+          const isAvailable = isDateAvailable(day);
+          
+          return (
+            <button
+              key={index}
+              onClick={() => handleDateClick(day)}
+              disabled={!day || isPast || isBlocked}
+              className={`
+                aspect-square p-2 text-sm rounded border
+                ${!day ? 'invisible' : ''}
+                ${isPast 
+                  ? 'bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed opacity-50' 
+                  : isBlocked
+                    ? 'bg-red-100 text-red-600 border-red-300 cursor-not-allowed'
+                    : isAvailable 
+                      ? 'text-white border-transparent hover:opacity-90' 
+                      : 'bg-white text-gray-900 border-gray-300 hover:bg-gray-50'
+                }
+                transition-colors ${!isPast && !isBlocked ? 'cursor-pointer' : ''} disabled:cursor-not-allowed
+              `}
+              style={isAvailable && !isPast && !isBlocked ? { backgroundColor: '#047857' } : {}}
+            >
+              {day}
+            </button>
+          );
+        })}
       </div>
 
       {/* Legend */}
@@ -123,14 +149,33 @@ const Calendar = ({ selectedMonth, onMonthChange, availableDates, onDateToggle }
           <div className="w-4 h-4 bg-white border border-gray-300 rounded"></div>
           <span className="text-sm text-gray-600">Unavailable</span>
         </div>
+        <div className="flex items-center gap-2">
+          <div className="w-4 h-4 bg-red-100 border border-red-300 rounded"></div>
+          <span className="text-sm text-gray-600">Blocked</span>
+        </div>
       </div>
     </div>
   );
 };
 
 // ========== WEEKLY SCHEDULE COMPONENT ==========
-const WeeklySchedule = ({ schedule, onScheduleChange }) => {
+const WeeklySchedule = ({ schedule, onScheduleChange, availableDates }) => {
   const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+  
+  // Check if a day has at least one date selected in the calendar
+  const isDaySelectedInCalendar = (day) => {
+    const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+    const dayIndex = dayNames.indexOf(day);
+    
+    // Check if any date in availableDates falls on this day of the week
+    for (const dateStr of availableDates) {
+      const date = new Date(dateStr + 'T00:00:00');
+      if (date.getDay() === dayIndex) {
+        return true;
+      }
+    }
+    return false;
+  };
 
   const handleTimeChange = (day, field, value) => {
     onScheduleChange({
@@ -142,58 +187,45 @@ const WeeklySchedule = ({ schedule, onScheduleChange }) => {
     });
   };
 
-  const toggleDay = (day) => {
-    onScheduleChange({
-      ...schedule,
-      [day]: {
-        ...schedule[day],
-        enabled: !schedule[day].enabled
-      }
-    });
-  };
-
   return (
     <div className="rounded-lg border border-gray-200 p-6" style={{ backgroundColor: '#f0fdf4' }}>
       <h2 className="text-lg font-bold text-gray-900 mb-6">Weekly Schedule</h2>
       
       <div className="space-y-4">
-        {days.map(day => (
-          <div key={day} className="flex items-center gap-4">
-            <div className="w-24 text-sm font-medium text-gray-900">
-              {day}
+        {days.map(day => {
+          const hasDates = isDaySelectedInCalendar(day);
+          const isEnabled = schedule[day].enabled && hasDates;
+          
+          return (
+            <div key={day} className={`flex items-center gap-4 ${!isEnabled ? 'opacity-60' : ''}`}>
+              <div className={`w-24 text-sm font-medium ${isEnabled ? 'text-gray-900' : 'text-gray-400'}`}>
+                {day}
+              </div>
+              
+              <input
+                type="time"
+                value={schedule[day].start}
+                onChange={(e) => isEnabled && handleTimeChange(day, 'start', e.target.value)}
+                disabled={!isEnabled}
+                readOnly={!isEnabled}
+                className="px-3 py-2 border border-gray-300 rounded text-sm disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed"
+                style={{ pointerEvents: isEnabled ? 'auto' : 'none' }}
+              />
+              
+              <span className={`text-sm ${isEnabled ? 'text-gray-600' : 'text-gray-400'}`}>to</span>
+              
+              <input
+                type="time"
+                value={schedule[day].end}
+                onChange={(e) => isEnabled && handleTimeChange(day, 'end', e.target.value)}
+                disabled={!isEnabled}
+                readOnly={!isEnabled}
+                className="px-3 py-2 border border-gray-300 rounded text-sm disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed"
+                style={{ pointerEvents: isEnabled ? 'auto' : 'none' }}
+              />
             </div>
-            
-            <input
-              type="time"
-              value={schedule[day].start}
-              onChange={(e) => handleTimeChange(day, 'start', e.target.value)}
-              disabled={!schedule[day].enabled}
-              className="px-3 py-2 border border-gray-300 rounded text-sm disabled:bg-gray-50 disabled:text-gray-400"
-            />
-            
-            <span className="text-sm text-gray-600">to</span>
-            
-            <input
-              type="time"
-              value={schedule[day].end}
-              onChange={(e) => handleTimeChange(day, 'end', e.target.value)}
-              disabled={!schedule[day].enabled}
-              className="px-3 py-2 border border-gray-300 rounded text-sm disabled:bg-gray-50 disabled:text-gray-400"
-            />
-            
-            <button
-              onClick={() => toggleDay(day)}
-              className={`p-2 border rounded transition-colors ${
-                schedule[day].enabled
-                  ? 'text-white border-transparent hover:opacity-90'
-                  : 'bg-white text-gray-400 border-gray-300 hover:bg-gray-50'
-              }`}
-              style={schedule[day].enabled ? { backgroundColor: '#047857' } : {}}
-            >
-              <Check size={16} />
-            </button>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );
@@ -209,6 +241,17 @@ const BlockDates = ({ blockedDates, onAddDate, onRemoveDate }) => {
       alert('Please select a date');
       return;
     }
+    // Check if the date is in the past
+    const selectedDate = new Date(newDate + 'T00:00:00');
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    selectedDate.setHours(0, 0, 0, 0);
+    
+    if (selectedDate < today) {
+      alert('Cannot block dates in the past');
+      return;
+    }
+    
     onAddDate({ date: newDate, reason: reason || 'Holiday' });
     setNewDate('');
     setReason('');
@@ -224,6 +267,7 @@ const BlockDates = ({ blockedDates, onAddDate, onRemoveDate }) => {
           type="date"
           value={newDate}
           onChange={(e) => setNewDate(e.target.value)}
+          min={new Date().toISOString().split('T')[0]}
           className="flex-1 px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2"
           style={{ focusRingColor: '#047857' }}
         />
@@ -285,11 +329,11 @@ const AvailabilityManagement = ({ onNavigate }) => {
   const [availableDates, setAvailableDates] = useState(new Set());
 
   const [schedule, setSchedule] = useState({
-    Monday: { start: '09:00', end: '17:00', enabled: true },
-    Tuesday: { start: '09:00', end: '17:00', enabled: true },
-    Wednesday: { start: '09:00', end: '17:00', enabled: true },
-    Thursday: { start: '09:00', end: '17:00', enabled: true },
-    Friday: { start: '09:00', end: '17:00', enabled: true },
+    Monday: { start: '09:00', end: '17:00', enabled: false },
+    Tuesday: { start: '09:00', end: '17:00', enabled: false },
+    Wednesday: { start: '09:00', end: '17:00', enabled: false },
+    Thursday: { start: '09:00', end: '17:00', enabled: false },
+    Friday: { start: '09:00', end: '17:00', enabled: false },
     Saturday: { start: '09:00', end: '17:00', enabled: false },
     Sunday: { start: '09:00', end: '17:00', enabled: false }
   });
@@ -302,33 +346,46 @@ const AvailabilityManagement = ({ onNavigate }) => {
       try {
         const response = await availabilityAPI.getMyAvailability();
         if (response.success && response.data) {
-          if (response.data.weeklySchedule) {
-            setSchedule(response.data.weeklySchedule);
+          // Load saved dates from calendar, but don't auto-enable weekly schedule days
+          if (response.data.availableDates && response.data.availableDates.length > 0) {
+            // Filter out past dates from saved availability
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            const validDates = response.data.availableDates.filter(dateStr => {
+              const date = new Date(dateStr + 'T00:00:00');
+              date.setHours(0, 0, 0, 0);
+              return date >= today;
+            });
+            setAvailableDates(new Set(validDates));
             
-            // Auto-generate available dates based on weekly schedule if no specific dates are set
-            if (!response.data.availableDates || response.data.availableDates.length === 0) {
-              const currentDate = new Date();
-              const year = currentDate.getFullYear();
-              const month = currentDate.getMonth();
-              const daysInMonth = new Date(year, month + 1, 0).getDate();
+            // Only enable days in weekly schedule if there are dates for those days
+            if (response.data.weeklySchedule) {
               const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-              const generatedDates = new Set();
+              const updatedSchedule = { ...response.data.weeklySchedule };
               
-              for (let day = 1; day <= daysInMonth; day++) {
-                const date = new Date(year, month, day);
-                const dayOfWeek = dayNames[date.getDay()];
+              // Check each day - only enable if there are dates for that day
+              dayNames.forEach(day => {
+                const dayIndex = dayNames.indexOf(day);
+                const hasDatesForDay = Array.from(validDates).some(dateStr => {
+                  const date = new Date(dateStr + 'T00:00:00');
+                  return date.getDay() === dayIndex;
+                });
                 
-                if (response.data.weeklySchedule[dayOfWeek]?.enabled) {
-                  const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-                  generatedDates.add(dateStr);
-                }
-              }
+                // Only enable if there are dates for this day
+                updatedSchedule[day] = {
+                  ...updatedSchedule[day],
+                  enabled: hasDatesForDay
+                };
+              });
               
-              setAvailableDates(generatedDates);
-            } else {
-              setAvailableDates(new Set(response.data.availableDates));
+              setSchedule(updatedSchedule);
             }
+          } else {
+            // No saved dates - start with empty schedule and dates
+            setAvailableDates(new Set());
+            // Keep schedule with all days disabled (already set in initial state)
           }
+          
           if (response.data.blockedDates) {
             setBlockedDates(response.data.blockedDates);
           }
@@ -351,41 +408,56 @@ const AvailabilityManagement = ({ onNavigate }) => {
   
   const handleDateToggle = (dateStr) => {
     const newDates = new Set(availableDates);
+    const date = new Date(dateStr + 'T00:00:00');
+    const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+    const dayOfWeek = dayNames[date.getDay()];
+    
     if (newDates.has(dateStr)) {
+      // Removing a date
       newDates.delete(dateStr);
+      
+      // Check if there are any other dates for this day of the week
+      let hasOtherDatesForDay = false;
+      for (const otherDateStr of newDates) {
+        const otherDate = new Date(otherDateStr + 'T00:00:00');
+        if (otherDate.getDay() === date.getDay()) {
+          hasOtherDatesForDay = true;
+          break;
+        }
+      }
+      
+      // If no other dates for this day remain, disable the day in weekly schedule
+      if (!hasOtherDatesForDay && schedule[dayOfWeek]?.enabled) {
+        setSchedule(prev => ({
+          ...prev,
+          [dayOfWeek]: {
+            ...prev[dayOfWeek],
+            enabled: false
+          }
+        }));
+      }
     } else {
+      // Adding a date
       newDates.add(dateStr);
+      
+      // Enable the corresponding day in the weekly schedule
+      // Only enable if not already enabled
+      if (!schedule[dayOfWeek]?.enabled) {
+        setSchedule(prev => ({
+          ...prev,
+          [dayOfWeek]: {
+            ...prev[dayOfWeek],
+            enabled: true
+          }
+        }));
+      }
     }
     setAvailableDates(newDates);
   };
 
   const handleScheduleChange = (newSchedule) => {
     setSchedule(newSchedule);
-    
-    // Auto-generate available dates based on weekly schedule for the current month
-    const newAvailableDates = new Set(availableDates);
-    const currentDate = new Date();
-    const year = selectedMonth.year;
-    const month = selectedMonth.month;
-    
-    // Get all days in the current month
-    const daysInMonth = new Date(year, month + 1, 0).getDate();
-    
-    // Day name mapping (0 = Sunday, 1 = Monday, etc.)
-    const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-    
-    for (let day = 1; day <= daysInMonth; day++) {
-      const date = new Date(year, month, day);
-      const dayOfWeek = dayNames[date.getDay()];
-      
-      // If this day is enabled in the schedule, mark it as available
-      if (newSchedule[dayOfWeek]?.enabled) {
-        const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-        newAvailableDates.add(dateStr);
-      }
-    }
-    
-    setAvailableDates(newAvailableDates);
+    // Don't auto-generate dates - let provider manually select dates in calendar
   };
 
   const handleAddBlockedDate = (dateInfo) => {
@@ -403,10 +475,25 @@ const AvailabilityManagement = ({ onNavigate }) => {
     setSuccess('');
     
     try {
+      // Filter out past dates before saving
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const validAvailableDates = Array.from(availableDates).filter(dateStr => {
+        const date = new Date(dateStr + 'T00:00:00');
+        date.setHours(0, 0, 0, 0);
+        return date >= today;
+      });
+      
+      const validBlockedDates = blockedDates.filter(item => {
+        const date = new Date(item.date + 'T00:00:00');
+        date.setHours(0, 0, 0, 0);
+        return date >= today;
+      });
+      
       const response = await availabilityAPI.updateAvailability({
         weeklySchedule: schedule,
-        availableDates: Array.from(availableDates),
-        blockedDates: blockedDates
+        availableDates: validAvailableDates,
+        blockedDates: validBlockedDates
       });
       
       if (response.success) {
@@ -460,6 +547,7 @@ const AvailabilityManagement = ({ onNavigate }) => {
               onMonthChange={setSelectedMonth}
               availableDates={availableDates}
               onDateToggle={handleDateToggle}
+              blockedDates={blockedDates}
             />
           </div>
 
@@ -468,6 +556,7 @@ const AvailabilityManagement = ({ onNavigate }) => {
             <WeeklySchedule 
               schedule={schedule}
               onScheduleChange={handleScheduleChange}
+              availableDates={availableDates}
             />
             
             <BlockDates 

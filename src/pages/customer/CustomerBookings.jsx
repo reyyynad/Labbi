@@ -119,7 +119,7 @@ const ReviewModal = ({ isOpen, onClose, booking, onSubmit }) => {
           
           <div className="mb-6">
             <h3 className="text-lg font-semibold text-[#374151] mb-2">{booking.service}</h3>
-            <p className="text-sm text-gray-600">Provider: {booking.provider}</p>
+            <p className="text-sm text-gray-600">Provider: {booking.provider} {booking.providerBookings !== undefined && `(${booking.providerBookings} bookings)`}</p>
             <p className="text-sm text-gray-600">Date: {booking.date} at {booking.time}</p>
           </div>
 
@@ -225,7 +225,7 @@ const BookingCard = ({ booking, onCancel }) => {
           <h3 className="font-semibold text-lg text-[#374151] mb-2">{booking.service}</h3>
           <div className="flex items-center gap-2 text-sm text-gray-600 mb-2">
             <User size={14} />
-            <span>Provider: {booking.provider}</span>
+            <span>Provider: {booking.provider} {booking.providerBookings !== undefined && `(${booking.providerBookings} bookings)`}</span>
           </div>
         </div>
         <div className="flex flex-col items-end gap-2">

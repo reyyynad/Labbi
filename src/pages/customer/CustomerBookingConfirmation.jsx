@@ -158,7 +158,7 @@ const CustomerBookingConfirmation = () => {
                   <h3 className="font-semibold text-[#374151] mb-1">{bookingData.service}</h3>
                   <p className="text-sm text-gray-600">by {bookingData.provider}</p>
                   <p className="text-sm font-semibold text-[#047857] mt-1">
-                    SR{(bookingData.pricing.serviceCost / parseInt(bookingData.duration)).toFixed(2)}/hour
+                    SR{(bookingData.pricing.serviceCost / bookingData.durationHours).toFixed(2)}/hour
                   </p>
                 </div>
               </div>

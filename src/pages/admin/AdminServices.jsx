@@ -91,7 +91,7 @@ const ReviewModal = ({ isOpen, onClose, service, onApprove, onReject }) => {
                   <FileText size={16} />
                   Service Description
                 </h4>
-                <p className="text-sm text-[#6b7280] leading-relaxed bg-white border border-gray-200 rounded-lg p-4">
+                <p className="text-sm text-[#6b7280] leading-relaxed bg-white border border-gray-200 rounded-lg p-4 break-words whitespace-pre-wrap overflow-wrap-anywhere">
                   {serviceDetails.description}
                 </p>
               </div>

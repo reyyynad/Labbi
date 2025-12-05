@@ -108,11 +108,22 @@ availabilitySchema.methods.getAvailableSlots = function(dateStr) {
   const isBlocked = this.blockedDates.some(b => b.date === dateStr);
   if (isBlocked) return [];
   
-  // Get schedule for this day
+  // First check if date is in provider's selected availableDates array
+  // This is the primary check - only show slots for dates the provider has selected
+  if (this.availableDates && this.availableDates.length > 0) {
+    if (!this.availableDates.includes(dateStr)) {
+      return []; // Date not in provider's selected dates
+    }
+  } else {
+    // If no specific dates are set, don't show any slots
+    return [];
+  }
+  
+  // Get schedule for this day - must be enabled
   const daySchedule = this.weeklySchedule[dayName];
   if (!daySchedule || !daySchedule.enabled) return [];
   
-  // Generate time slots
+  // Generate time slots based on the day's schedule
   const slots = [];
   const startHour = parseInt(daySchedule.start.split(':')[0]);
   const endHour = parseInt(daySchedule.end.split(':')[0]);

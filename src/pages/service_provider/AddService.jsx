@@ -20,19 +20,24 @@ const AddService = ({ onNavigate }) => {
   const [apiError, setApiError] = useState('');
 
   const categories = [
-    { value: 'technology', label: 'Technology' },
-    { value: 'design', label: 'Design' },
-    { value: 'language', label: 'Language' },
-    { value: 'tutoring', label: 'Tutoring' },
-    { value: 'home', label: 'Home Services' }
+    { value: 'home-services', label: 'Home Services' },
+    { value: 'beauty', label: 'Beauty & Wellness' },
+    { value: 'education', label: 'Education & Tutoring' },
+    { value: 'tech', label: 'Tech & IT Services' },
+    { value: 'events', label: 'Events & Entertainment' },
+    { value: 'health', label: 'Health & Fitness' },
+    { value: 'business', label: 'Business Services' },
+    { value: 'other', label: 'Other' }
   ];
 
   const subcategories = {
-    technology: ['Web Development', 'Mobile Development', 'Data Science'],
-    design: ['UI/UX Design', 'Graphic Design', 'Logo Design'],
-    language: ['Translation', 'Teaching', 'Proofreading'],
-    tutoring: ['Math', 'Science', 'Language'],
-    home: ['Cleaning', 'Maintenance', 'Cooking']
+    'home-services': ['Cleaning', 'Maintenance', 'Cooking', 'Plumbing', 'Electrical', 'Gardening', 'Moving & Packing'],
+    'beauty': ['Hair Styling', 'Makeup Artistry', 'Nail Art', 'Skincare Consultation', 'Barber Services', 'Beauty Consultation'],
+    'education': ['Online Tutoring', 'Course Creation', 'Educational Consulting', 'Curriculum Development', 'Study Skills Coaching'],
+    'tech': ['Web Development', 'Mobile Development', 'Data Science', 'Software Development', 'IT Support', 'Cybersecurity'],
+    'events': ['Event Planning', 'Photography Services', 'Catering', 'DJ Services', 'Entertainment', 'Decoration'],
+    'health': ['Personal Training', 'Yoga Instruction', 'Nutrition Counseling', 'Mental Health Support', 'Physical Therapy', 'Massage Therapy'],
+    'business': ['Business Consulting', 'Marketing Strategy', 'Financial Planning', 'Career Coaching', 'Project Management', 'HR Consulting']
   };
 
   const handleChange = (e) => {
@@ -56,22 +61,42 @@ const AddService = ({ onNavigate }) => {
       return;
     }
     
+    // Clear any previous errors
+    setApiError('');
+    
     // Convert files to base64
-    files.forEach(file => {
-      if (file.size > 5 * 1024 * 1024) {
-        setApiError('Each image must be less than 5MB');
-        return;
-      }
-      
-      const reader = new FileReader();
-      reader.onload = (event) => {
+    const imagePromises = files.map(file => {
+      return new Promise((resolve, reject) => {
+        if (file.size > 5 * 1024 * 1024) {
+          reject(new Error('Each image must be less than 5MB'));
+          return;
+        }
+        
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          resolve(event.target.result);
+        };
+        reader.onerror = () => {
+          reject(new Error('Failed to read image file'));
+        };
+        reader.readAsDataURL(file);
+      });
+    });
+    
+    // Wait for all images to be converted, then update state
+    Promise.all(imagePromises)
+      .then(base64Images => {
         setFormData(prev => ({
           ...prev,
-          images: [...prev.images, event.target.result]
+          images: [...prev.images, ...base64Images]
         }));
-      };
-      reader.readAsDataURL(file);
-    });
+      })
+      .catch(error => {
+        setApiError(error.message || 'Failed to process images');
+      });
+    
+    // Reset the input so the same file can be selected again
+    e.target.value = '';
   };
 
   const removeImage = (index) => {
@@ -112,15 +137,22 @@ const AddService = ({ onNavigate }) => {
       setApiError('');
       
       try {
+        // Use custom category if "other" is selected, otherwise use the selected category
+        const finalCategory = formData.category === 'other' 
+          ? formData.customCategory.trim().toLowerCase().replace(/\s+/g, '-')
+          : formData.category;
+        
+        console.log('Submitting service with images:', formData.images.length);
+        
         const response = await servicesAPI.create({
           title: formData.title,
           description: formData.description,
-          category: formData.category,
+          category: finalCategory,
           subcategory: formData.subcategory,
           pricingType: formData.pricingType,
           price: parseFloat(formData.price),
           sessionDuration: parseFloat(formData.sessionDuration) || 1,
-          images: formData.images // Send base64 encoded images
+          images: formData.images || [] // Send base64 encoded images
         });
         
         if (response.success) {
@@ -386,11 +418,15 @@ const AddService = ({ onNavigate }) => {
                           src={img} 
                           alt={`Preview ${index + 1}`}
                           className="w-full h-20 object-cover rounded-lg border border-gray-200"
+                          onError={(e) => {
+                            console.error('Image preview error:', e);
+                            e.target.src = 'https://via.placeholder.com/150/cccccc/666666?text=Image+Error';
+                          }}
                         />
                         <button
                           type="button"
                           onClick={() => removeImage(index)}
-                          className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center text-xs hover:bg-red-600"
+                          className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center text-xs hover:bg-red-600 z-10"
                         >
                           ×
                         </button>

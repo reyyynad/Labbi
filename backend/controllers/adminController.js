@@ -131,7 +131,7 @@ exports.getDashboard = async (req, res) => {
       .lean();
 
     // Format pending approvals for frontend
-    const formattedApprovals = pendingServiceApprovals.map((service, index) => ({
+    const formattedApprovals = pendingServiceApprovals.map((service) => ({
       id: service._id.toString(),
       title: service.title,
       owner: service.provider?.fullName || 'Unknown',
@@ -140,8 +140,7 @@ exports.getDashboard = async (req, res) => {
         month: 'short', 
         day: 'numeric', 
         year: 'numeric' 
-      }),
-      status: index < 2 ? 'High Priority' : 'Normal' // First 2 are high priority
+      })
     }));
 
     // Get recent activity feed

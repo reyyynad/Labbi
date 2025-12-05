@@ -293,6 +293,309 @@ const ServiceCard = ({ service, onViewDetails }) => {
   );
 };
 
+// ========== MODAL COMPONENT ==========
+const Modal = ({ isOpen, onClose, title, children }) => {
+  if (!isOpen) return null;
+
+  return (
+    <div 
+      className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4"
+      onClick={onClose}
+    >
+      <div 
+        className="bg-white rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-hidden flex flex-col"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-center justify-between p-6 border-b border-gray-200">
+          <h2 className="text-2xl font-bold text-[#374151]">{title}</h2>
+          <button
+            onClick={onClose}
+            className="text-gray-400 hover:text-gray-600 transition-colors"
+          >
+            <X size={24} />
+          </button>
+        </div>
+        <div className="p-6 overflow-y-auto flex-1">
+          {children}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// ========== PRIVACY POLICY MODAL ==========
+const PrivacyModal = ({ isOpen, onClose }) => {
+  return (
+    <Modal isOpen={isOpen} onClose={onClose} title="Privacy Policy">
+      <div className="space-y-4 text-gray-700">
+        <p className="text-sm text-gray-500">Last updated: January 2025</p>
+        
+        <section>
+          <h3 className="text-lg font-semibold text-[#374151] mb-2">1. Information We Collect</h3>
+          <p className="mb-3">
+            We collect information that you provide directly to us, including:
+          </p>
+          <ul className="list-disc list-inside space-y-1 ml-4">
+            <li>Name, email address, phone number, and other contact information</li>
+            <li>Account credentials and profile information</li>
+            <li>Service booking details and preferences</li>
+            <li>Payment information (processed securely through third-party providers)</li>
+            <li>Communications with service providers and other users</li>
+          </ul>
+        </section>
+
+        <section>
+          <h3 className="text-lg font-semibold text-[#374151] mb-2">2. How We Use Your Information</h3>
+          <p className="mb-3">
+            We use the information we collect to:
+          </p>
+          <ul className="list-disc list-inside space-y-1 ml-4">
+            <li>Provide, maintain, and improve our services</li>
+            <li>Process transactions and send related information</li>
+            <li>Send technical notices, updates, and support messages</li>
+            <li>Respond to your comments and questions</li>
+            <li>Monitor and analyze trends and usage</li>
+            <li>Detect, prevent, and address technical issues</li>
+          </ul>
+        </section>
+
+        <section>
+          <h3 className="text-lg font-semibold text-[#374151] mb-2">3. Information Sharing</h3>
+          <p>
+            We do not sell your personal information. We may share your information only in the following circumstances:
+          </p>
+          <ul className="list-disc list-inside space-y-1 ml-4 mt-2">
+            <li>With service providers you choose to book through our platform</li>
+            <li>With third-party service providers who perform services on our behalf</li>
+            <li>When required by law or to protect our rights</li>
+            <li>In connection with a business transfer or merger</li>
+          </ul>
+        </section>
+
+        <section>
+          <h3 className="text-lg font-semibold text-[#374151] mb-2">4. Data Security</h3>
+          <p>
+            We implement appropriate technical and organizational measures to protect your personal information. However, no method of transmission over the internet is 100% secure.
+          </p>
+        </section>
+
+        <section>
+          <h3 className="text-lg font-semibold text-[#374151] mb-2">5. Your Rights</h3>
+          <p>
+            You have the right to access, update, or delete your personal information at any time through your account settings or by contacting us.
+          </p>
+        </section>
+
+        <section>
+          <h3 className="text-lg font-semibold text-[#374151] mb-2">6. Contact Us</h3>
+          <p>
+            If you have questions about this Privacy Policy, please contact us at:
+          </p>
+          <ul className="list-disc list-inside space-y-1 ml-4 mt-2">
+            <li>
+              <a href="mailto:arwayaser26@gmail.com" className="text-[#047857] hover:underline">
+                arwayaser26@gmail.com
+              </a>
+            </li>
+            <li>
+              <a href="mailto:renad.elsafi@outlook.com" className="text-[#047857] hover:underline">
+                renad.elsafi@outlook.com
+              </a>
+            </li>
+            <li>
+              <a href="mailto:shathasa111@gmail.com" className="text-[#047857] hover:underline">
+                shathasa111@gmail.com
+              </a>
+            </li>
+          </ul>
+        </section>
+      </div>
+    </Modal>
+  );
+};
+
+// ========== TERMS OF SERVICE MODAL ==========
+const TermsModal = ({ isOpen, onClose }) => {
+  return (
+    <Modal isOpen={isOpen} onClose={onClose} title="Terms of Service">
+      <div className="space-y-4 text-gray-700">
+        <p className="text-sm text-gray-500">Last updated: January 2025</p>
+        
+        <section>
+          <h3 className="text-lg font-semibold text-[#374151] mb-2">1. Acceptance of Terms</h3>
+          <p>
+            By accessing and using Labbi, you accept and agree to be bound by the terms and provision of this agreement. If you do not agree to these terms, please do not use our service.
+          </p>
+        </section>
+
+        <section>
+          <h3 className="text-lg font-semibold text-[#374151] mb-2">2. Description of Service</h3>
+          <p>
+            Labbi is a digital marketplace that connects service providers with clients. We facilitate the booking and management of services but are not a party to the actual service agreement between providers and clients.
+          </p>
+        </section>
+
+        <section>
+          <h3 className="text-lg font-semibold text-[#374151] mb-2">3. User Accounts</h3>
+          <p className="mb-2">
+            To use certain features of our service, you must register for an account. You agree to:
+          </p>
+          <ul className="list-disc list-inside space-y-1 ml-4">
+            <li>Provide accurate, current, and complete information</li>
+            <li>Maintain and update your information to keep it accurate</li>
+            <li>Maintain the security of your password</li>
+            <li>Accept responsibility for all activities under your account</li>
+          </ul>
+        </section>
+
+        <section>
+          <h3 className="text-lg font-semibold text-[#374151] mb-2">4. Service Provider Responsibilities</h3>
+          <p className="mb-2">
+            Service providers agree to:
+          </p>
+          <ul className="list-disc list-inside space-y-1 ml-4">
+            <li>Provide accurate information about their services</li>
+            <li>Honor all bookings and commitments</li>
+            <li>Maintain professional standards and quality of service</li>
+            <li>Comply with all applicable laws and regulations</li>
+          </ul>
+        </section>
+
+        <section>
+          <h3 className="text-lg font-semibold text-[#374151] mb-2">5. Client Responsibilities</h3>
+          <p className="mb-2">
+            Clients agree to:
+          </p>
+          <ul className="list-disc list-inside space-y-1 ml-4">
+            <li>Provide accurate booking information</li>
+            <li>Respect scheduled appointment times</li>
+            <li>Pay for services as agreed</li>
+            <li>Treat service providers with respect</li>
+          </ul>
+        </section>
+
+        <section>
+          <h3 className="text-lg font-semibold text-[#374151] mb-2">6. Cancellations and Refunds</h3>
+          <p>
+            Cancellation policies are set by individual service providers. Refunds, if applicable, will be processed according to the provider's cancellation policy and our platform terms.
+          </p>
+        </section>
+
+        <section>
+          <h3 className="text-lg font-semibold text-[#374151] mb-2">7. Prohibited Activities</h3>
+          <p className="mb-2">
+            You agree not to:
+          </p>
+          <ul className="list-disc list-inside space-y-1 ml-4">
+            <li>Use the service for any illegal purpose</li>
+            <li>Impersonate any person or entity</li>
+            <li>Interfere with or disrupt the service</li>
+            <li>Attempt to gain unauthorized access to any part of the service</li>
+            <li>Post false, misleading, or fraudulent information</li>
+          </ul>
+        </section>
+
+        <section>
+          <h3 className="text-lg font-semibold text-[#374151] mb-2">8. Limitation of Liability</h3>
+          <p>
+            Labbi acts as a platform connecting service providers and clients. We are not responsible for the quality, safety, or legality of services provided by third parties. Users interact at their own risk.
+          </p>
+        </section>
+
+        <section>
+          <h3 className="text-lg font-semibold text-[#374151] mb-2">9. Contact Us</h3>
+          <p className="mb-3">
+            If you have questions about these Terms of Service, please contact us at:
+          </p>
+          <div className="bg-[#f0fdf4] rounded-lg p-4 space-y-2">
+            <div>
+              <a href="mailto:arwayaser26@gmail.com" className="text-[#047857] hover:underline block">
+                arwayaser26@gmail.com
+              </a>
+            </div>
+            <div>
+              <a href="mailto:renad.elsafi@outlook.com" className="text-[#047857] hover:underline block">
+                renad.elsafi@outlook.com
+              </a>
+            </div>
+            <div>
+              <a href="mailto:shathasa111@gmail.com" className="text-[#047857] hover:underline block">
+                shathasa111@gmail.com
+              </a>
+            </div>
+          </div>
+        </section>
+      </div>
+    </Modal>
+  );
+};
+
+// ========== CONTACT MODAL ==========
+const ContactModal = ({ isOpen, onClose }) => {
+  return (
+    <Modal isOpen={isOpen} onClose={onClose} title="Contact Us">
+      <div className="space-y-6 text-gray-700">
+        <div>
+          <h3 className="text-lg font-semibold text-[#374151] mb-3">Get in Touch</h3>
+          <p className="mb-4">
+            We'd love to hear from you! Whether you have a question, feedback, or need support, we're here to help.
+          </p>
+        </div>
+
+        <div className="bg-[#f0fdf4] rounded-lg p-6 space-y-4">
+          <div>
+            <h4 className="font-semibold text-[#374151] mb-2">Email</h4>
+            <div className="space-y-2">
+              <a 
+                href="mailto:arwayaser26@gmail.com" 
+                className="text-[#047857] hover:underline block"
+              >
+                arwayaser26@gmail.com
+              </a>
+              <a 
+                href="mailto:renad.elsafi@outlook.com" 
+                className="text-[#047857] hover:underline block"
+              >
+                renad.elsafi@outlook.com
+              </a>
+              <a 
+                href="mailto:shathasa111@gmail.com" 
+                className="text-[#047857] hover:underline block"
+              >
+                shathasa111@gmail.com
+              </a>
+            </div>
+          </div>
+
+          <div>
+            <h4 className="font-semibold text-[#374151] mb-2">Response Time</h4>
+            <p className="text-gray-600">
+              We typically respond within 24-48 hours during business days.
+            </p>
+          </div>
+        </div>
+
+        <div>
+          <h4 className="font-semibold text-[#374151] mb-3">Common Inquiries</h4>
+          <ul className="space-y-2 text-gray-600">
+            <li>• Account and profile questions</li>
+            <li>• Booking and payment issues</li>
+            <li>• Service provider inquiries</li>
+            <li>• Technical support</li>
+            <li>• Feedback and suggestions</li>
+          </ul>
+        </div>
+
+        <div className="pt-4 border-t border-gray-200">
+          <p className="text-sm text-gray-500">
+            For urgent matters, please include "URGENT" in your email subject line.
+          </p>
+        </div>
+      </div>
+    </Modal>
+  );
+};
+
 // ========== MAIN APP - FILTER ON LEFT ==========
 const CustomerInterface = () => {
   const navigate = useNavigate();
@@ -306,6 +609,7 @@ const CustomerInterface = () => {
   const [allServices, setAllServices] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [openModal, setOpenModal] = useState(null); // 'privacy', 'terms', 'contact', or null
 
   // Fetch services from backend
   useEffect(() => {
@@ -321,19 +625,25 @@ const CustomerInterface = () => {
       
       if (response.success) {
         // Transform backend data to match the expected format
-        const services = response.data.map(service => ({
-          id: service.id,
-          title: service.title,
-          description: service.description,
-          provider: service.provider?.fullName || 'Service Provider',
-          rating: service.rating || 0,
-          reviews: service.reviewsCount || 0,
-          price: service.price,
-          unit: service.priceType || 'hour',
-          location: service.location || service.provider?.location || 'Saudi Arabia',
-          category: formatCategory(service.category),
-          image: service.images?.[0] || getDefaultImage(service.category)
-        }));
+        const services = response.data.map(service => {
+          // Filter out empty strings and invalid images
+          const validImages = (service.images || []).filter(img => img && img.trim().length > 0 && img.startsWith('data:image'));
+          const hasValidImages = validImages.length > 0;
+          
+          return {
+            id: service.id,
+            title: service.title,
+            description: service.description,
+            provider: service.provider?.fullName || 'Service Provider',
+            rating: service.rating || 0,
+            reviews: service.reviewsCount || 0,
+            price: service.price,
+            unit: service.priceType || 'hour',
+            location: service.location || service.provider?.location || 'Saudi Arabia',
+            category: formatCategory(service.category),
+            image: hasValidImages ? validImages[0] : getDefaultImage(service.category)
+          };
+        });
         setAllServices(services);
       }
     } catch (err) {
@@ -508,12 +818,41 @@ const CustomerInterface = () => {
         <div className="max-w-7xl mx-auto px-6 py-6 flex flex-col md:flex-row items-center justify-between text-sm text-gray-600">
           <span>© 2025 Labbi</span>
           <div className="flex gap-4 mt-3 md:mt-0">
-            <a href="/" className="hover:text-[#047857]">Privacy</a>
-            <a href="/" className="hover:text-[#047857]">Terms</a>
-            <a href="mailto:renad.elsafi@outlook.com" className="hover:text-[#047857]">Contact</a>
+            <button 
+              onClick={() => setOpenModal('privacy')} 
+              className="hover:text-[#047857] transition-colors cursor-pointer"
+            >
+              Privacy
+            </button>
+            <button 
+              onClick={() => setOpenModal('terms')} 
+              className="hover:text-[#047857] transition-colors cursor-pointer"
+            >
+              Terms
+            </button>
+            <button 
+              onClick={() => setOpenModal('contact')} 
+              className="hover:text-[#047857] transition-colors cursor-pointer"
+            >
+              Contact
+            </button>
           </div>
         </div>
       </footer>
+
+      {/* Modals */}
+      <PrivacyModal 
+        isOpen={openModal === 'privacy'} 
+        onClose={() => setOpenModal(null)} 
+      />
+      <TermsModal 
+        isOpen={openModal === 'terms'} 
+        onClose={() => setOpenModal(null)} 
+      />
+      <ContactModal 
+        isOpen={openModal === 'contact'} 
+        onClose={() => setOpenModal(null)} 
+      />
     </div>
   );
 };

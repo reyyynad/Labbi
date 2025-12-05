@@ -502,15 +502,17 @@ const ProviderProfile = ({ onNavigate }) => {
                     {initials}
                   </div>
                 )}
-                <label className="absolute bottom-0 right-0 w-8 h-8 bg-white border-2 border-[#065f46] rounded-full flex items-center justify-center hover:bg-[#f0fdf4] cursor-pointer">
-                  <Camera className="w-4 h-4 text-[#065f46]" />
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={handleImageChange}
-                    className="hidden"
-                  />
-                </label>
+                {isEditing && (
+                  <label className="absolute bottom-0 right-0 w-8 h-8 bg-white border-2 border-[#065f46] rounded-full flex items-center justify-center hover:bg-[#f0fdf4] cursor-pointer">
+                    <Camera className="w-4 h-4 text-[#065f46]" />
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleImageChange}
+                      className="hidden"
+                    />
+                  </label>
+                )}
               </div>
 
               {/* Profile Info */}

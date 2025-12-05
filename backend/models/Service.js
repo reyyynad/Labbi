@@ -20,7 +20,24 @@ const serviceSchema = new mongoose.Schema({
   category: {
     type: String,
     required: [true, 'Category is required'],
-    enum: ['technology', 'design', 'language', 'tutoring', 'home', 'beauty', 'education', 'tech', 'events', 'health', 'business', 'other']
+    validate: {
+      validator: function(value) {
+        // Allow predefined categories from SignupProvider or any custom category (non-empty string)
+        const validCategories = [
+          'home-services',
+          'beauty',
+          'education',
+          'tech',
+          'events',
+          'health',
+          'business',
+          'other'
+        ];
+        // Allow enum values or any custom category (must be non-empty string)
+        return validCategories.includes(value) || (typeof value === 'string' && value.trim().length > 0);
+      },
+      message: 'Category must be a valid predefined category or a custom category name'
+    }
   },
   subcategory: {
     type: String,

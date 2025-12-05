@@ -9,11 +9,11 @@ const EditServiceModal = ({ isOpen, onClose, service, onSave }) => {
     title: '',
     description: '',
     category: '',
+    subcategory: '',
     price: '',
     priceType: 'hourly',
     sessionDuration: '2',
-    imageFile: null,
-    imagePreview: ''
+    images: []
   });
 
   const [errors, setErrors] = useState({});
@@ -21,15 +21,20 @@ const EditServiceModal = ({ isOpen, onClose, service, onSave }) => {
   // Update form data when service changes
   useEffect(() => {
     if (service) {
+      // Get existing images from service (filter out empty/invalid ones)
+      const existingImages = (service.images || []).filter(img => 
+        img && typeof img === 'string' && img.trim().length > 0
+      );
+      
       setFormData({
         title: service.title || '',
         description: service.description || '',
         category: service.category || '',
+        subcategory: service.subcategory || '',
         price: service.price || '',
         priceType: service.priceType === 'hour' ? 'hourly' : service.priceType === 'session' ? 'session' : 'fixed',
-        sessionDuration: '2',
-        imageFile: null,
-        imagePreview: service.image || ''
+        sessionDuration: service.sessionDuration || '2',
+        images: existingImages
       });
       // Clear any previous errors
       setErrors({});
@@ -37,12 +42,25 @@ const EditServiceModal = ({ isOpen, onClose, service, onSave }) => {
   }, [service]);
 
   const categories = [
-    { value: 'technology', label: 'Technology' },
-    { value: 'design', label: 'Design' },
-    { value: 'language', label: 'Language' },
-    { value: 'tutoring', label: 'Tutoring' },
-    { value: 'Home Services', label: 'Home Services' }
+    { value: 'home-services', label: 'Home Services' },
+    { value: 'beauty', label: 'Beauty & Wellness' },
+    { value: 'education', label: 'Education & Tutoring' },
+    { value: 'tech', label: 'Tech & IT Services' },
+    { value: 'events', label: 'Events & Entertainment' },
+    { value: 'health', label: 'Health & Fitness' },
+    { value: 'business', label: 'Business Services' },
+    { value: 'other', label: 'Other' }
   ];
+
+  const subcategories = {
+    'home-services': ['Cleaning', 'Maintenance', 'Cooking', 'Plumbing', 'Electrical', 'Gardening', 'Moving & Packing'],
+    'beauty': ['Hair Styling', 'Makeup Artistry', 'Nail Art', 'Skincare Consultation', 'Barber Services', 'Beauty Consultation'],
+    'education': ['Online Tutoring', 'Course Creation', 'Educational Consulting', 'Curriculum Development', 'Study Skills Coaching'],
+    'tech': ['Web Development', 'Mobile Development', 'Data Science', 'Software Development', 'IT Support', 'Cybersecurity'],
+    'events': ['Event Planning', 'Photography Services', 'Catering', 'DJ Services', 'Entertainment', 'Decoration'],
+    'health': ['Personal Training', 'Yoga Instruction', 'Nutrition Counseling', 'Mental Health Support', 'Physical Therapy', 'Massage Therapy'],
+    'business': ['Business Consulting', 'Marketing Strategy', 'Financial Planning', 'Career Coaching', 'Project Management', 'HR Consulting']
+  };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -55,35 +73,54 @@ const EditServiceModal = ({ isOpen, onClose, service, onSave }) => {
     }
   };
 
-  const handleImageUpload = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      // Validate file type
-      if (!file.type.startsWith('image/')) {
-        setErrors(prev => ({ ...prev, image: 'Please select a valid image file' }));
-        return;
-      }
-      
-      // Validate file size (max 5MB)
-      if (file.size > 5 * 1024 * 1024) {
-        setErrors(prev => ({ ...prev, image: 'Image size must be less than 5MB' }));
-        return;
-      }
-
-      // Create preview URL
-      const previewURL = URL.createObjectURL(file);
-      
+  const handleImageUpload = async (e) => {
+    const files = Array.from(e.target.files);
+    
+    if (formData.images.length + files.length > 5) {
+      setErrors(prev => ({ ...prev, image: 'Maximum 5 images allowed' }));
+      return;
+    }
+    
+    const newImagePromises = files.map(file => {
+      return new Promise((resolve, reject) => {
+        if (!file.type.startsWith('image/')) {
+          reject('Please select a valid image file');
+          return;
+        }
+        if (file.size > 5 * 1024 * 1024) {
+          reject('Each image must be less than 5MB');
+          return;
+        }
+        
+        const reader = new FileReader();
+        reader.onload = (event) => resolve(event.target.result);
+        reader.onerror = (error) => reject('Failed to read file');
+        reader.readAsDataURL(file);
+      });
+    });
+    
+    try {
+      const newImages = await Promise.all(newImagePromises);
       setFormData(prev => ({
         ...prev,
-        imageFile: file,
-        imagePreview: previewURL
+        images: [...prev.images, ...newImages]
       }));
-      
-      // Clear any previous image errors
       if (errors.image) {
         setErrors(prev => ({ ...prev, image: '' }));
       }
+    } catch (error) {
+      setErrors(prev => ({ ...prev, image: error }));
     }
+    
+    // Reset the input so the same file can be selected again
+    e.target.value = '';
+  };
+
+  const removeImage = (index) => {
+    setFormData(prev => ({
+      ...prev,
+      images: prev.images.filter((_, i) => i !== index)
+    }));
   };
 
   const validateForm = () => {
@@ -119,32 +156,17 @@ const EditServiceModal = ({ isOpen, onClose, service, onSave }) => {
         title: formData.title,
         description: formData.description,
         category: formData.category,
+        subcategory: formData.subcategory || '',
         price: parseFloat(formData.price),
         priceType: formData.priceType === 'hourly' ? 'hour' : formData.priceType,
-        // Use preview URL if new file uploaded, otherwise keep existing image
-        image: formData.imageFile ? formData.imagePreview : service.image
+        sessionDuration: parseFloat(formData.sessionDuration) || 1,
+        images: formData.images || [] // Send all images (existing + new)
       };
-      
-      // In a real app, you would upload the file to a server here
-      // For now, we'll use the preview URL
-      if (formData.imageFile) {
-        console.log('Image file to upload:', formData.imageFile);
-        // TODO: Upload file to server and get URL
-      }
       
       onSave(updatedService);
       onClose();
     }
   };
-
-  // Clean up preview URL when modal closes
-  React.useEffect(() => {
-    return () => {
-      if (formData.imagePreview && formData.imagePreview.startsWith('blob:')) {
-        URL.revokeObjectURL(formData.imagePreview);
-      }
-    };
-  }, [formData.imagePreview]);
 
   if (!isOpen) return null;
 
@@ -224,7 +246,11 @@ const EditServiceModal = ({ isOpen, onClose, service, onSave }) => {
             <select
               name="category"
               value={formData.category}
-              onChange={handleChange}
+              onChange={(e) => {
+                handleChange(e);
+                // Reset subcategory when category changes
+                setFormData(prev => ({ ...prev, subcategory: '' }));
+              }}
               className={`w-full px-4 py-2.5 border rounded-lg focus:outline-none focus:ring-2 bg-white ${
                 errors.category ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-teal-500'
               }`}
@@ -238,6 +264,26 @@ const EditServiceModal = ({ isOpen, onClose, service, onSave }) => {
               <p className="text-red-600 text-sm mt-1">{errors.category}</p>
             )}
           </div>
+
+          {/* Subcategory */}
+          {formData.category && formData.category !== 'other' && subcategories[formData.category] && (
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-900 mb-2">
+                Subcategory
+              </label>
+              <select
+                name="subcategory"
+                value={formData.subcategory}
+                onChange={handleChange}
+                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 bg-white"
+              >
+                <option value="">Select subcategory (optional)</option>
+                {subcategories[formData.category].map(sub => (
+                  <option key={sub} value={sub}>{sub}</option>
+                ))}
+              </select>
+            </div>
+          )}
 
           {/* Pricing Type */}
           <div className="mb-4">
@@ -311,62 +357,61 @@ const EditServiceModal = ({ isOpen, onClose, service, onSave }) => {
           {/* Image Upload */}
           <div className="mb-6">
             <label className="block text-sm font-medium text-gray-900 mb-2">
-              Service Image
+              Service Images (up to 5)
             </label>
             
-            {/* Image Preview */}
-            {formData.imagePreview && (
-              <div className="mb-4 relative">
-                <img
-                  src={formData.imagePreview}
-                  alt="Service preview"
-                  className="w-full h-48 object-cover rounded-lg border border-gray-300"
-                />
-                <button
-                  type="button"
-                  onClick={() => {
-                    // Clean up blob URL if it exists
-                    if (formData.imagePreview && formData.imagePreview.startsWith('blob:')) {
-                      URL.revokeObjectURL(formData.imagePreview);
-                    }
-                    setFormData(prev => ({
-                      ...prev,
-                      imageFile: null,
-                      imagePreview: ''
-                    }));
-                  }}
-                  className="absolute top-2 right-2 w-8 h-8 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center transition-colors shadow-lg"
-                  title="Remove image"
-                >
-                  <X size={16} />
-                </button>
+            {/* Image Previews */}
+            {formData.images.length > 0 && (
+              <div className="mt-4 p-4 bg-white rounded-lg border border-gray-200">
+                <p className="text-sm text-gray-700 font-medium mb-3">
+                  {formData.images.length} image(s) selected
+                </p>
+                <div className="grid grid-cols-5 gap-3">
+                  {formData.images.map((img, index) => (
+                    <div key={index} className="relative">
+                      <img 
+                        src={img} 
+                        alt={`Preview ${index + 1}`}
+                        className="w-full h-20 object-cover rounded-lg border border-gray-200"
+                        onError={(e) => {
+                          e.target.src = 'https://via.placeholder.com/150/cccccc/666666?text=Image+Error';
+                        }}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => removeImage(index)}
+                        className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center text-xs hover:bg-red-600"
+                      >
+                        ×
+                      </button>
+                    </div>
+                  ))}
+                </div>
               </div>
             )}
             
             {/* Upload Area */}
-            <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center bg-gray-50 hover:border-gray-400 transition-colors">
-              <Upload className="w-10 h-10 text-gray-400 mx-auto mb-3" />
-              <p className="text-gray-600 mb-1">Click to upload or drag and drop</p>
-              <p className="text-sm text-gray-500 mb-4">PNG, JPG up to 5MB</p>
-              <input
-                type="file"
-                accept="image/*"
-                onChange={handleImageUpload}
-                className="hidden"
-                id="image-upload-edit"
-              />
-              <label
-                htmlFor="image-upload-edit"
-                className="inline-block px-6 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors font-medium"
-              >
-                Choose Image
-              </label>
-              {formData.imageFile && (
-                <p className="text-sm text-green-600 mt-2">
-                  {formData.imageFile.name} selected
-                </p>
-              )}
-            </div>
+            {formData.images.length < 5 && (
+              <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center bg-gray-50 hover:border-gray-400 transition-colors">
+                <Upload className="w-10 h-10 text-gray-400 mx-auto mb-3" />
+                <p className="text-gray-600 mb-1">Click to upload or drag and drop</p>
+                <p className="text-sm text-gray-500 mb-4">PNG, JPG up to 5MB each (max 5 images)</p>
+                <input
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  onChange={handleImageUpload}
+                  className="hidden"
+                  id="image-upload-edit"
+                />
+                <label
+                  htmlFor="image-upload-edit"
+                  className="inline-block px-6 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors font-medium"
+                >
+                  Choose Images
+                </label>
+              </div>
+            )}
             
             {errors.image && (
               <p className="text-red-600 text-sm mt-1 flex items-center gap-1">
@@ -437,7 +482,11 @@ const ServicePreviewModal = ({ isOpen, onClose, service }) => {
     try {
       const response = await userAPI.getProfile();
       if (response.success) {
-        setProviderData(response.data.profile);
+        // Store both profile and stats
+        setProviderData({
+          ...response.data.profile,
+          stats: response.data.stats
+        });
       }
     } catch (err) {
       console.log('Could not fetch provider data:', err);
@@ -471,7 +520,11 @@ const ServicePreviewModal = ({ isOpen, onClose, service }) => {
     reviewsCount: reviews.length,
     location: providerData?.location || 'Saudi Arabia',
     price: service.price,
-    images: service.image ? [service.image] : []
+    images: (() => {
+      // Filter out empty strings and invalid images
+      const validImages = (service.images || []).filter(img => img && img.trim().length > 0 && (img.startsWith('data:image') || img.startsWith('http')));
+      return validImages.length > 0 ? validImages : (service.image && service.image.trim().length > 0 ? [service.image] : []);
+    })()
   };
 
   const provider = {
@@ -479,7 +532,7 @@ const ServicePreviewModal = ({ isOpen, onClose, service }) => {
     title: `${service.category} Specialist`,
     rating: parseFloat(avgRating),
     reviews: reviews.length,
-    bookings: service.bookings || 0,
+    bookings: providerData?.stats?.totalBookings || service.bookings || 0, // Use provider's total bookings from profile
     email: providerData?.email || 'provider@labbi.com',
     phone: providerData?.phone || '+966 50 000 0000'
   };
@@ -542,10 +595,11 @@ const ServicePreviewModal = ({ isOpen, onClose, service }) => {
 
               {/* Service Gallery */}
               <div className="mb-4">
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="col-span-2 row-span-2 bg-gray-100 border border-gray-300 rounded overflow-hidden h-64">
+                {servicePreview.images && servicePreview.images.length === 1 ? (
+                  // Single image - show without grid and without empty placeholders
+                  <div className="bg-gray-100 border border-gray-300 rounded overflow-hidden h-64">
                     <img 
-                      src={servicePreview.images[0] || 'https://via.placeholder.com/600x400/cccccc/666666?text=No+Image'} 
+                      src={servicePreview.images[0]} 
                       alt={servicePreview.name}
                       className="w-full h-full object-cover"
                       onError={(e) => {
@@ -553,12 +607,35 @@ const ServicePreviewModal = ({ isOpen, onClose, service }) => {
                       }}
                     />
                   </div>
-                  {[1, 2, 3, 4].map((num) => (
-                    <div key={num} className="bg-gray-100 border border-gray-300 rounded flex items-center justify-center h-24">
-                      <span className="text-xs text-gray-400">Image {num}</span>
+                ) : (
+                  // Multiple images - show grid with only actual images
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="col-span-2 row-span-2 bg-gray-100 border border-gray-300 rounded overflow-hidden h-64">
+                      <img 
+                        src={(servicePreview.images && servicePreview.images.length > 0) ? servicePreview.images[0] : 'https://via.placeholder.com/600x400/cccccc/666666?text=No+Image'} 
+                        alt={servicePreview.name}
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          e.target.src = 'https://via.placeholder.com/600x400/cccccc/666666?text=Image+Not+Found';
+                        }}
+                      />
                     </div>
-                  ))}
-                </div>
+                    {servicePreview.images && servicePreview.images.length > 1 && (
+                      servicePreview.images.slice(1, 5).map((img, index) => (
+                        <div key={index} className="bg-gray-100 border border-gray-300 rounded overflow-hidden h-24">
+                          <img
+                            src={img}
+                            alt={`${servicePreview.name} preview ${index + 2}`}
+                            className="w-full h-full object-cover"
+                            onError={(e) => {
+                              e.target.src = 'https://via.placeholder.com/150/cccccc/666666?text=Image+Error';
+                            }}
+                          />
+                        </div>
+                      ))
+                    )}
+                  </div>
+                )}
               </div>
 
               {/* Provider Info */}
@@ -601,7 +678,7 @@ const ServicePreviewModal = ({ isOpen, onClose, service }) => {
               {/* Service Description */}
               <div className="bg-white border border-gray-300 rounded p-6 mb-4">
                 <h2 className="text-lg font-semibold mb-4">About This Service</h2>
-                <p className="text-sm text-gray-700 leading-relaxed mb-4">
+                <p className="text-sm text-gray-700 leading-relaxed mb-4 break-words whitespace-pre-wrap overflow-wrap-anywhere">
                   {service.description}
                 </p>
                 <ul className="space-y-2">
@@ -737,17 +814,23 @@ const MyServices = ({ onNavigate }) => {
       const response = await servicesAPI.getMyServices();
       
       if (response.success) {
-        setServices(response.data.map(s => ({
-          id: s.id,
-          title: s.title,
-          category: s.category,
-          description: s.description,
-          price: s.price,
-          priceType: s.priceType || 'hour',
-          status: s.status,
-          bookings: s.bookings || 0,
-          image: s.image || s.images?.[0] || ''
-        })));
+        setServices(response.data.map(s => {
+          // Filter out empty strings and invalid images
+          const validImages = (s.images || []).filter(img => img && img.trim().length > 0 && (img.startsWith('data:image') || img.startsWith('http')));
+          
+          return {
+            id: s.id,
+            title: s.title,
+            category: s.category,
+            description: s.description,
+            price: s.price,
+            priceType: s.priceType || 'hour',
+            status: s.status,
+            bookings: s.bookings || 0,
+            image: validImages.length > 0 ? validImages[0] : (s.image || ''),
+            images: validImages
+          };
+        }));
       }
     } catch (err) {
       console.error('Fetch services error:', err);
@@ -794,12 +877,27 @@ const MyServices = ({ onNavigate }) => {
           title: updatedService.title,
           description: updatedService.description,
           category: updatedService.category,
+          subcategory: updatedService.subcategory,
           price: updatedService.price,
-          pricingType: updatedService.priceType === 'hour' ? 'hourly' : updatedService.priceType
+          pricingType: updatedService.priceType === 'hour' ? 'hourly' : updatedService.priceType,
+          sessionDuration: updatedService.sessionDuration,
+          images: updatedService.images || [] // Include images array
         });
         
         if (response.success) {
-          setServices(services.map(s => s.id === editingService.id ? updatedService : s));
+          // Filter valid images
+          const validImages = (updatedService.images || []).filter(img => 
+            img && typeof img === 'string' && img.trim().length > 0 && 
+            (img.startsWith('data:image') || img.startsWith('http'))
+          );
+          
+          // Update the service in the list with the response data
+          const updatedServiceData = {
+            ...updatedService,
+            images: validImages,
+            image: validImages.length > 0 ? validImages[0] : (updatedService.image || '')
+          };
+          setServices(services.map(s => s.id === editingService.id ? updatedServiceData : s));
           alert('Service updated successfully!');
         }
       } catch (err) {
@@ -825,18 +923,46 @@ const MyServices = ({ onNavigate }) => {
   const ServiceCard = ({ service }) => {
     const statusColors = getStatusColor(service.status);
     
+    // Get the first uploaded image, or fallback to service.image or default
+    const getServiceImage = () => {
+      if (service.images && service.images.length > 0) {
+        // Filter valid images and return the first one
+        const validImages = service.images.filter(img => 
+          img && typeof img === 'string' && img.trim().length > 0 && 
+          (img.startsWith('data:image') || img.startsWith('http'))
+        );
+        if (validImages.length > 0) {
+          return validImages[0];
+        }
+      }
+      // Fallback to service.image if it exists
+      if (service.image && service.image.trim().length > 0) {
+        return service.image;
+      }
+      // Return null to show placeholder
+      return null;
+    };
+    
+    const serviceImage = getServiceImage();
+    
     return (
       <div className="rounded-lg border border-gray-200 overflow-hidden hover:shadow-lg transition-shadow" style={{ backgroundColor: '#f0fdf4' }}>
         {/* Service Image */}
         <div className="relative h-48 bg-gray-200">
-          <img 
-            src={service.image} 
-            alt={service.title}
-            className="w-full h-full object-cover"
-            onError={(e) => {
-              e.target.style.display = 'none';
-            }}
-          />
+          {serviceImage ? (
+            <img 
+              src={serviceImage} 
+              alt={service.title}
+              className="w-full h-full object-cover"
+              onError={(e) => {
+                e.target.src = 'https://via.placeholder.com/400x300/cccccc/666666?text=Image+Error';
+              }}
+            />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center bg-gray-100">
+              <span className="text-gray-400 text-sm">No Image</span>
+            </div>
+          )}
           {/* Status Badge */}
           <div 
             className="absolute top-3 right-3 px-3 py-1 rounded-full text-xs font-semibold"

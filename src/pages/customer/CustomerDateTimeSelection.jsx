@@ -70,7 +70,7 @@ const CalendarWidget = ({ selectedDate, setSelectedDate, availability, blockedDa
     return checkDate < todayStart;
   };
 
-  // Check if date is available based on provider's schedule
+  // Check if date is available based on provider's selected dates
   const isDateAvailable = (day) => {
     if (!day || isPastDate(day)) return false;
     
@@ -79,16 +79,14 @@ const CalendarWidget = ({ selectedDate, setSelectedDate, availability, blockedDa
     // Check if blocked
     if (blockedDates.some(b => b.date === dateStr)) return false;
     
-    // Check weekly schedule
-    const date = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), day);
-    const dayName = dayNames[date.getDay()];
-    
-    if (availability?.weeklySchedule) {
-      return availability.weeklySchedule[dayName]?.enabled || false;
+    // Check if date is in provider's selected availableDates array
+    // This is the primary check - only show dates the provider has specifically selected
+    if (availability?.availableDates && Array.isArray(availability.availableDates)) {
+      return availability.availableDates.includes(dateStr);
     }
     
-    // Default: weekdays available
-    return date.getDay() !== 0 && date.getDay() !== 6;
+    // If no specific dates are set, don't show any dates as available
+    return false;
   };
   
   return (

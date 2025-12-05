@@ -1,4 +1,5 @@
 const express = require('express');
+const mongoose = require('mongoose');
 const Booking = require('../models/Booking');
 const Availability = require('../models/Availability');
 const { protect, authorize } = require('../middleware/auth');
@@ -133,6 +134,16 @@ router.get('/', protect, async (req, res) => {
       .sort({ date: -1 })
       .lean();
 
+    // Get unique provider IDs to fetch their booking counts
+    const providerIds = [...new Set(bookings.map(b => b.provider?.toString()).filter(Boolean))];
+    const providerBookingCounts = {};
+    
+    // Fetch booking counts for each provider
+    for (const providerId of providerIds) {
+      const count = await Booking.countDocuments({ provider: providerId });
+      providerBookingCounts[providerId] = count;
+    }
+
     res.status(200).json({
       success: true,
       count: bookings.length,
@@ -142,6 +153,7 @@ router.get('/', protect, async (req, res) => {
         service: booking.serviceName,
         provider: booking.providerName,
         providerId: booking.provider,
+        providerBookings: providerBookingCounts[booking.provider?.toString()] || 0,
         customer: booking.customer?.fullName || 'Customer',
         customerEmail: booking.customer?.email,
         customerPhone: booking.customer?.phone,
@@ -437,12 +449,25 @@ router.post('/', protect, async (req, res) => {
       notes
     } = req.body;
 
+    // Ensure providerId is converted to ObjectId if it's a string
+    const mongoose = require('mongoose');
+    let providerObjectId = providerId;
+    if (providerId && typeof providerId === 'string') {
+      providerObjectId = new mongoose.Types.ObjectId(providerId);
+    }
+    
+    // Ensure serviceId is converted to ObjectId if it's a string
+    let serviceObjectId = serviceId;
+    if (serviceId && typeof serviceId === 'string') {
+      serviceObjectId = new mongoose.Types.ObjectId(serviceId);
+    }
+    
     const booking = await Booking.create({
       customer: req.user._id,
-      service: serviceId,
+      service: serviceObjectId,
       serviceName,
       serviceImage,
-      provider: providerId,
+      provider: providerObjectId,
       providerName,
       date: new Date(date),
       displayDate,

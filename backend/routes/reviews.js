@@ -1,4 +1,5 @@
 const express = require('express');
+const mongoose = require('mongoose');
 const Review = require('../models/Review');
 const Booking = require('../models/Booking');
 const Service = require('../models/Service');
@@ -43,11 +44,11 @@ router.post('/', protect, async (req, res) => {
   try {
     const { bookingId, rating, comment } = req.body;
 
-    // Find the booking
+    // Find the booking - populate provider to ensure we get the ObjectId
     const booking = await Booking.findOne({
       _id: bookingId,
       customer: req.user._id
-    });
+    }).populate('provider', '_id');
 
     if (!booking) {
       return res.status(404).json({
@@ -70,16 +71,39 @@ router.post('/', protect, async (req, res) => {
       });
     }
 
+    // Ensure provider is correctly set - booking.provider should be an ObjectId
+    // Convert to ObjectId if it's a string
+    let providerId = booking.provider;
+    if (typeof providerId === 'string') {
+      providerId = new mongoose.Types.ObjectId(providerId);
+    }
+    
+    // Ensure service is correctly set - booking.service should be an ObjectId
+    // Convert to ObjectId if it's a string
+    let serviceId = booking.service;
+    if (serviceId && typeof serviceId === 'string') {
+      serviceId = new mongoose.Types.ObjectId(serviceId);
+    }
+    
     // Create review
     const review = await Review.create({
       booking: bookingId,
       customer: req.user._id,
-      provider: booking.provider,
+      provider: providerId,
       providerName: booking.providerName,
-      service: booking.service,
+      service: serviceId,
       serviceName: booking.serviceName,
       rating,
       comment
+    });
+    
+    console.log('Review created:', {
+      reviewId: review._id,
+      provider: review.provider,
+      providerId: providerId,
+      providerName: review.providerName,
+      bookingProvider: booking.provider,
+      bookingProviderType: typeof booking.provider
     });
 
     // Mark booking as reviewed
@@ -164,10 +188,25 @@ router.get('/provider/:providerId', async (req, res) => {
 // @access  Public
 router.get('/service/:serviceId', async (req, res) => {
   try {
-    const reviews = await Review.find({ service: req.params.serviceId })
+    // Convert serviceId to ObjectId if it's a string
+    const mongoose = require('mongoose');
+    let serviceObjectId = req.params.serviceId;
+    if (typeof serviceObjectId === 'string' && mongoose.Types.ObjectId.isValid(serviceObjectId)) {
+      serviceObjectId = new mongoose.Types.ObjectId(serviceObjectId);
+    }
+    
+    // Query reviews - handle both ObjectId and string formats
+    const reviews = await Review.find({ 
+      $or: [
+        { service: serviceObjectId },
+        { service: req.params.serviceId }
+      ]
+    })
       .populate('customer', 'fullName')
       .sort({ createdAt: -1 })
       .lean();
+    
+    console.log('Fetching reviews for service:', req.params.serviceId, 'Found:', reviews.length);
 
     const avgRating = reviews.length > 0
       ? reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length
@@ -200,10 +239,13 @@ router.get('/service/:serviceId', async (req, res) => {
 // @access  Private (Provider only)
 router.get('/my-reviews', protect, async (req, res) => {
   try {
+    // Query reviews for this provider - Mongoose handles ObjectId comparison automatically
     const reviews = await Review.find({ provider: req.user._id })
       .populate('customer', 'fullName')
       .sort({ createdAt: -1 })
       .lean();
+    
+    console.log('Fetching reviews for provider:', req.user._id, 'Found:', reviews.length);
 
     const avgRating = reviews.length > 0
       ? reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length
