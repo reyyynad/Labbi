@@ -1,5 +1,5 @@
 // API Service for Labbi Application
-const API_BASE_URL = 'http://localhost:5001/api';
+import { API_BASE_URL } from '../config';
 
 // Helper function to get auth token
 const getToken = () => {

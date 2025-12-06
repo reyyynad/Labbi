@@ -70,6 +70,8 @@ Labbi empowers young providers to earn money and build reputation, while custome
 
 ### Step 1: Configure Environment Variables
 
+#### Backend Environment Variables
+
 Create a `.env` file in the `backend/` folder with the following variables:
 
 ```env
@@ -107,7 +109,24 @@ PORT=5000
 2. Start MongoDB service
 3. Use connection string: `mongodb://localhost:27017/labbi`
 
-### Step 3: Run the Backend Server
+### Step 3: Configure Frontend Environment Variables
+
+Create a `.env` file in the **root** folder (same level as `package.json`) with the following:
+
+```env
+# Backend API URL
+# For local development: http://localhost:5001
+# For production (Render): https://your-backend-name.onrender.com
+VITE_API_URL=http://localhost:5001
+```
+
+> **Note:** In Vite, environment variables must be prefixed with `VITE_` to be exposed to the client. This is a security feature.
+
+**For Production Deployment:**
+- Replace `http://localhost:5001` with your Render backend URL (e.g., `https://labbi-backend.onrender.com`)
+- The frontend will automatically use this URL for all API calls
+
+### Step 4: Run the Backend Server
 
 ```bash
 cd backend
@@ -157,6 +176,57 @@ cd backend && npm run dev
 # Terminal 2 - Frontend
 npm run dev
 ```
+
+---
+
+## 🚀 Deployment Instructions
+
+### Deploying to Render
+
+#### Backend Deployment
+
+1. **Push your code to GitHub** (if not already done)
+2. **Create a new Web Service on Render:**
+   - Connect your GitHub repository
+   - Select the `backend` folder as the root directory
+   - Build command: `npm install`
+   - Start command: `npm start`
+   - Add environment variables:
+     - `MONGO_URI` - Your MongoDB connection string
+     - `JWT_SECRET` - Your JWT secret key
+     - `JWT_EXPIRE` - Token expiration (e.g., `30d`)
+     - `PORT` - Will be automatically set by Render
+
+3. **Note your backend URL** (e.g., `https://labbi-backend.onrender.com`)
+
+#### Frontend Deployment
+
+1. **Update Frontend Environment Variables:**
+   - Create a `.env` file in the root directory (or update existing one)
+   - Set `VITE_API_URL` to your Render backend URL:
+     ```env
+     VITE_API_URL=https://labbi-backend.onrender.com
+     ```
+
+2. **Deploy Frontend to Render (or Vercel/Netlify):**
+   - Create a new Static Site on Render (or use Vercel/Netlify)
+   - Connect your GitHub repository
+   - Build command: `npm run build`
+   - Publish directory: `dist`
+   - Add environment variable: `VITE_API_URL=https://labbi-backend.onrender.com`
+
+3. **Commit and push your changes:**
+   ```bash
+   git add .
+   git commit -m "Update API URL to production backend"
+   git push origin main
+   ```
+
+**Important Notes:**
+- The frontend config (`src/config.js`) automatically uses `VITE_API_URL` if set
+- For local development, it defaults to `http://localhost:5001`
+- Never commit `.env` files with production credentials
+- Make sure CORS is configured on your backend to allow your frontend domain
 
 ---
 
