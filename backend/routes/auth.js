@@ -84,8 +84,12 @@ router.post('/register', async (req, res) => {
     try {
       const emailResult = await sendVerificationEmail(user.email, user.fullName, verificationToken, user.userType);
       console.log(`[REGISTRATION] Email service result:`, emailResult);
+      if (emailResult.logged) {
+        console.warn('[REGISTRATION] ⚠️ Email was logged instead of sent (SMTP not configured)');
+      }
     } catch (emailError) {
-      console.error('[REGISTRATION] Error sending verification email:', emailError);
+      console.error('[REGISTRATION] ❌ Error sending verification email:', emailError.message);
+      console.error('[REGISTRATION] User can resend verification email later');
       // Don't fail registration if email fails - user can resend later
     }
 
@@ -421,17 +425,30 @@ router.post('/forgot-password', async (req, res) => {
 
     // Send password reset email
     try {
-      await sendPasswordResetEmail(user.email, user.fullName, resetToken);
-      res.status(200).json({
-        success: true,
-        message: 'Password reset email sent. Please check your inbox.'
-      });
+      const emailResult = await sendPasswordResetEmail(user.email, user.fullName, resetToken);
+      
+      if (emailResult.logged) {
+        // Development mode - email was logged
+        console.log('[FORGOT PASSWORD] SMTP not configured - email logged to console');
+        res.status(200).json({
+          success: true,
+          message: 'Password reset email logged (SMTP not configured). Check server logs for the reset link.',
+          logged: true,
+          link: emailResult.link
+        });
+      } else {
+        res.status(200).json({
+          success: true,
+          message: 'Password reset email sent. Please check your inbox.'
+        });
+      }
     } catch (emailError) {
       console.error('Error sending password reset email:', emailError);
-      // Still return success to user, but log the error
-      res.status(200).json({
-        success: true,
-        message: 'If an account with that email exists, a password reset link has been sent.'
+      // Return error response so user knows email failed
+      res.status(500).json({
+        success: false,
+        message: 'Failed to send password reset email. Please check SMTP configuration or try again later.',
+        error: process.env.NODE_ENV === 'development' ? emailError.message : undefined
       });
     }
   } catch (error) {

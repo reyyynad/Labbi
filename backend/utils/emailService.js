@@ -1,9 +1,13 @@
 const nodemailer = require('nodemailer');
 
+// Check if we're in production (Render, Vercel, etc.)
+const isProduction = process.env.NODE_ENV === 'production' || process.env.RENDER || process.env.VERCEL;
+
 // Create reusable transporter object using SMTP transport
 const createTransporter = async () => {
   // Debug: Check if env variables are loaded
   console.log('\n[EMAIL DEBUG] Checking SMTP configuration...');
+  console.log('Environment:', isProduction ? 'PRODUCTION' : 'DEVELOPMENT');
   console.log('SMTP_USER:', process.env.SMTP_USER ? '✅ Set' : '❌ Not set');
   console.log('SMTP_PASS:', process.env.SMTP_PASS ? '✅ Set (' + process.env.SMTP_PASS.length + ' chars)' : '❌ Not set');
   console.log('SMTP_HOST:', process.env.SMTP_HOST || 'smtp.gmail.com (default)');
@@ -14,7 +18,7 @@ const createTransporter = async () => {
     console.log('[EMAIL DEBUG] ✅ SMTP configured, creating transporter...\n');
     try {
       // Remove spaces from password (Gmail App Passwords sometimes have spaces)
-      const password = process.env.SMTP_PASS.replace(/\s/g, '');
+      const password = process.env.SMTP_PASS.replace(/\s/g, '').trim();
       const port = parseInt(process.env.SMTP_PORT) || 587;
       const useSecure = port === 465;
       
@@ -23,16 +27,17 @@ const createTransporter = async () => {
         port: port,
         secure: useSecure, // true for 465, false for other ports
         auth: {
-          user: process.env.SMTP_USER,
+          user: process.env.SMTP_USER.trim(),
           pass: password, // Use App Password for Gmail
         },
         tls: {
           // Do not fail on invalid certs
           rejectUnauthorized: false
         },
-        // Add connection timeout
-        connectionTimeout: 10000, // 10 seconds
-        greetingTimeout: 10000,
+        // Add connection timeout - longer for production
+        connectionTimeout: isProduction ? 30000 : 10000,
+        greetingTimeout: isProduction ? 30000 : 10000,
+        socketTimeout: isProduction ? 30000 : 10000,
       });
       
       // Verify connection (but don't fail if verify fails - try sending anyway)
@@ -54,18 +59,21 @@ const createTransporter = async () => {
         console.error('[EMAIL DEBUG] Connection timeout - trying alternative configuration...');
         // Try with different settings
         try {
-          const password = process.env.SMTP_PASS.replace(/\s/g, '');
+          const password = process.env.SMTP_PASS.replace(/\s/g, '').trim();
           const altTransporter = nodemailer.createTransport({
             host: 'smtp.gmail.com',
             port: 465,
             secure: true,
             auth: {
-              user: process.env.SMTP_USER,
+              user: process.env.SMTP_USER.trim(),
               pass: password,
             },
             tls: {
               rejectUnauthorized: false
-            }
+            },
+            connectionTimeout: isProduction ? 30000 : 10000,
+            greetingTimeout: isProduction ? 30000 : 10000,
+            socketTimeout: isProduction ? 30000 : 10000,
           });
           await altTransporter.verify();
           console.log('[EMAIL DEBUG] ✅ Alternative connection (port 465) works!\n');
@@ -79,24 +87,42 @@ const createTransporter = async () => {
     }
   }
 
-  // If no SMTP configured, log instructions and use console fallback
+  // If no SMTP configured
+  const errorMessage = isProduction 
+    ? 'SMTP configuration is required in production. Please set SMTP_USER and SMTP_PASS environment variables in your Render/Vercel dashboard.'
+    : 'SMTP not configured - emails will be logged to console';
+  
   console.log('\n⚠️  EMAIL CONFIGURATION REQUIRED ⚠️');
-  console.log('[EMAIL DEBUG] ❌ SMTP not configured - emails will be logged to console');
-  console.log('\nTo send emails, add these to your backend/.env file:');
-  console.log('SMTP_USER=your-email@gmail.com');
-  console.log('SMTP_PASS=your-app-password');
-  console.log('SMTP_HOST=smtp.gmail.com (optional)');
-  console.log('SMTP_PORT=587 (optional)');
-  console.log('\n📧 Gmail Setup Instructions:');
-  console.log('1. Enable 2-Step Verification: https://myaccount.google.com/security');
-  console.log('2. Generate App Password: https://myaccount.google.com/apppasswords');
-  console.log('3. Select "Mail" and generate password');
-  console.log('4. Copy the 16-character password (remove spaces)');
-  console.log('5. Add to backend/.env as SMTP_PASS');
-  console.log('6. Restart backend server');
+  console.log('[EMAIL DEBUG] ❌', errorMessage);
+  
+  if (!isProduction) {
+    console.log('\nTo send emails, add these to your backend/.env file:');
+    console.log('SMTP_USER=your-email@gmail.com');
+    console.log('SMTP_PASS=your-app-password');
+    console.log('SMTP_HOST=smtp.gmail.com (optional)');
+    console.log('SMTP_PORT=587 (optional)');
+    console.log('\n📧 Gmail Setup Instructions:');
+    console.log('1. Enable 2-Step Verification: https://myaccount.google.com/security');
+    console.log('2. Generate App Password: https://myaccount.google.com/apppasswords');
+    console.log('3. Select "Mail" and generate password');
+    console.log('4. Copy the 16-character password (remove spaces)');
+    console.log('5. Add to backend/.env as SMTP_PASS');
+    console.log('6. Restart backend server');
+  }
+  
+  console.log('\n📦 For Production (Render/Vercel):');
+  console.log('1. Go to your Render/Vercel dashboard');
+  console.log('2. Navigate to Environment Variables');
+  console.log('3. Add SMTP_USER, SMTP_PASS, SMTP_HOST (optional), SMTP_PORT (optional)');
+  console.log('4. Redeploy your service');
   console.log('==========================================\n');
   
-  // Return a mock transporter that will log instead of sending
+  // In production, throw an error instead of silently logging
+  if (isProduction) {
+    throw new Error('SMTP configuration is missing. Please configure SMTP_USER and SMTP_PASS environment variables in your deployment platform (Render/Vercel).');
+  }
+  
+  // Return a mock transporter that will log instead of sending (only in development)
   return {
     sendMail: async (options) => {
       console.log('\n📧 EMAIL (SMTP not configured - logging instead):');
@@ -197,18 +223,22 @@ const sendVerificationEmail = async (email, name, token, userType) => {
     console.log('[EMAIL DEBUG] Attempting to send verification email...');
     const info = await transporter.sendMail(mailOptions);
     
-    if (process.env.SMTP_USER && process.env.SMTP_PASS) {
-      console.log('✅ Verification email sent successfully!');
-      console.log('   Message ID:', info.messageId);
-      console.log('   To:', email);
-      console.log('   From:', process.env.SMTP_USER);
-      return { success: true, messageId: info.messageId };
-    } else {
+    // Check if this was a mock send (development only)
+    if (info.messageId && info.messageId.startsWith('mock-')) {
       console.log('📧 Verification email logged (SMTP not configured)');
       console.log('   Link:', verificationUrl);
-      // Return success but indicate it was logged, not sent
+      // In production, this should not happen (error would be thrown)
+      if (isProduction) {
+        throw new Error('Email sending failed: SMTP not configured');
+      }
       return { success: true, messageId: info.messageId, logged: true, link: verificationUrl };
     }
+    
+    console.log('✅ Verification email sent successfully!');
+    console.log('   Message ID:', info.messageId);
+    console.log('   To:', email);
+    console.log('   From:', process.env.SMTP_USER);
+    return { success: true, messageId: info.messageId };
   } catch (error) {
     console.error('\n❌ ERROR sending verification email:');
     console.error('   Error message:', error.message);
@@ -313,12 +343,20 @@ const sendPasswordResetEmail = async (email, name, token) => {
 
     const info = await transporter.sendMail(mailOptions);
     
-    if (process.env.SMTP_USER && process.env.SMTP_PASS) {
-      console.log('✅ Password reset email sent successfully:', info.messageId);
-    } else {
+    // Check if this was a mock send (development only)
+    if (info.messageId && info.messageId.startsWith('mock-')) {
       console.log('📧 Password reset email logged (SMTP not configured)');
+      console.log('   Link:', resetUrl);
+      // In production, this should not happen (error would be thrown)
+      if (isProduction) {
+        throw new Error('Email sending failed: SMTP not configured');
+      }
+      return { success: true, messageId: info.messageId, logged: true, link: resetUrl };
     }
     
+    console.log('✅ Password reset email sent successfully:', info.messageId);
+    console.log('   To:', email);
+    console.log('   From:', process.env.SMTP_USER);
     return { success: true, messageId: info.messageId };
   } catch (error) {
     console.error('Error sending password reset email:', error);
