@@ -75,30 +75,35 @@ router.post('/register', async (req, res) => {
     // Create user
     const user = await User.create(userData);
 
+    // EMAIL VERIFICATION DISABLED - Auto-verify email on registration
     // Generate email verification token
-    const verificationToken = user.generateEmailVerificationToken();
-    await user.save({ validateBeforeSave: false });
+    // const verificationToken = user.generateEmailVerificationToken();
+    // await user.save({ validateBeforeSave: false });
 
-    // Send verification email
-    console.log(`\n[REGISTRATION] Sending verification email to: ${user.email}`);
-    try {
-      const emailResult = await sendVerificationEmail(user.email, user.fullName, verificationToken, user.userType);
-      console.log(`[REGISTRATION] Email service result:`, emailResult);
-      if (emailResult.logged) {
-        console.warn('[REGISTRATION] ⚠️ Email was logged instead of sent (SMTP not configured)');
-      }
-    } catch (emailError) {
-      console.error('[REGISTRATION] ❌ Error sending verification email:', emailError.message);
-      console.error('[REGISTRATION] User can resend verification email later');
-      // Don't fail registration if email fails - user can resend later
-    }
+    // Send verification email - DISABLED
+    // console.log(`\n[REGISTRATION] Sending verification email to: ${user.email}`);
+    // try {
+    //   const emailResult = await sendVerificationEmail(user.email, user.fullName, verificationToken, user.userType);
+    //   console.log(`[REGISTRATION] Email service result:`, emailResult);
+    //   if (emailResult.logged) {
+    //     console.warn('[REGISTRATION] ⚠️ Email was logged instead of sent (SMTP not configured)');
+    //   }
+    // } catch (emailError) {
+    //   console.error('[REGISTRATION] ❌ Error sending verification email:', emailError.message);
+    //   console.error('[REGISTRATION] User can resend verification email later');
+    //   // Don't fail registration if email fails - user can resend later
+    // }
+
+    // Auto-verify email (no verification required)
+    user.isEmailVerified = true;
+    await user.save({ validateBeforeSave: false });
 
     // Generate token
     const token = generateToken(user._id);
 
     res.status(201).json({
       success: true,
-      message: userType === 'provider' ? 'Provider registration successful. Please check your email to verify your account.' : 'Registration successful. Please check your email to verify your account.',
+      message: userType === 'provider' ? 'Provider registration successful. You can now log in.' : 'Registration successful. You can now log in.',
       data: {
         token,
         user: {
@@ -163,15 +168,16 @@ router.post('/login', async (req, res) => {
       });
     }
 
+    // EMAIL VERIFICATION DISABLED - Allow login without email verification
     // Check if email is verified (skip for admin users)
-    if (user.userType !== 'admin' && !user.isEmailVerified) {
-      console.log(`Login blocked: Email not verified for ${normalizedEmail}`);
-      return res.status(403).json({
-        success: false,
-        message: 'Please verify your email address before logging in. Check your inbox for the verification link.',
-        requiresVerification: true
-      });
-    }
+    // if (user.userType !== 'admin' && !user.isEmailVerified) {
+    //   console.log(`Login blocked: Email not verified for ${normalizedEmail}`);
+    //   return res.status(403).json({
+    //     success: false,
+    //     message: 'Please verify your email address before logging in. Check your inbox for the verification link.',
+    //     requiresVerification: true
+    //   });
+    // }
 
     console.log(`Login successful: ${normalizedEmail} (${user.userType})`);
 
@@ -394,136 +400,138 @@ router.get('/me', protect, async (req, res) => {
   }
 });
 
+// FORGOT PASSWORD DISABLED
 // @route   POST /api/auth/forgot-password
 // @desc    Send password reset email
 // @access  Public
-router.post('/forgot-password', async (req, res) => {
-  try {
-    const { email } = req.body;
+// router.post('/forgot-password', async (req, res) => {
+//   try {
+//     const { email } = req.body;
 
-    if (!email) {
-      return res.status(400).json({
-        success: false,
-        message: 'Email is required'
-      });
-    }
+//     if (!email) {
+//       return res.status(400).json({
+//         success: false,
+//         message: 'Email is required'
+//       });
+//     }
 
-    const user = await User.findOne({ email: email.toLowerCase() });
+//     const user = await User.findOne({ email: email.toLowerCase() });
     
-    // Don't reveal if user exists or not (security best practice)
-    // Always return success message
-    if (!user) {
-      return res.status(200).json({
-        success: true,
-        message: 'If an account with that email exists, a password reset link has been sent.'
-      });
-    }
+//     // Don't reveal if user exists or not (security best practice)
+//     // Always return success message
+//     if (!user) {
+//       return res.status(200).json({
+//         success: true,
+//         message: 'If an account with that email exists, a password reset link has been sent.'
+//       });
+//     }
 
-    // Generate password reset token
-    const resetToken = user.generatePasswordResetToken();
-    await user.save({ validateBeforeSave: false });
+//     // Generate password reset token
+//     const resetToken = user.generatePasswordResetToken();
+//     await user.save({ validateBeforeSave: false });
 
-    // Send password reset email
-    try {
-      const emailResult = await sendPasswordResetEmail(user.email, user.fullName, resetToken);
+//     // Send password reset email
+//     try {
+//       const emailResult = await sendPasswordResetEmail(user.email, user.fullName, resetToken);
       
-      if (emailResult.logged) {
-        // Development mode - email was logged
-        console.log('[FORGOT PASSWORD] SMTP not configured - email logged to console');
-        res.status(200).json({
-          success: true,
-          message: 'Password reset email logged (SMTP not configured). Check server logs for the reset link.',
-          logged: true,
-          link: emailResult.link
-        });
-      } else {
-        res.status(200).json({
-          success: true,
-          message: 'Password reset email sent. Please check your inbox.'
-        });
-      }
-    } catch (emailError) {
-      console.error('Error sending password reset email:', emailError);
-      // Return error response so user knows email failed
-      res.status(500).json({
-        success: false,
-        message: 'Failed to send password reset email. Please check SMTP configuration or try again later.',
-        error: process.env.NODE_ENV === 'development' ? emailError.message : undefined
-      });
-    }
-  } catch (error) {
-    console.error('Forgot password error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Server error'
-    });
-  }
-});
+//       if (emailResult.logged) {
+//         // Development mode - email was logged
+//         console.log('[FORGOT PASSWORD] SMTP not configured - email logged to console');
+//         res.status(200).json({
+//           success: true,
+//           message: 'Password reset email logged (SMTP not configured). Check server logs for the reset link.',
+//           logged: true,
+//           link: emailResult.link
+//         });
+//       } else {
+//         res.status(200).json({
+//           success: true,
+//           message: 'Password reset email sent. Please check your inbox.'
+//         });
+//       }
+//     } catch (emailError) {
+//       console.error('Error sending password reset email:', emailError);
+//       // Return error response so user knows email failed
+//       res.status(500).json({
+//         success: false,
+//         message: 'Failed to send password reset email. Please check SMTP configuration or try again later.',
+//         error: process.env.NODE_ENV === 'development' ? emailError.message : undefined
+//       });
+//     }
+//   } catch (error) {
+//     console.error('Forgot password error:', error);
+//     res.status(500).json({
+//       success: false,
+//       message: 'Server error'
+//     });
+//   }
+// });
 
+// RESET PASSWORD DISABLED
 // @route   POST /api/auth/reset-password/:token
 // @desc    Reset password with token
 // @access  Public
-router.post('/reset-password/:token', async (req, res) => {
-  try {
-    const { token } = req.params;
-    const { password } = req.body;
+// router.post('/reset-password/:token', async (req, res) => {
+//   try {
+//     const { token } = req.params;
+//     const { password } = req.body;
 
-    if (!password || password.length < 8) {
-      return res.status(400).json({
-        success: false,
-        message: 'Password must be at least 8 characters long'
-      });
-    }
+//     if (!password || password.length < 8) {
+//       return res.status(400).json({
+//         success: false,
+//         message: 'Password must be at least 8 characters long'
+//       });
+//     }
 
-    // Hash the token to compare with stored hash
-    const hashedToken = crypto
-      .createHash('sha256')
-      .update(token)
-      .digest('hex');
+//     // Hash the token to compare with stored hash
+//     const hashedToken = crypto
+//       .createHash('sha256')
+//       .update(token)
+//       .digest('hex');
 
-    // Find user with this token and check if it's not expired
-    const user = await User.findOne({
-      passwordResetToken: hashedToken,
-      passwordResetExpires: { $gt: Date.now() }
-    }).select('+passwordResetToken +passwordResetExpires');
+//     // Find user with this token and check if it's not expired
+//     const user = await User.findOne({
+//       passwordResetToken: hashedToken,
+//       passwordResetExpires: { $gt: Date.now() }
+//     }).select('+passwordResetToken +passwordResetExpires');
 
-    if (!user) {
-      return res.status(400).json({
-        success: false,
-        message: 'Invalid or expired password reset token'
-      });
-    }
+//     if (!user) {
+//       return res.status(400).json({
+//         success: false,
+//         message: 'Invalid or expired password reset token'
+//       });
+//     }
 
-    // Set new password
-    user.password = password;
-    user.passwordResetToken = undefined;
-    user.passwordResetExpires = undefined;
-    await user.save();
+//     // Set new password
+//     user.password = password;
+//     user.passwordResetToken = undefined;
+//     user.passwordResetExpires = undefined;
+//     await user.save();
 
-    // Generate new token for automatic login
-    const authToken = generateToken(user._id);
+//     // Generate new token for automatic login
+//     const authToken = generateToken(user._id);
 
-    res.status(200).json({
-      success: true,
-      message: 'Password reset successfully',
-      data: {
-        token: authToken,
-        user: {
-          id: user._id,
-          fullName: user.fullName,
-          email: user.email,
-          userType: user.userType
-        }
-      }
-    });
-  } catch (error) {
-    console.error('Reset password error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Server error during password reset'
-    });
-  }
-});
+//     res.status(200).json({
+//       success: true,
+//       message: 'Password reset successfully',
+//       data: {
+//         token: authToken,
+//         user: {
+//           id: user._id,
+//           fullName: user.fullName,
+//           email: user.email,
+//           userType: user.userType
+//         }
+//       }
+//     });
+//   } catch (error) {
+//     console.error('Reset password error:', error);
+//     res.status(500).json({
+//       success: false,
+//       message: 'Server error during password reset'
+//     });
+//   }
+// });
 
 // @route   PUT /api/auth/update-password
 // @desc    Update password
@@ -610,77 +618,78 @@ router.get('/verify-email/:token', async (req, res) => {
   }
 });
 
+// RESEND VERIFICATION DISABLED
 // @route   POST /api/auth/resend-verification
 // @desc    Resend verification email
 // @access  Public
-router.post('/resend-verification', async (req, res) => {
-  try {
-    const { email } = req.body;
+// router.post('/resend-verification', async (req, res) => {
+//   try {
+//     const { email } = req.body;
 
-    if (!email) {
-      return res.status(400).json({
-        success: false,
-        message: 'Email is required'
-      });
-    }
+//     if (!email) {
+//       return res.status(400).json({
+//         success: false,
+//         message: 'Email is required'
+//       });
+//     }
 
-    // Find user
-    const user = await User.findOne({ email: email.toLowerCase() })
-      .select('+emailVerificationToken +emailVerificationExpires');
+//     // Find user
+//     const user = await User.findOne({ email: email.toLowerCase() })
+//       .select('+emailVerificationToken +emailVerificationExpires');
 
-    if (!user) {
-      return res.status(404).json({
-        success: false,
-        message: 'User not found'
-      });
-    }
+//     if (!user) {
+//       return res.status(404).json({
+//         success: false,
+//         message: 'User not found'
+//       });
+//     }
 
-    // Check if already verified
-    if (user.isEmailVerified) {
-      return res.status(400).json({
-        success: false,
-        message: 'Email is already verified'
-      });
-    }
+//     // Check if already verified
+//     if (user.isEmailVerified) {
+//       return res.status(400).json({
+//         success: false,
+//         message: 'Email is already verified'
+//       });
+//     }
 
-    // Generate new verification token
-    const verificationToken = user.generateEmailVerificationToken();
-    await user.save({ validateBeforeSave: false });
+//     // Generate new verification token
+//     const verificationToken = user.generateEmailVerificationToken();
+//     await user.save({ validateBeforeSave: false });
 
-    // Send verification email
-    try {
-      const emailResult = await sendVerificationEmail(user.email, user.fullName, verificationToken, user.userType);
+//     // Send verification email
+//     try {
+//       const emailResult = await sendVerificationEmail(user.email, user.fullName, verificationToken, user.userType);
       
-      // If SMTP is not configured, include the link in the response
-      if (emailResult.logged) {
-        console.log('[RESEND] SMTP not configured - email logged to console');
-        res.status(200).json({
-          success: true,
-          message: 'Verification email logged (SMTP not configured). Check server logs for the verification link.',
-          logged: true,
-          link: emailResult.link
-        });
-      } else {
-        res.status(200).json({
-          success: true,
-          message: 'Verification email sent successfully'
-        });
-      }
-    } catch (emailError) {
-      console.error('Error sending verification email:', emailError);
-      res.status(500).json({
-        success: false,
-        message: 'Failed to send verification email. Please check SMTP configuration or try again later.'
-      });
-    }
-  } catch (error) {
-    console.error('Resend verification error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Server error'
-    });
-  }
-});
+//       // If SMTP is not configured, include the link in the response
+//       if (emailResult.logged) {
+//         console.log('[RESEND] SMTP not configured - email logged to console');
+//         res.status(200).json({
+//           success: true,
+//           message: 'Verification email logged (SMTP not configured). Check server logs for the verification link.',
+//           logged: true,
+//           link: emailResult.link
+//         });
+//       } else {
+//         res.status(200).json({
+//           success: true,
+//           message: 'Verification email sent successfully'
+//         });
+//       }
+//     } catch (emailError) {
+//       console.error('Error sending verification email:', emailError);
+//       res.status(500).json({
+//         success: false,
+//         message: 'Failed to send verification email. Please check SMTP configuration or try again later.'
+//       });
+//     }
+//   } catch (error) {
+//     console.error('Resend verification error:', error);
+//     res.status(500).json({
+//       success: false,
+//       message: 'Server error'
+//     });
+//   }
+// });
 
 module.exports = router;
 
