@@ -29,7 +29,9 @@ function VerifyEmail() {
     setVerifying(true)
     setError('')
     try {
-      await authAPI.verifyEmail(verificationToken)
+      console.log('Verifying email with token:', verificationToken)
+      const result = await authAPI.verifyEmail(verificationToken)
+      console.log('Verification result:', result)
       setVerified(true)
       // Redirect after 2 seconds
       setTimeout(() => {
@@ -40,6 +42,7 @@ function VerifyEmail() {
         }
       }, 2000)
     } catch (err) {
+      console.error('Verification error:', err)
       setError(err.message || 'Verification failed. The link may be invalid or expired.')
     } finally {
       setVerifying(false)

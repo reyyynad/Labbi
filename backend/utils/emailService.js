@@ -221,6 +221,10 @@ const sendVerificationEmail = async (email, name, token, userType) => {
     };
 
     console.log('[EMAIL DEBUG] Attempting to send verification email...');
+    console.log('[EMAIL DEBUG] To:', email);
+    console.log('[EMAIL DEBUG] From:', fromEmail);
+    console.log('[EMAIL DEBUG] Verification URL:', verificationUrl);
+    
     const info = await transporter.sendMail(mailOptions);
     
     // Check if this was a mock send (development only)
@@ -238,13 +242,18 @@ const sendVerificationEmail = async (email, name, token, userType) => {
     console.log('   Message ID:', info.messageId);
     console.log('   To:', email);
     console.log('   From:', process.env.SMTP_USER);
+    console.log('   Response:', info.response || 'No response');
     return { success: true, messageId: info.messageId };
   } catch (error) {
     console.error('\n❌ ERROR sending verification email:');
     console.error('   Error message:', error.message);
     console.error('   Error code:', error.code);
+    console.error('   Error stack:', error.stack);
     if (error.response) {
       console.error('   SMTP Response:', error.response);
+    }
+    if (error.command) {
+      console.error('   SMTP Command:', error.command);
     }
     
     // Log the verification link as fallback
@@ -252,13 +261,23 @@ const sendVerificationEmail = async (email, name, token, userType) => {
     console.log('\n=== EMAIL VERIFICATION (Fallback - Email Failed) ===');
     console.log(`To: ${email}`);
     console.log(`Verification Link: ${verificationUrl}`);
+    console.log(`Environment: ${isProduction ? 'PRODUCTION' : 'DEVELOPMENT'}`);
+    console.log(`SMTP_USER: ${process.env.SMTP_USER ? 'Set' : 'NOT SET'}`);
+    console.log(`SMTP_PASS: ${process.env.SMTP_PASS ? 'Set (' + process.env.SMTP_PASS.length + ' chars)' : 'NOT SET'}`);
     console.log(`\nCommon fixes:`);
-    console.log(`1. Check SMTP_USER and SMTP_PASS in backend/.env`);
+    console.log(`1. Check SMTP_USER and SMTP_PASS in Render environment variables`);
     console.log(`2. Make sure you're using App Password (not regular password)`);
     console.log(`3. Remove spaces from App Password`);
-    console.log(`4. Restart backend server after changing .env`);
+    console.log(`4. Redeploy backend after changing environment variables`);
     console.log(`5. Check if 2-Step Verification is enabled`);
+    console.log(`6. Check Render logs for SMTP connection errors`);
     console.log('===================================================\n');
+    
+    // In production, make sure the error is properly thrown
+    if (isProduction) {
+      throw error; // Re-throw to ensure it's caught by the route handler
+    }
+    
     return { success: false, error: error.message };
   }
 };
@@ -341,6 +360,11 @@ const sendPasswordResetEmail = async (email, name, token) => {
       `,
     };
 
+    console.log('[EMAIL DEBUG] Attempting to send password reset email...');
+    console.log('[EMAIL DEBUG] To:', email);
+    console.log('[EMAIL DEBUG] From:', fromEmail);
+    console.log('[EMAIL DEBUG] Reset URL:', resetUrl);
+    
     const info = await transporter.sendMail(mailOptions);
     
     // Check if this was a mock send (development only)
@@ -357,15 +381,35 @@ const sendPasswordResetEmail = async (email, name, token) => {
     console.log('✅ Password reset email sent successfully:', info.messageId);
     console.log('   To:', email);
     console.log('   From:', process.env.SMTP_USER);
+    console.log('   Response:', info.response || 'No response');
     return { success: true, messageId: info.messageId };
   } catch (error) {
-    console.error('Error sending password reset email:', error);
+    console.error('\n❌ ERROR sending password reset email:');
+    console.error('   Error message:', error.message);
+    console.error('   Error code:', error.code);
+    console.error('   Error stack:', error.stack);
+    if (error.response) {
+      console.error('   SMTP Response:', error.response);
+    }
+    if (error.command) {
+      console.error('   SMTP Command:', error.command);
+    }
+    
     const resetUrl = `${process.env.FRONTEND_URL || 'https://labbi.vercel.app'}/reset-password/${token}`;
-    console.log('\n=== PASSWORD RESET EMAIL (Fallback) ===');
+    console.log('\n=== PASSWORD RESET EMAIL (Fallback - Email Failed) ===');
     console.log(`To: ${email}`);
     console.log(`Reset Link: ${resetUrl}`);
+    console.log(`Environment: ${isProduction ? 'PRODUCTION' : 'DEVELOPMENT'}`);
+    console.log(`SMTP_USER: ${process.env.SMTP_USER ? 'Set' : 'NOT SET'}`);
+    console.log(`SMTP_PASS: ${process.env.SMTP_PASS ? 'Set (' + process.env.SMTP_PASS.length + ' chars)' : 'NOT SET'}`);
     console.log(`Error: ${error.message}`);
     console.log('========================================\n');
+    
+    // In production, make sure the error is properly thrown
+    if (isProduction) {
+      throw error; // Re-throw to ensure it's caught by the route handler
+    }
+    
     return { success: false, error: error.message };
   }
 };
