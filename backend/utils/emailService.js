@@ -35,10 +35,15 @@ const createTransporter = async () => {
         greetingTimeout: 10000,
       });
       
-      // Verify connection
+      // Verify connection (but don't fail if verify fails - try sending anyway)
       console.log('[EMAIL DEBUG] Verifying SMTP connection...');
-      await transporter.verify();
-      console.log('[EMAIL DEBUG] ✅ SMTP connection verified successfully!\n');
+      try {
+        await transporter.verify();
+        console.log('[EMAIL DEBUG] ✅ SMTP connection verified successfully!\n');
+      } catch (verifyError) {
+        console.warn('[EMAIL DEBUG] ⚠️ SMTP verify failed, but will try to send anyway:', verifyError.message);
+        console.warn('[EMAIL DEBUG] This is sometimes normal - the connection might still work for sending\n');
+      }
       return transporter;
     } catch (error) {
       console.error('[EMAIL DEBUG] ❌ SMTP connection failed:', error.message);

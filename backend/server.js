@@ -11,6 +11,7 @@ const reviewRoutes = require('./routes/reviews');
 const serviceRoutes = require('./routes/services');
 const adminRoutes = require('./routes/admin');
 const availabilityRoutes = require('./routes/availability');
+const testEmailRoutes = require('./routes/testEmail');
 
 const app = express();
 
@@ -55,6 +56,7 @@ app.use('/api/reviews', reviewRoutes);
 app.use('/api/services', serviceRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/availability', availabilityRoutes);
+app.use('/api', testEmailRoutes);
 
 // Test route
 app.get('/', (req, res) => {
