@@ -66,7 +66,9 @@ Labbi empowers young providers to earn money and build reputation, while custome
 
 ---
 
-## ⚙️ Environment Variables
+## 🔧 Backend Setup Instructions
+
+### Step 1: Configure Environment Variables
 
 Create a `.env` file in the `backend/` folder with the following variables:
 
@@ -88,13 +90,40 @@ PORT=5000
 
 > ⚠️ **IMPORTANT:** Never commit your `.env` file to Git! It's already added to `.gitignore`.
 
-### Setting up MongoDB Atlas (Recommended)
+### Step 2: Set up MongoDB Database
+
+#### Option A: MongoDB Atlas (Recommended for Development)
 
 1. Go to [MongoDB Atlas](https://www.mongodb.com/cloud/atlas)
 2. Create a free cluster
 3. Create a database user with password
 4. Whitelist your IP address (or use `0.0.0.0/0` for development)
 5. Get your connection string and replace placeholders with your credentials
+6. Copy the connection string to `MONGO_URI` in your `.env` file
+
+#### Option B: Local MongoDB
+
+1. Install MongoDB locally ([Download MongoDB](https://www.mongodb.com/try/download/community))
+2. Start MongoDB service
+3. Use connection string: `mongodb://localhost:27017/labbi`
+
+### Step 3: Run the Backend Server
+
+```bash
+cd backend
+npm run dev
+```
+
+The server will start at: **http://localhost:5000**
+
+**Verify the server is running:**
+- Open your browser and visit: `http://localhost:5000`
+- You should see a JSON response with API endpoints information
+
+**Troubleshooting:**
+- If MongoDB connection fails, check your `MONGO_URI` in `.env`
+- If port 5000 is in use, change `PORT` in `.env` to another port (e.g., 5001)
+- Check console logs for any error messages
 
 ---
 
@@ -270,6 +299,34 @@ Authorization: Bearer <token>
 }
 ```
 
+#### Update Profile
+
+**Request:**
+```json
+PUT /api/users/profile
+Authorization: Bearer <token>
+{
+  "fullName": "John Smith",
+  "phone": "+966501234568",
+  "location": "Jeddah"
+}
+```
+
+**Response (200):**
+```json
+{
+  "success": true,
+  "message": "Profile updated successfully",
+  "data": {
+    "id": "507f1f77bcf86cd799439011",
+    "fullName": "John Smith",
+    "email": "john@example.com",
+    "phone": "+966501234568",
+    "location": "Jeddah"
+  }
+}
+```
+
 ---
 
 ### Services Endpoints
@@ -285,6 +342,37 @@ Authorization: Bearer <token>
 | `PUT` | `/services/:id/status` | Update service status | Yes |
 | `GET` | `/services/provider/:providerId` | Get provider's public services | No |
 
+#### Get All Services
+
+**Request:**
+```
+GET /api/services?category=events&status=Active
+```
+
+**Response (200):**
+```json
+{
+  "success": true,
+  "count": 10,
+  "data": [
+    {
+      "id": "507f1f77bcf86cd799439011",
+      "title": "Professional Photography",
+      "description": "High-quality photography services...",
+      "category": "events",
+      "price": 200,
+      "pricingType": "hourly",
+      "rating": 4.5,
+      "reviewsCount": 25,
+      "provider": {
+        "fullName": "Jane Smith",
+        "location": "Riyadh"
+      }
+    }
+  ]
+}
+```
+
 #### Create Service
 
 **Request:**
@@ -297,7 +385,8 @@ Authorization: Bearer <token>
   "category": "events",
   "price": 200,
   "pricingType": "hourly",
-  "location": "Riyadh"
+  "location": "Riyadh",
+  "images": ["data:image/png;base64,..."]
 }
 ```
 
@@ -311,6 +400,33 @@ Authorization: Bearer <token>
     "title": "Professional Photography",
     "category": "events",
     "price": 200,
+    "status": "Pending"
+  }
+}
+```
+
+#### Update Service
+
+**Request:**
+```json
+PUT /api/services/507f1f77bcf86cd799439011
+Authorization: Bearer <token>
+{
+  "title": "Professional Photography - Updated",
+  "price": 250,
+  "description": "Updated description..."
+}
+```
+
+**Response (200):**
+```json
+{
+  "success": true,
+  "message": "Service updated successfully",
+  "data": {
+    "id": "507f1f77bcf86cd799439011",
+    "title": "Professional Photography - Updated",
+    "price": 250,
     "status": "Pending"
   }
 }
@@ -333,6 +449,35 @@ Authorization: Bearer <token>
 | `PUT` | `/bookings/:id/decline` | Decline booking | Yes (Provider) |
 | `PUT` | `/bookings/:id/complete` | Mark as completed | Yes (Provider) |
 | `GET` | `/bookings/provider/stats` | Get provider stats | Yes (Provider) |
+
+#### Get User's Bookings
+
+**Request:**
+```
+GET /api/bookings
+Authorization: Bearer <token>
+```
+
+**Response (200):**
+```json
+{
+  "success": true,
+  "count": 3,
+  "data": [
+    {
+      "id": "507f1f77bcf86cd799439013",
+      "serviceName": "Professional Photography",
+      "providerName": "Jane Smith",
+      "date": "December 15, 2025",
+      "time": "10:00 AM",
+      "status": "Pending",
+      "pricing": {
+        "total": 451.5
+      }
+    }
+  ]
+}
+```
 
 #### Create Booking
 
@@ -374,6 +519,46 @@ Authorization: Bearer <token>
     "pricing": {
       "total": 451.5
     }
+  }
+}
+```
+
+#### Cancel Booking
+
+**Request:**
+```json
+PUT /api/bookings/507f1f77bcf86cd799439013/cancel
+Authorization: Bearer <token>
+```
+
+**Response (200):**
+```json
+{
+  "success": true,
+  "message": "Booking cancelled successfully",
+  "data": {
+    "id": "507f1f77bcf86cd799439013",
+    "status": "Cancelled"
+  }
+}
+```
+
+#### Accept Booking (Provider)
+
+**Request:**
+```json
+PUT /api/bookings/507f1f77bcf86cd799439013/accept
+Authorization: Bearer <provider_token>
+```
+
+**Response (200):**
+```json
+{
+  "success": true,
+  "message": "Booking accepted successfully",
+  "data": {
+    "id": "507f1f77bcf86cd799439013",
+    "status": "Confirmed"
   }
 }
 ```
@@ -429,6 +614,52 @@ Authorization: Bearer <token>
 | `POST` | `/availability/book-slot` | Book a time slot | Yes |
 | `DELETE` | `/availability/free-slot` | Free a time slot | Yes |
 
+#### Update Availability
+
+**Request:**
+```json
+PUT /api/availability
+Authorization: Bearer <token>
+{
+  "availability": {
+    "monday": { "available": true, "startTime": "09:00 AM", "endTime": "05:00 PM" },
+    "tuesday": { "available": true, "startTime": "09:00 AM", "endTime": "05:00 PM" },
+    "wednesday": { "available": false, "startTime": "", "endTime": "" }
+  }
+}
+```
+
+**Response (200):**
+```json
+{
+  "success": true,
+  "message": "Availability updated successfully",
+  "data": {
+    "availability": {
+      "monday": { "available": true, "startTime": "09:00 AM", "endTime": "05:00 PM" }
+    }
+  }
+}
+```
+
+#### Get Time Slots
+
+**Request:**
+```
+GET /api/availability/slots/507f1f77bcf86cd799439012/2025-12-15
+```
+
+**Response (200):**
+```json
+{
+  "success": true,
+  "data": {
+    "availableSlots": ["09:00 AM", "10:00 AM", "11:00 AM", "02:00 PM", "03:00 PM"],
+    "bookedSlots": ["01:00 PM"]
+  }
+}
+```
+
 ---
 
 ### Admin Endpoints
@@ -444,6 +675,78 @@ Authorization: Bearer <token>
 | `PUT` | `/admin/services/:id/reject` | Reject service | Yes (Admin) |
 | `GET` | `/admin/bookings` | Get all bookings | Yes (Admin) |
 | `GET` | `/admin/analytics` | Get analytics data | Yes (Admin) |
+
+#### Get Dashboard Stats
+
+**Request:**
+```
+GET /api/admin/dashboard
+Authorization: Bearer <admin_token>
+```
+
+**Response (200):**
+```json
+{
+  "success": true,
+  "data": {
+    "stats": {
+      "totalUsers": 150,
+      "totalCustomers": 100,
+      "totalProviders": 50,
+      "totalServices": 75,
+      "pendingServices": 5,
+      "totalBookings": 200,
+      "totalReviews": 180,
+      "revenue": 15000
+    },
+    "recentUsers": [...],
+    "recentServices": [...]
+  }
+}
+```
+
+#### Approve Service
+
+**Request:**
+```json
+PUT /api/admin/services/507f1f77bcf86cd799439011/approve
+Authorization: Bearer <admin_token>
+```
+
+**Response (200):**
+```json
+{
+  "success": true,
+  "message": "Service approved successfully",
+  "data": {
+    "id": "507f1f77bcf86cd799439011",
+    "status": "Active"
+  }
+}
+```
+
+#### Update User Status
+
+**Request:**
+```json
+PUT /api/admin/users/507f1f77bcf86cd799439011/status
+Authorization: Bearer <admin_token>
+{
+  "status": "Suspended"
+}
+```
+
+**Response (200):**
+```json
+{
+  "success": true,
+  "message": "User status updated successfully",
+  "data": {
+    "id": "507f1f77bcf86cd799439011",
+    "status": "Suspended"
+  }
+}
+```
 
 ---
 
