@@ -88,6 +88,11 @@ JWT_EXPIRE=30d
 
 # Server Port (optional, defaults to 5000)
 PORT=5000
+
+# Frontend URL (for email links - verification, password reset)
+# For production: https://labbi.vercel.app
+# For local development: http://localhost:5173
+FRONTEND_URL=https://labbi.vercel.app
 ```
 
 > ⚠️ **IMPORTANT:** Never commit your `.env` file to Git! It's already added to `.gitignore`.

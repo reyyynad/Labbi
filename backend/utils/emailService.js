@@ -116,7 +116,7 @@ const sendVerificationEmail = async (email, name, token, userType) => {
   try {
     const transporter = await createTransporter();
     
-    const verificationUrl = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/verify-email/${token}`;
+    const verificationUrl = `${process.env.FRONTEND_URL || 'https://labbi.vercel.app'}/verify-email/${token}`;
     
     // Determine sender email
     const fromEmail = process.env.SMTP_USER || 'noreply@labbi.com';
@@ -212,7 +212,7 @@ const sendVerificationEmail = async (email, name, token, userType) => {
     }
     
     // Log the verification link as fallback
-    const verificationUrl = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/verify-email/${token}`;
+    const verificationUrl = `${process.env.FRONTEND_URL || 'https://labbi.vercel.app'}/verify-email/${token}`;
     console.log('\n=== EMAIL VERIFICATION (Fallback - Email Failed) ===');
     console.log(`To: ${email}`);
     console.log(`Verification Link: ${verificationUrl}`);
@@ -232,7 +232,7 @@ const sendPasswordResetEmail = async (email, name, token) => {
   try {
     const transporter = await createTransporter();
     
-    const resetUrl = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/reset-password/${token}`;
+    const resetUrl = `${process.env.FRONTEND_URL || 'https://labbi.vercel.app'}/reset-password/${token}`;
     
     // Determine sender email
     const fromEmail = process.env.SMTP_USER || 'noreply@labbi.com';
@@ -316,7 +316,7 @@ const sendPasswordResetEmail = async (email, name, token) => {
     return { success: true, messageId: info.messageId };
   } catch (error) {
     console.error('Error sending password reset email:', error);
-    const resetUrl = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/reset-password/${token}`;
+    const resetUrl = `${process.env.FRONTEND_URL || 'https://labbi.vercel.app'}/reset-password/${token}`;
     console.log('\n=== PASSWORD RESET EMAIL (Fallback) ===');
     console.log(`To: ${email}`);
     console.log(`Reset Link: ${resetUrl}`);
