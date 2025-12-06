@@ -48,18 +48,25 @@ function VerifyEmail() {
 
   const handleResend = async () => {
     if (!email || email === 'your@email.com') {
-      setError('Email address is required to resend verification')
+      setError('Email address is required to resend verification. Please log in again or contact support.')
       return
     }
     
     setResending(true)
     setError('')
     try {
-      await authAPI.resendVerification(email)
+      const result = await authAPI.resendVerification(email)
       setResent(true)
       setTimeout(() => setResent(false), 5000)
+      
+      // If email was logged (development), show the link
+      if (result.logged && result.link) {
+        console.log('Verification link (SMTP not configured):', result.link)
+        setError(`Email not configured. Check console for link: ${result.link}`)
+      }
     } catch (err) {
-      setError(err.message || 'Failed to resend verification email')
+      console.error('Resend verification error:', err)
+      setError(err.message || 'Failed to resend verification email. Please check your connection and try again.')
     } finally {
       setResending(false)
     }
