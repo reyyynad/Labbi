@@ -197,12 +197,13 @@ const sendVerificationEmail = async (email, name, token, userType) => {
       console.log('   Message ID:', info.messageId);
       console.log('   To:', email);
       console.log('   From:', process.env.SMTP_USER);
+      return { success: true, messageId: info.messageId };
     } else {
       console.log('📧 Verification email logged (SMTP not configured)');
       console.log('   Link:', verificationUrl);
+      // Return success but indicate it was logged, not sent
+      return { success: true, messageId: info.messageId, logged: true, link: verificationUrl };
     }
-    
-    return { success: true, messageId: info.messageId };
   } catch (error) {
     console.error('\n❌ ERROR sending verification email:');
     console.error('   Error message:', error.message);

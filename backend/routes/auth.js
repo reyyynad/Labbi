@@ -632,16 +632,28 @@ router.post('/resend-verification', async (req, res) => {
 
     // Send verification email
     try {
-      await sendVerificationEmail(user.email, user.fullName, verificationToken, user.userType);
-      res.status(200).json({
-        success: true,
-        message: 'Verification email sent successfully'
-      });
+      const emailResult = await sendVerificationEmail(user.email, user.fullName, verificationToken, user.userType);
+      
+      // If SMTP is not configured, include the link in the response
+      if (emailResult.logged) {
+        console.log('[RESEND] SMTP not configured - email logged to console');
+        res.status(200).json({
+          success: true,
+          message: 'Verification email logged (SMTP not configured). Check server logs for the verification link.',
+          logged: true,
+          link: emailResult.link
+        });
+      } else {
+        res.status(200).json({
+          success: true,
+          message: 'Verification email sent successfully'
+        });
+      }
     } catch (emailError) {
       console.error('Error sending verification email:', emailError);
       res.status(500).json({
         success: false,
-        message: 'Failed to send verification email. Please try again later.'
+        message: 'Failed to send verification email. Please check SMTP configuration or try again later.'
       });
     }
   } catch (error) {
